@@ -18,12 +18,15 @@
 
 package org.apache.flink
 
+import org.apache.flink.table.api.scala._
 import org.apache.flink.api.common.functions.{RichFilterFunction, RichMapFunction}
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.operators.DataSink
 import org.apache.flink.api.scala.{DataSet, ExecutionEnvironment}
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.ml.common.LabeledVector
+import org.apache.flink.table.api.Table
+import org.apache.flink.table.functions.ScalarFunction
 
 import scala.reflect.ClassTag
 
@@ -69,6 +72,36 @@ package object ml {
       : DataSet[O] = {
       dataSet.map(new BroadcastSingleElementMapperWithIteration[T, B, O](dataSet.clean(fun)))
         .withBroadcastSet(broadcastVariable, "broadcastVariable")
+    }
+  }
+
+  implicit class RichTable(table: Table) {
+    def mapWithBcVariable[T, B, O: TypeInformation: ClassTag](broadcastVariable: Table)(fun: (T, B) => O)
+    : Table = {
+      val func = new BroadcastSingleElementMapperFunction(fun)
+      table.join(broadcastVariable).as('value, 'broadcast).select(func('value, 'broadcast))
+    }
+
+    def filterWithBcVariable[T, B, O](broadcastVariable: Table)(fun: (T, B) => Boolean)
+    : Table = {
+      val func = new BroadcastSingleElementFilterFunction(fun)
+      table.join(broadcastVariable).as('value, 'broadcast).where(func('value, 'broadcast))
+    }
+  }
+
+  private class BroadcastSingleElementMapperFunction[T, B, O](
+      fun: (T, B) => O)
+    extends ScalarFunction {
+    def eval(value: T, broadcast: B): O = {
+      fun(value, broadcast)
+    }
+  }
+
+  private class BroadcastSingleElementFilterFunction[T, B](
+      fun: (T, B) => Boolean)
+    extends ScalarFunction {
+    def eval(value: T, broadcast: B): Boolean = {
+      fun(value, broadcast)
     }
   }
 
