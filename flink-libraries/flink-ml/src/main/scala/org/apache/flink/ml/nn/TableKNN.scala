@@ -33,7 +33,6 @@ import org.apache.flink.util.Collector
 
 import scala.collection.immutable.Vector
 import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 import scala.math
 
@@ -118,7 +117,7 @@ object TableKNN {
     new TableKNN
   }
 
-  implicit def fitKNN[T <: FlinkVector : TypeInformation]: TableFitOperation[TableKNN] = {
+  implicit def fitKNN[T <: FlinkVector: TypeInformation: ClassTag]: TableFitOperation[TableKNN] = {
     new TableFitOperation[TableKNN] {
       override def fit(instance: TableKNN, fitParameters: ParameterMap, input: Table): Unit = {
         val resultParameters = instance.parameters ++ fitParameters
@@ -130,7 +129,8 @@ object TableKNN {
         val partitioner = TableFlinkMLTools.ModuloKeyPartitionFunction
         val inputAsVector = input
 
-        instance.trainingSet = Some(TableFlinkMLTools.block(inputAsVector, blocks, Some(partitioner)))
+        instance.trainingSet = Some(
+          TableFlinkMLTools.block[T](inputAsVector, blocks, Some(partitioner)))
       }
     }
   }
@@ -154,7 +154,7 @@ object TableKNN {
 
             val inputWithId = input.zipWithUUID()
 
-            val inputSplit = TableFlinkMLTools.block(inputWithId, blocks, Some(partitioner))
+            val inputSplit = TableFlinkMLTools.block[T](inputWithId, blocks, Some(partitioner))
 
             val crossTuned = trainingSet.as('train).join(inputSplit.as('test))
 
@@ -252,7 +252,8 @@ object TableKNN {
       *                    aggregated results
       * @return the aggregation result
       */
-    override def getValue(accumulator: mutable.PriorityQueue[(FlinkVector, FlinkVector, String, Double)])
+    override def getValue(
+        accumulator: mutable.PriorityQueue[(FlinkVector, FlinkVector, String, Double)])
     : (FlinkVector, Array[FlinkVector]) = {
       if (accumulator.nonEmpty) {
         (accumulator.head._2, accumulator.map(_._1).toArray)

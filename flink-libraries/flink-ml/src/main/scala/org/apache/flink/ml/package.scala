@@ -79,7 +79,8 @@ package object ml {
   }
 
   implicit class RichTable(table: Table) {
-    def mapWithBcVariable[T, B, O: TypeInformation: ClassTag](broadcastVariable: Table)(fun: (T, B) => O)
+    def mapWithBcVariable[T, B, O: TypeInformation: ClassTag](broadcastVariable: Table)
+        (fun: (T, B) => O)
     : Table = {
       val func = new BroadcastSingleElementMapperFunction(fun)
       table.as('value).join(broadcastVariable.as('broadcast))

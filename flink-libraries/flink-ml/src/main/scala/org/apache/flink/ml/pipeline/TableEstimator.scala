@@ -18,7 +18,7 @@
 
 package org.apache.flink.ml.pipeline
 
-import com.sun.tools.javac.code.TypeTag
+import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
 import org.apache.flink.ml.common.{ParameterMap, WithParameters}
