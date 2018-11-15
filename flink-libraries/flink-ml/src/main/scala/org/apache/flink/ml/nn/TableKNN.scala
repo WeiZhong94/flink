@@ -21,14 +21,22 @@ package org.apache.flink.ml.nn
 import org.apache.flink.api.common.operators.base.CrossOperatorBase.CrossHint
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.ml._
-import org.apache.flink.ml.common.{Parameter, ParameterMap, TableFlinkMLTools}
+import org.apache.flink.ml.common.{Block, Parameter, ParameterMap, TableFlinkMLTools}
 import org.apache.flink.ml.metrics.distances.{DistanceMetric, EuclideanDistanceMetric, SquaredEuclideanDistanceMetric}
 import org.apache.flink.ml.pipeline.{TableFitOperation, TablePredictTableOperation, TablePredictor}
+import org.apache.flink.api.scala._
 import org.apache.flink.table.api.scala._
 import org.apache.flink.table.api.Table
 import org.apache.flink.ml.math.{DenseVector, Vector => FlinkVector}
+import org.apache.flink.table.functions.{AggregateFunction, FunctionContext, TableFunction}
+import org.apache.flink.util.Collector
 
+import scala.collection.immutable.Vector
+import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
+import scala.math
+
 class TableKNN extends TablePredictor[TableKNN] {
 
   import TableKNN._
@@ -144,14 +152,190 @@ object TableKNN {
             val metric = resultParameters.get(DistanceMetric).get
             val partitioner = TableFlinkMLTools.ModuloKeyPartitionFunction
 
-            val inputWithId = input.zipWithRandomLong()
+            val inputWithId = input.zipWithUUID()
 
             val inputSplit = TableFlinkMLTools.block(inputWithId, blocks, Some(partitioner))
 
             val crossTuned = trainingSet.as('train).join(inputSplit.as('test))
 
+            val useQuadTree = resultParameters.get(UseQuadTree)
 
-            null
+            val queryTableFunction = new KNNQueryTableFunction[T](metric, useQuadTree, k)
+
+            val crossed = crossTuned.join(queryTableFunction('train, 'test))
+              .as('train, 'test, 'singleTrain, 'singleTest, 'id, 'distance)
+              .select('singleTrain, 'singleTest, 'id, 'distance)
+
+            val sortGroupAggregateFunction = new KNNSortGroupAggregateFunction(k)
+
+            val result = crossed.groupBy('id)
+              .select(sortGroupAggregateFunction('singleTrain, 'singleTest, 'id, 'distance))
+            result
+        }
+      }
+    }
+  }
+
+  class KNNQueryTableFunction[T <: FlinkVector](
+      metric: DistanceMetric, useQuadTreeOption: Option[Boolean], k: Int)
+    extends TableFunction[(FlinkVector, FlinkVector, String, Double)] {
+    var out: Collector[(FlinkVector, FlinkVector, String, Double)] = _
+
+    override def open(context: FunctionContext): Unit = {
+      super.open(context)
+      out = new Collector[(FlinkVector, FlinkVector, String, Double)] {
+        /**
+          * Emits a record.
+          *
+          * @param record The record to collect.
+          */
+        override def collect(record: (FlinkVector, FlinkVector, String, Double)): Unit = {
+          collect(record)
+        }
+
+        /**
+          * Closes the collector. If any data was buffered, that data will be flushed.
+          */
+        override def close(): Unit = {}
+      }
+    }
+
+    def eval(training: Block[FlinkVector], testing: Block[(String, T)]): Unit = {
+      // use a quadtree if (4 ^ dim) * Ntest * log(Ntrain)
+      // < Ntest * Ntrain, and distance is Euclidean
+      val checkSize = math.log(4.0) * training.values.head.size +
+        math.log(math.log(training.values.length)) < math.log(training.values.length)
+      val checkMetric = metric match {
+        case _: EuclideanDistanceMetric => true
+        case _: SquaredEuclideanDistanceMetric => true
+        case _ => false
+      }
+      val useQuadTree = useQuadTreeOption.getOrElse(checkSize && checkMetric)
+
+      if (useQuadTree) {
+        knnQueryWithQuadTree(training.values, testing.values, k, metric, out)
+      } else {
+        knnQueryBasic(training.values, testing.values, k, metric, out)
+      }
+    }
+  }
+
+  class KNNSortGroupAggregateFunction(k: Int)
+    extends AggregateFunction[(FlinkVector, Array[FlinkVector]),
+      mutable.PriorityQueue[(FlinkVector, FlinkVector, String, Double)]] {
+    /**
+      * Creates and init the Accumulator for this [[AggregateFunction]].
+      *
+      * @return the accumulator with the initial value
+      */
+    override def createAccumulator()
+    : mutable.PriorityQueue[(FlinkVector, FlinkVector, String, Double)] = {
+      mutable.PriorityQueue[(FlinkVector, FlinkVector, String, Double)]()(
+        Ordering.by(_._4))
+    }
+
+    def accumulate(accumulator: mutable.PriorityQueue[(FlinkVector, FlinkVector, String, Double)],
+                   train: FlinkVector, test: FlinkVector, id: String, distance: Double): Unit = {
+      accumulator.enqueue((train, test, id, distance))
+      if (accumulator.size > k) {
+        accumulator.dequeue()
+      }
+    }
+
+    /**
+      * Called every time when an aggregation result should be materialized.
+      * The returned value could be either an early and incomplete result
+      * (periodically emitted as data arrive) or the final result of the
+      * aggregation.
+      *
+      * @param accumulator the accumulator which contains the current
+      *                    aggregated results
+      * @return the aggregation result
+      */
+    override def getValue(accumulator: mutable.PriorityQueue[(FlinkVector, FlinkVector, String, Double)])
+    : (FlinkVector, Array[FlinkVector]) = {
+      if (accumulator.nonEmpty) {
+        (accumulator.head._2, accumulator.map(_._1).toArray)
+      } else {
+        (null, Array())
+      }
+    }
+  }
+
+  private def knnQueryWithQuadTree[T <: FlinkVector](
+      training: Vector[T],
+      testing: Vector[(String, T)],
+      k: Int,
+      metric: DistanceMetric,
+      out: Collector[(FlinkVector, FlinkVector, String, Double)]): Unit = {
+    // find a bounding box
+    val MinArr = Array.tabulate(training.head.size)(x => x)
+    val MaxArr = Array.tabulate(training.head.size)(x => x)
+
+    val minVecTrain = MinArr.map(i => training.map(x => x(i)).min - 0.01)
+    val minVecTest = MinArr.map(i => testing.map(x => x._2(i)).min - 0.01)
+    val maxVecTrain = MaxArr.map(i => training.map(x => x(i)).max + 0.01)
+    val maxVecTest = MaxArr.map(i => testing.map(x => x._2(i)).max + 0.01)
+
+    val MinVec = DenseVector(MinArr.map(i => math.min(minVecTrain(i), minVecTest(i))))
+    val MaxVec = DenseVector(MinArr.map(i => math.max(maxVecTrain(i), maxVecTest(i))))
+
+    // default value of max elements/box is set to max(20,k)
+    val maxPerBox = math.max(k, 20)
+    val trainingQuadTree = new QuadTree(MinVec, MaxVec, metric, maxPerBox)
+
+    val queue = mutable.PriorityQueue[(FlinkVector, FlinkVector, String, Double)]()(
+      Ordering.by(_._4))
+
+    for (v <- training) {
+      trainingQuadTree.insert(v)
+    }
+
+    for ((id, vector) <- testing) {
+      // Find siblings' objects and do local kNN there
+      val siblingObjects = trainingQuadTree.searchNeighborsSiblingQueue(vector)
+
+      // do KNN query on siblingObjects and get max distance of kNN then rad is good choice
+      // for a neighborhood to do a refined local kNN search
+      val knnSiblings = siblingObjects.map(v => metric.distance(vector, v)).sortWith(_ < _).take(k)
+
+      val rad = knnSiblings.last
+      val trainingFiltered = trainingQuadTree.searchNeighbors(vector, rad)
+
+      for (b <- trainingFiltered) {
+        // (training vector, input vector, input key, distance)
+        queue.enqueue((b, vector, id, metric.distance(b, vector)))
+        if (queue.size > k) {
+          queue.dequeue()
+        }
+      }
+
+      for (v <- queue) {
+        out.collect(v)
+      }
+    }
+  }
+
+  private def knnQueryBasic[T <: FlinkVector](
+      training: Vector[T],
+      testing: Vector[(String, T)],
+      k: Int,
+      metric: DistanceMetric,
+      out: Collector[(FlinkVector, FlinkVector, String, Double)]): Unit = {
+    val queue = mutable.PriorityQueue[(FlinkVector, FlinkVector, String, Double)]()(
+      Ordering.by(_._4))
+
+    for ((id, vector) <- testing) {
+      for (b <- training) {
+        // (training vector, input vector, input key, distance)
+        queue.enqueue((b, vector, id, metric.distance(b, vector)))
+        if (queue.size > k) {
+          queue.dequeue()
+        }
+      }
+
+      for (v <- queue) {
+        out.collect(v)
       }
     }
   }

@@ -18,15 +18,16 @@
 
 package org.apache.flink
 
-import java.util.Random
+import java.util.{Random, UUID}
 
-import org.apache.flink.table.api.scala._
+import com.fasterxml.uuid.Generators
 import org.apache.flink.api.common.functions.{RichFilterFunction, RichMapFunction}
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.operators.DataSink
 import org.apache.flink.api.scala.{DataSet, ExecutionEnvironment}
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.ml.common.LabeledVector
+import org.apache.flink.table.api.scala._
 import org.apache.flink.table.api.Table
 import org.apache.flink.table.functions.{FunctionContext, ScalarFunction}
 
@@ -92,9 +93,13 @@ package object ml {
         .where(func('value, 'broadcast))
     }
 
-    def zipWithRandomLong[T](): Table = {
-      val func = new RandomLongFunction
+    def zipWithUUID[T](): Table = {
+      val func = new UUIDGenerateFunction
       table.as('t).select(func() as 'id, 't)
+    }
+
+    def mapPartition(func: Any): Table = { //fake
+      table
     }
   }
 
@@ -126,6 +131,12 @@ package object ml {
     override def isDeterministic: Boolean = false
 
     def eval(): Long = r.nextLong()
+  }
+
+  private class UUIDGenerateFunction extends ScalarFunction {
+    def eval(): String = Generators.timeBasedGenerator().generate().toString
+
+    override def isDeterministic: Boolean = false
   }
 
   private class BroadcastSingleElementMapper[T, B, O](

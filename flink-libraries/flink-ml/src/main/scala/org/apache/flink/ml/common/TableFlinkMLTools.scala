@@ -18,7 +18,7 @@ object TableFlinkMLTools {
 
     val preGroupBlockIDInput = partitionerOption match {
       case Some(partitioner) =>
-        blockIDInput.select(partitioner('id) as 'id, 't)
+        blockIDInput.select(partitioner('id, numBlocks) as 'id, 't)
 
       case None => blockIDInput
     }
@@ -37,10 +37,20 @@ object TableFlinkMLTools {
         result
       }
     }
+
+    def eval(key: String, numPartitions: Int): Int = {
+      val result = key.hashCode % numPartitions
+
+      if (result < 0) {
+        result + numPartitions
+      } else {
+        result
+      }
+    }
   }
 }
 
-class BlockIDAssigner[T](numBlocks: Int) extends ScalarFunction {
+class BlockIDAssigner[T: TypeInformation](numBlocks: Int) extends ScalarFunction {
   def eval(element: T): (Int, T) = {
     val blockID = element.hashCode() % numBlocks
 
