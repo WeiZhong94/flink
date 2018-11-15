@@ -18,6 +18,8 @@
 
 package org.apache.flink
 
+import java.util.Random
+
 import org.apache.flink.table.api.scala._
 import org.apache.flink.api.common.functions.{RichFilterFunction, RichMapFunction}
 import org.apache.flink.api.common.typeinfo.TypeInformation
@@ -26,7 +28,7 @@ import org.apache.flink.api.scala.{DataSet, ExecutionEnvironment}
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.ml.common.LabeledVector
 import org.apache.flink.table.api.Table
-import org.apache.flink.table.functions.ScalarFunction
+import org.apache.flink.table.functions.{FunctionContext, ScalarFunction}
 
 import scala.reflect.ClassTag
 
@@ -79,13 +81,20 @@ package object ml {
     def mapWithBcVariable[T, B, O: TypeInformation: ClassTag](broadcastVariable: Table)(fun: (T, B) => O)
     : Table = {
       val func = new BroadcastSingleElementMapperFunction(fun)
-      table.join(broadcastVariable).as('value, 'broadcast).select(func('value, 'broadcast))
+      table.as('value).join(broadcastVariable.as('broadcast))
+        .select(func('value, 'broadcast))
     }
 
     def filterWithBcVariable[T, B, O](broadcastVariable: Table)(fun: (T, B) => Boolean)
     : Table = {
       val func = new BroadcastSingleElementFilterFunction(fun)
-      table.join(broadcastVariable).as('value, 'broadcast).where(func('value, 'broadcast))
+      table.as('value).join(broadcastVariable.as('broadcast))
+        .where(func('value, 'broadcast))
+    }
+
+    def zipWithRandomLong[T](): Table = {
+      val func = new RandomLongFunction
+      table.as('t).select(func() as 'id, 't)
     }
   }
 
@@ -103,6 +112,20 @@ package object ml {
     def eval(value: T, broadcast: B): Boolean = {
       fun(value, broadcast)
     }
+  }
+
+  private class RandomLongFunction extends ScalarFunction {
+
+    var r: Random = _
+
+    override def open(context: FunctionContext): Unit = {
+      super.open(context)
+      r = new Random
+    }
+
+    override def isDeterministic: Boolean = false
+
+    def eval(): Long = r.nextLong()
   }
 
   private class BroadcastSingleElementMapper[T, B, O](

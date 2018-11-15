@@ -20,11 +20,15 @@ package org.apache.flink.ml.nn
 
 import org.apache.flink.api.common.operators.base.CrossOperatorBase.CrossHint
 import org.apache.flink.api.common.typeinfo.TypeInformation
+import org.apache.flink.ml._
 import org.apache.flink.ml.common.{Parameter, ParameterMap, TableFlinkMLTools}
 import org.apache.flink.ml.metrics.distances.{DistanceMetric, EuclideanDistanceMetric, SquaredEuclideanDistanceMetric}
-import org.apache.flink.ml.pipeline.{TableFitOperation, TablePredictor}
+import org.apache.flink.ml.pipeline.{TableFitOperation, TablePredictTableOperation, TablePredictor}
+import org.apache.flink.table.api.scala._
 import org.apache.flink.table.api.Table
 import org.apache.flink.ml.math.{DenseVector, Vector => FlinkVector}
+
+import scala.reflect.ClassTag
 class TableKNN extends TablePredictor[TableKNN] {
 
   import TableKNN._
@@ -119,6 +123,35 @@ object TableKNN {
         val inputAsVector = input
 
         instance.trainingSet = Some(TableFlinkMLTools.block(inputAsVector, blocks, Some(partitioner)))
+      }
+    }
+  }
+
+  implicit def predictValues[T <: FlinkVector : ClassTag : TypeInformation] = {
+    new TablePredictTableOperation[TableKNN, T, (FlinkVector, Array[FlinkVector])] {
+      override def predictTable(
+          instance: TableKNN,
+          predictParameters: ParameterMap,
+          input: Table): Table = {
+        val resultParameters = instance.parameters ++ predictParameters
+        require(resultParameters.get(K).isDefined, "K is needed for calculation")
+        require(resultParameters.get(Blocks).isDefined, "Blocks is needed for calculation")
+
+        instance.trainingSet match {
+          case Some(trainingSet) =>
+            val k = resultParameters.get(K).get
+            val blocks = resultParameters.get(Blocks).get
+            val metric = resultParameters.get(DistanceMetric).get
+            val partitioner = TableFlinkMLTools.ModuloKeyPartitionFunction
+
+            val inputWithId = input.zipWithRandomLong()
+
+            val inputSplit = TableFlinkMLTools.block(inputWithId, blocks, Some(partitioner))
+
+            val crossTuned = trainingSet.as('train).join(inputSplit.as('test))
+
+
+            null
       }
     }
   }
