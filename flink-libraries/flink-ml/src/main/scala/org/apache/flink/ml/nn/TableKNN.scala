@@ -21,7 +21,7 @@ package org.apache.flink.ml.nn
 import org.apache.flink.api.common.operators.base.CrossOperatorBase.CrossHint
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.ml._
-import org.apache.flink.ml.common.{Block, Parameter, ParameterMap, TableFlinkMLTools}
+import org.apache.flink.ml.common._
 import org.apache.flink.ml.metrics.distances.{DistanceMetric, EuclideanDistanceMetric, SquaredEuclideanDistanceMetric}
 import org.apache.flink.ml.pipeline.{TableFitOperation, TablePredictTableOperation, TablePredictor}
 import org.apache.flink.api.scala._
@@ -117,8 +117,8 @@ object TableKNN {
     new TableKNN
   }
 
-  implicit def fitKNN[T <: FlinkVector: TypeInformation: ClassTag]: TableFitOperation[TableKNN] = {
-    new TableFitOperation[TableKNN] {
+  implicit def fitKNN[T <: FlinkVector: TypeInformation: ClassTag]: TableFitOperation[TableKNN, T] = {
+    new TableFitOperation[TableKNN, T] {
       override def fit(instance: TableKNN, fitParameters: ParameterMap, input: Table): Unit = {
         val resultParameters = instance.parameters ++ fitParameters
 
@@ -136,7 +136,7 @@ object TableKNN {
   }
 
   implicit def predictValues[T <: FlinkVector : ClassTag : TypeInformation] = {
-    new TablePredictTableOperation[TableKNN, T, (FlinkVector, Array[FlinkVector])] {
+    new TablePredictTableOperation[TableKNN, T, (T, Array[T])] {
       override def predictTable(
           instance: TableKNN,
           predictParameters: ParameterMap,
@@ -154,9 +154,18 @@ object TableKNN {
 
             val inputWithId = input.zipWithUUID()
 
-            val inputSplit = TableFlinkMLTools.block[T](inputWithId, blocks, Some(partitioner))
+            val tupleIDAndData = new TupleIDAndData[String, T]
 
-            val crossTuned = trainingSet.as('train).join(inputSplit.as('test))
+            val inputTuple = inputWithId.as('id, 'data).select(tupleIDAndData('id, 'data))
+
+            val inputSplit = TableFlinkMLTools.block[(String, T)](inputTuple, blocks, Some(partitioner))
+
+            val one = new OneFunction
+
+            val trainTable = trainingSet.as('train).select('train, one() as 'one)
+            val crossTuned = trainTable
+              .join(inputSplit.as('test).select('test, one() as 'one2), 'one === 'one2)
+              .select('train, 'test)
 
             val useQuadTree = resultParameters.get(UseQuadTree)
 
@@ -165,7 +174,6 @@ object TableKNN {
             val crossed = crossTuned.join(queryTableFunction('train, 'test))
               .as('train, 'test, 'singleTrain, 'singleTest, 'id, 'distance)
               .select('singleTrain, 'singleTest, 'id, 'distance)
-
             val sortGroupAggregateFunction = new KNNSortGroupAggregateFunction(k)
 
             val result = crossed.groupBy('id)
@@ -190,7 +198,7 @@ object TableKNN {
           * @param record The record to collect.
           */
         override def collect(record: (FlinkVector, FlinkVector, String, Double)): Unit = {
-          collect(record)
+          KNNQueryTableFunction.this.collect(record)
         }
 
         /**
@@ -260,6 +268,11 @@ object TableKNN {
       } else {
         (null, Array())
       }
+    }
+
+    def resetAccumulator(
+        accumulator: mutable.PriorityQueue[(FlinkVector, FlinkVector, String, Double)]): Unit = {
+      accumulator.clear()
     }
   }
 

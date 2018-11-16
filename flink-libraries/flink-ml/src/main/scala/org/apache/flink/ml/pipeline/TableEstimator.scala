@@ -27,17 +27,17 @@ import org.apache.flink.table.api.Table
 trait TableEstimator[Self] extends WithParameters {
   that: Self =>
 
-  def fit(training: Table,fitParameters: ParameterMap = ParameterMap.Empty)
-         (implicit fitOperation: TableFitOperation[Self]): Unit = {
+  def fit[T](training: Table,fitParameters: ParameterMap = ParameterMap.Empty)
+         (implicit fitOperation: TableFitOperation[Self, T]): Unit = {
     fitOperation.fit(this, fitParameters, training)
   }
 }
 
 object TableEstimator {
   implicit def fallbackFitOperation[
-  Self: TypeTag]
-  : TableFitOperation[Self] = {
-    new TableFitOperation[Self]{
+  Self: TypeTag, T: TypeTag]
+  : TableFitOperation[Self, T] = {
+    new TableFitOperation[Self, T]{
       override def fit(
           instance: Self,
           fitParameters: ParameterMap,
@@ -52,6 +52,6 @@ object TableEstimator {
   }
 }
 
-trait TableFitOperation[Self] {
+trait TableFitOperation[Self, T] {
   def fit(instance: Self, fitParameters: ParameterMap,  input: Table): Unit
 }

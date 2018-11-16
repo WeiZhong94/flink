@@ -18,11 +18,14 @@
 
 package org.apache.flink.ml.common
 
+import java.util.Random
+
+import com.fasterxml.uuid.Generators
 import org.apache.flink.api.scala._
 import org.apache.flink.table.api.scala._
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.table.api.Table
-import org.apache.flink.table.functions.{AggregateFunction, ScalarFunction}
+import org.apache.flink.table.functions.{AggregateFunction, FunctionContext, ScalarFunction}
 import org.apache.flink.api.java.tuple
 
 import scala.collection.mutable.ArrayBuffer
@@ -32,17 +35,20 @@ object TableFlinkMLTools {
   def block[T: TypeInformation: ClassTag](
       input: Table, numBlocks: Int, partitionerOption: Option[ScalarFunction]): Table = {
     val blockIDAssigner = new BlockIDAssigner[T](numBlocks)
-    val blockIDInput = input.as('t).select(blockIDAssigner('t).flatten()).as('id, 't)
+    val blockIDInput = input
+      .as('data)
+      .select(blockIDAssigner('data).flatten())
+      .as('id, 'data)
 
     val preGroupBlockIDInput = partitionerOption match {
       case Some(partitioner) =>
-        blockIDInput.select(partitioner('id, numBlocks) as 'id, 't)
+        blockIDInput.select(partitioner('id, numBlocks) as 'id, 'data)
 
       case None => blockIDInput
     }
 
     val blockGenerator = new BlockGenerator[T]
-    preGroupBlockIDInput.groupBy('id).select(blockGenerator('id, 't))
+    preGroupBlockIDInput.groupBy('id).select(blockGenerator('id, 'data))
   }
 
   object ModuloKeyPartitionFunction extends ScalarFunction {
@@ -97,6 +103,11 @@ class BlockGenerator[T] extends AggregateFunction[Block[T], tuple.Tuple2[Int, Ar
   override def createAccumulator(): tuple.Tuple2[Int, ArrayBuffer[T]] =
     new tuple.Tuple2(0, ArrayBuffer[T]())
 
+  def resetAccumulator(accumulator: tuple.Tuple2[Int, ArrayBuffer[T]]): Unit = {
+    accumulator.f0 = 0
+    accumulator.f1.clear()
+  }
+
   def accumulate(acc: tuple.Tuple2[Int, ArrayBuffer[T]], id: Int, element: T): Unit = {
     acc.f0 = id
     acc.f1.append(element)
@@ -115,4 +126,60 @@ class BlockGenerator[T] extends AggregateFunction[Block[T], tuple.Tuple2[Int, Ar
   override def getValue(accumulator: tuple.Tuple2[Int, ArrayBuffer[T]]): Block[T] = {
     Block[T](accumulator.f0, accumulator.f1.toVector)
   }
+}
+
+
+class BroadcastSingleElementMapperFunction[T, B, O](
+                                                             fun: (T, B) => O)
+  extends ScalarFunction {
+  def eval(value: T, broadcast: B): O = {
+    fun(value, broadcast)
+  }
+}
+
+class BroadcastSingleElementFilterFunction[T, B](
+                                                          fun: (T, B) => Boolean)
+  extends ScalarFunction {
+  def eval(value: T, broadcast: B): Boolean = {
+    fun(value, broadcast)
+  }
+}
+
+class RandomLongFunction extends ScalarFunction {
+
+  var r: Random = _
+
+  override def open(context: FunctionContext): Unit = {
+    super.open(context)
+    r = new Random
+  }
+
+  override def isDeterministic: Boolean = false
+
+  def eval(): Long = r.nextLong()
+}
+
+class UUIDGenerateFunction extends ScalarFunction {
+  def eval(): String = Generators.timeBasedGenerator().generate().toString
+
+  override def isDeterministic: Boolean = false
+}
+
+class TupleIDAndData[ID: TypeInformation, DATA: TypeInformation] extends ScalarFunction {
+  def eval(id: ID, data: DATA): (ID, DATA) = {
+    (id, data)
+  }
+
+  def getTypeInfo[K: TypeInformation]: TypeInformation[K] = implicitly[TypeInformation[K]]
+
+  override def getResultType(signature: Array[Class[_]]): TypeInformation[_] =
+    getTypeInfo[(ID, DATA)]
+}
+
+class OneFunction extends ScalarFunction {
+  def eval(): Int = {
+    1
+  }
+
+  override def isDeterministic: Boolean = false
 }

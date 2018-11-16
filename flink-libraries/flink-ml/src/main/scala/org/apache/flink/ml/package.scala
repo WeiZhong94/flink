@@ -18,18 +18,14 @@
 
 package org.apache.flink
 
-import java.util.{Random, UUID}
-
-import com.fasterxml.uuid.Generators
 import org.apache.flink.api.common.functions.{RichFilterFunction, RichMapFunction}
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.operators.DataSink
 import org.apache.flink.api.scala.{DataSet, ExecutionEnvironment}
 import org.apache.flink.configuration.Configuration
-import org.apache.flink.ml.common.LabeledVector
+import org.apache.flink.ml.common.{BroadcastSingleElementFilterFunction, BroadcastSingleElementMapperFunction, LabeledVector, UUIDGenerateFunction}
 import org.apache.flink.table.api.scala._
 import org.apache.flink.table.api.Table
-import org.apache.flink.table.functions.{FunctionContext, ScalarFunction}
 
 import scala.reflect.ClassTag
 
@@ -102,42 +98,6 @@ package object ml {
     def mapPartition(func: Any): Table = { //fake
       table
     }
-  }
-
-  private class BroadcastSingleElementMapperFunction[T, B, O](
-      fun: (T, B) => O)
-    extends ScalarFunction {
-    def eval(value: T, broadcast: B): O = {
-      fun(value, broadcast)
-    }
-  }
-
-  private class BroadcastSingleElementFilterFunction[T, B](
-      fun: (T, B) => Boolean)
-    extends ScalarFunction {
-    def eval(value: T, broadcast: B): Boolean = {
-      fun(value, broadcast)
-    }
-  }
-
-  private class RandomLongFunction extends ScalarFunction {
-
-    var r: Random = _
-
-    override def open(context: FunctionContext): Unit = {
-      super.open(context)
-      r = new Random
-    }
-
-    override def isDeterministic: Boolean = false
-
-    def eval(): Long = r.nextLong()
-  }
-
-  private class UUIDGenerateFunction extends ScalarFunction {
-    def eval(): String = Generators.timeBasedGenerator().generate().toString
-
-    override def isDeterministic: Boolean = false
   }
 
   private class BroadcastSingleElementMapper[T, B, O](
