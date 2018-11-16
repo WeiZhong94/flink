@@ -374,12 +374,10 @@ abstract class TableEnvironment(val config: TableConfig) {
         ImmutableList.of(), ImmutableList.of())
     } catch {
       case e: CannotPlanException =>
-        e.printStackTrace()
-        throw new TableException(e.toString
-          /*s"Cannot generate a valid execution plan for the given query: \n\n" +
+        throw new TableException(s"Cannot generate a valid execution plan for the given query: \n\n" +
             s"${RelOptUtil.toString(input)}\n" +
             s"This exception indicates that the query uses an unsupported SQL feature.\n" +
-            s"Please check the documentation for the set of currently supported SQL features."*/)
+            s"Please check the documentation for the set of currently supported SQL features.")
       case t: TableException =>
         throw new TableException(
           s"Cannot generate a valid execution plan for the given query: \n\n" +
