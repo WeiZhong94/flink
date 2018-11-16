@@ -23,7 +23,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.ml._
 import org.apache.flink.ml.common._
 import org.apache.flink.ml.metrics.distances.{DistanceMetric, EuclideanDistanceMetric, SquaredEuclideanDistanceMetric}
-import org.apache.flink.ml.pipeline.{TableFitOperation, TablePredictTableOperation, TablePredictor}
+import org.apache.flink.ml.pipeline._
 import org.apache.flink.api.scala._
 import org.apache.flink.table.api.scala._
 import org.apache.flink.table.api.Table
@@ -36,7 +36,7 @@ import scala.collection.mutable
 import scala.reflect.ClassTag
 import scala.math
 
-class TableKNN extends TablePredictor[TableKNN] {
+class TableKNN extends Predictor[TableKNN] {
 
   import TableKNN._
 
@@ -117,8 +117,8 @@ object TableKNN {
     new TableKNN
   }
 
-  implicit def fitKNN[T <: FlinkVector: TypeInformation: ClassTag]: TableFitOperation[TableKNN, T] = {
-    new TableFitOperation[TableKNN, T] {
+  implicit def fitKNN[T <: FlinkVector: TypeInformation: ClassTag]: FitOperation[TableKNN, T] = {
+    new FitOperation[TableKNN, T] {
       override def fit(instance: TableKNN, fitParameters: ParameterMap, input: Table): Unit = {
         val resultParameters = instance.parameters ++ fitParameters
 
@@ -136,8 +136,8 @@ object TableKNN {
   }
 
   implicit def predictValues[T <: FlinkVector : ClassTag : TypeInformation] = {
-    new TablePredictTableOperation[TableKNN, T, (T, Array[T])] {
-      override def predictTable(
+    new PredictDataSetOperation[TableKNN, T, (T, Array[T])] {
+      override def predictDataSet(
           instance: TableKNN,
           predictParameters: ParameterMap,
           input: Table): Table = {

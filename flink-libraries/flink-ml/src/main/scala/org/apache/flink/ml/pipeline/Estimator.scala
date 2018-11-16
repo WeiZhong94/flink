@@ -55,7 +55,6 @@ trait Estimator[Self] extends WithParameters {
       fitParameters: ParameterMap = ParameterMap.Empty)(implicit
       fitOperation: FitOperation[Self, Training],
       trainingTypeInformation: TypeInformation[Training]): Unit = {
-    FlinkMLTools.registerFlinkMLTypes(training.toDataSet[Training].getExecutionEnvironment)
     fitOperation.fit(this, fitParameters, training)
   }
 }

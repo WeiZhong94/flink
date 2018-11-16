@@ -74,32 +74,6 @@ package object ml {
     }
   }
 
-  implicit class RichTable(table: Table) {
-    def mapWithBcVariable[T, B, O: TypeInformation: ClassTag](broadcastVariable: Table)
-        (fun: (T, B) => O)
-    : Table = {
-      val func = new BroadcastSingleElementMapperFunction(fun)
-      table.as('value).join(broadcastVariable.as('broadcast))
-        .select(func('value, 'broadcast))
-    }
-
-    def filterWithBcVariable[T, B, O](broadcastVariable: Table)(fun: (T, B) => Boolean)
-    : Table = {
-      val func = new BroadcastSingleElementFilterFunction(fun)
-      table.as('value).join(broadcastVariable.as('broadcast))
-        .where(func('value, 'broadcast))
-    }
-
-    def zipWithUUID[T](): Table = {
-      val func = new UUIDGenerateFunction
-      table.as('t).select(func() as 'id, 't)
-    }
-
-    def mapPartition(func: Any): Table = { //fake
-      table
-    }
-  }
-
   private class BroadcastSingleElementMapper[T, B, O](
       fun: (T, B) => O)
     extends RichMapFunction[T, O] {
@@ -142,6 +116,32 @@ package object ml {
 
     override def filter(value: T): Boolean = {
       fun(value, broadcastVariable)
+    }
+  }
+
+  implicit class RichTable(table: Table) {
+    def mapWithBcVariable[T, B, O: TypeInformation: ClassTag](broadcastVariable: Table)
+                                                             (fun: (T, B) => O)
+    : Table = {
+      val func = new BroadcastSingleElementMapperFunction(fun)
+      table.as('value).join(broadcastVariable.as('broadcast))
+        .select(func('value, 'broadcast))
+    }
+
+    def filterWithBcVariable[T, B, O](broadcastVariable: Table)(fun: (T, B) => Boolean)
+    : Table = {
+      val func = new BroadcastSingleElementFilterFunction(fun)
+      table.as('value).join(broadcastVariable.as('broadcast))
+        .where(func('value, 'broadcast))
+    }
+
+    def zipWithUUID[T](): Table = {
+      val func = new UUIDGenerateFunction
+      table.as('t).select(func() as 'id, 't)
+    }
+
+    def mapPartition(func: Any): Table = { //fake
+      table
     }
   }
 }

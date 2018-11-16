@@ -57,7 +57,6 @@ trait Predictor[Self] extends Estimator[Self] with WithParameters {
       predictor: PredictDataSetOperation[Self, Testing, Prediction],
       testingTypeInformation: TypeInformation[Testing],
       predictionTypeInformation: TypeInformation[Prediction]): Table = {
-    FlinkMLTools.registerFlinkMLTypes(testing.toDataSet[Testing].getExecutionEnvironment)
     predictor.predictDataSet(this, predictParameters, testing)
   }
 
