@@ -25,12 +25,15 @@ import org.apache.flink.ml.classification.Classification
 import org.apache.flink.ml.math.{DenseVector, Vector => FlinkVector}
 import org.apache.flink.ml.metrics.distances.SquaredEuclideanDistanceMetric
 import org.apache.flink.table.api.TableEnvironment
+import org.apache.flink.types.Row
+
+import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class TableKNNITSuite {
   // calculate answer
-  val answer = Classification.trainingData.map {
-    v => (v.vector, SquaredEuclideanDistanceMetric().distance(DenseVector(0.0, 0.0), v.vector))
+  val answer: Array[DenseVector] = Classification.trainingData.map {
+    v => (v.vector.asInstanceOf[DenseVector], SquaredEuclideanDistanceMetric().distance(DenseVector(0.0, 0.0), v.vector))
   }.sortBy(_._2).take(3).map(_._1).toArray
 
   @Test
@@ -54,10 +57,21 @@ class TableKNNITSuite {
       .setUseQuadTree(false)
 
     knn.fit[DenseVector](trainTable)
-    val result = knn.predict[DenseVector, (DenseVector, Array[DenseVector])](testTable).collect()
+    val result: Seq[Row] =
+      knn.predict[DenseVector, (DenseVector, Array[DenseVector])](testTable).collect()
+    val row: Row = result.head
+    val tup: (DenseVector, Array[DenseVector]) =
+      row.getField(0).asInstanceOf[(DenseVector, Array[DenseVector])]
+    val arr: Array[DenseVector] = tup._2
+    val sortedArr = arr.map(_.toString).sortWith((a, b) => a > b)
+    val sortedAnswer = answer.map(_.toString).sortWith((a, b) => a > b)
+    assert(
+      sortedArr
+      .sameElements(
+        sortedAnswer))
     println("actual computed knn result: ")
-    result.foreach(_.getField(0).asInstanceOf[(DenseVector, Array[DenseVector])]._2.foreach(println(_)))
+    sortedArr.foreach(println(_))
     println("expected result: ")
-    answer.foreach(println(_))
+    sortedAnswer.foreach(println(_))
   }
 }

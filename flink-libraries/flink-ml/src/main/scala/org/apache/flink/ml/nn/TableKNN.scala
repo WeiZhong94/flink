@@ -228,22 +228,22 @@ object TableKNN {
     }
   }
 
-  class KNNSortGroupAggregateFunction(k: Int)
-    extends AggregateFunction[(FlinkVector, Array[FlinkVector]),
-      mutable.PriorityQueue[(FlinkVector, FlinkVector, String, Double)]] {
+  class KNNSortGroupAggregateFunction[T <: FlinkVector : ClassTag : TypeInformation](k: Int)
+    extends AggregateFunction[(T, Array[T]),
+      mutable.PriorityQueue[(T, T, String, Double)]] {
     /**
       * Creates and init the Accumulator for this [[AggregateFunction]].
       *
       * @return the accumulator with the initial value
       */
     override def createAccumulator()
-    : mutable.PriorityQueue[(FlinkVector, FlinkVector, String, Double)] = {
-      mutable.PriorityQueue[(FlinkVector, FlinkVector, String, Double)]()(
+    : mutable.PriorityQueue[(T, T, String, Double)] = {
+      mutable.PriorityQueue[(T, T, String, Double)]()(
         Ordering.by(_._4))
     }
 
-    def accumulate(accumulator: mutable.PriorityQueue[(FlinkVector, FlinkVector, String, Double)],
-                   train: FlinkVector, test: FlinkVector, id: String, distance: Double): Unit = {
+    def accumulate(accumulator: mutable.PriorityQueue[(T, T, String, Double)],
+                   train: T, test: T, id: String, distance: Double): Unit = {
       accumulator.enqueue((train, test, id, distance))
       if (accumulator.size > k) {
         accumulator.dequeue()
@@ -261,17 +261,17 @@ object TableKNN {
       * @return the aggregation result
       */
     override def getValue(
-        accumulator: mutable.PriorityQueue[(FlinkVector, FlinkVector, String, Double)])
-    : (FlinkVector, Array[FlinkVector]) = {
+        accumulator: mutable.PriorityQueue[(T, T, String, Double)])
+    : (T, Array[T]) = {
       if (accumulator.nonEmpty) {
         (accumulator.head._2, accumulator.map(_._1).toArray)
       } else {
-        (null, Array())
+        (null.asInstanceOf[T], Array())
       }
     }
 
     def resetAccumulator(
-        accumulator: mutable.PriorityQueue[(FlinkVector, FlinkVector, String, Double)]): Unit = {
+        accumulator: mutable.PriorityQueue[(T, T, String, Double)]): Unit = {
       accumulator.clear()
     }
   }
