@@ -20,56 +20,43 @@ package org.apache.flink.table.functions.utils
 
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.table.calcite.FlinkTypeFactory
-import org.apache.flink.table.functions.AggregateFunction
+import org.apache.flink.table.functions.TableAggregateFunction
 
-/**
-  * Calcite wrapper for user-defined aggregate functions.
-  *
-  * @param name function name (used by SQL parser)
-  * @param displayName name to be displayed in operator name
-  * @param aggregateFunction aggregate function to be called
-  * @param returnType the type information of returned value
-  * @param accType the type information of the accumulator
-  * @param typeFactory type factory for converting Flink's between Calcite's types
-  */
-class AggSqlFunction (
+class TableAggSqlFunction(
     name: String,
     displayName: String,
-    aggregateFunction: AggregateFunction[_, _],
-    override val returnType: TypeInformation[_],
-    override val accType: TypeInformation[_],
-    typeFactory: FlinkTypeFactory,
-    requiresOver: Boolean)
+    aggregateFunction: TableAggregateFunction[_, _],
+    val tableReturnType: TypeInformation[_],
+    val tableAccType: TypeInformation[_],
+    typeFactory: FlinkTypeFactory)
   extends AccumulateSqlFunction(
     name,
     displayName,
     aggregateFunction,
-    returnType,
-    accType,
+    tableReturnType,
+    tableAccType,
     typeFactory,
-    requiresOver
+    requiresOver = false
   ) {
 
-  override def getFunction: AggregateFunction[_, _] = aggregateFunction
+  override def getFunction: TableAggregateFunction[_, _] = aggregateFunction
 }
 
-object AggSqlFunction {
+object TableAggSqlFunction {
   def apply(
-      name: String,
-      displayName: String,
-      aggregateFunction: AggregateFunction[_, _],
-      returnType: TypeInformation[_],
-      accType: TypeInformation[_],
-      typeFactory: FlinkTypeFactory,
-      requiresOver: Boolean): AggSqlFunction = {
+             name: String,
+             displayName: String,
+             aggregateFunction: TableAggregateFunction[_, _],
+             returnType: TypeInformation[_],
+             accType: TypeInformation[_],
+             typeFactory: FlinkTypeFactory): TableAggSqlFunction = {
 
-    new AggSqlFunction(
+    new TableAggSqlFunction(
       name,
       displayName,
       aggregateFunction,
       returnType,
       accType,
-      typeFactory,
-      requiresOver)
+      typeFactory)
   }
 }

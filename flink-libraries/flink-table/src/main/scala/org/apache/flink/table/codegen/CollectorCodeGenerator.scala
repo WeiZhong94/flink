@@ -23,6 +23,7 @@ import org.apache.flink.table.api.TableConfig
 import org.apache.flink.table.codegen.CodeGenUtils.{boxedTypeTermForTypeInfo, newName}
 import org.apache.flink.table.codegen.Indenter.toISC
 import org.apache.flink.table.runtime.TableFunctionCollector
+import org.apache.flink.types.Row
 
 
 /**
@@ -126,4 +127,84 @@ class CollectorCodeGenerator(
     GeneratedCollector(className, funcCode)
   }
 
+  def generateDataSetWindowTableAggregateFunctionCollector(
+      name: String,
+      outputArity: Int,
+      outputOffset: Int)
+  : GeneratedCollector = {
+    val className = name
+    val externalResultType = input1
+    val inputTerm = "typedRecord"
+    val inputTypeTerm = boxedTypeTermForTypeInfo(externalResultType)
+    val outputTerm = "outputRow"
+    val outputTypeTerm = classOf[Row].getCanonicalName
+
+    val resultAccessExprs = (0 until input1.getArity)
+      .map(i => generateInputAccess(externalResultType, inputTerm, i))
+
+    val resultExpr =
+      generateResultExpressionWithOffset(outputTerm, resultAccessExprs, outputOffset)
+
+    val funcCode = j"""
+      |public static class $className extends ${classOf[TableFunctionCollector[_]].getCanonicalName} {
+      |
+      |  ${reuseMemberCode()}
+      |
+      |  public $className() throws Exception {
+      |    ${reuseInitCode()}
+      |  }
+      |
+      |  @Override
+      |  public void open(${classOf[Configuration].getCanonicalName} parameters) throws Exception {
+      |
+      |  }
+      |
+      |  @Override
+      |  public void collect(Object record) throws Exception {
+      |      super.collect(record);
+      |      $inputTypeTerm $inputTerm = ($inputTypeTerm)record;
+      |      $outputTypeTerm $outputTerm = new $outputTypeTerm($outputArity);
+      |      ${reuseInputUnboxingCode()}
+      |      ${reusePerRecordCode()}
+             $resultExpr
+      |      this.getCollector().collect($outputTerm);
+      |  }
+      |
+      |  @Override
+      |  public void close() throws Exception {
+      |
+      |  }
+      |}
+      |""".stripMargin
+
+    GeneratedCollector(className, funcCode)
+  }
+
+  def generateResultExpressionWithOffset(
+      outputTerm: String,
+      resultAccessExprs: Seq[GeneratedExpression],
+      outputOffset: Int): String = {
+    var resultSetters = resultAccessExprs.zipWithIndex.map {
+      case (fieldExpr, i) =>
+        if (nullCheck) {
+          s"""
+             |${fieldExpr.code}
+             |if (${fieldExpr.nullTerm}) {
+             |  $outputTerm.setField(${i + outputOffset}, null);
+             |}
+             |else {
+             |  $outputTerm.setField(${i + outputOffset}, ${fieldExpr.resultTerm});
+             |}
+             |""".stripMargin
+        }
+        else {
+          s"""
+             |${fieldExpr.code}
+             |$outputTerm.setField(${i + outputOffset}, ${fieldExpr.resultTerm});
+             |""".stripMargin
+        }
+    }
+
+    generateCodeSplits(resultSetters)
+  }
 }

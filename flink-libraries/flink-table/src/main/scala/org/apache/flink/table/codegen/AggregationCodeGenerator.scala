@@ -23,6 +23,7 @@ import java.lang.{Iterable => JIterable}
 import org.apache.calcite.rex.RexLiteral
 import org.apache.flink.api.common.state.{ListStateDescriptor, MapStateDescriptor, State, StateDescriptor}
 import org.apache.flink.api.common.typeinfo.{BasicTypeInfo, TypeInformation}
+import org.apache.flink.api.common.typeutils.CompositeType
 import org.apache.flink.api.java.typeutils.RowTypeInfo
 import org.apache.flink.api.java.typeutils.TypeExtractionUtils.{extractTypeArgument, getRawClass}
 import org.apache.flink.table.api.TableConfig
@@ -30,7 +31,7 @@ import org.apache.flink.table.api.dataview._
 import org.apache.flink.table.codegen.CodeGenUtils.{newName, reflectiveFieldWriteAccess}
 import org.apache.flink.table.codegen.Indenter.toISC
 import org.apache.flink.table.dataview.{MapViewTypeInfo, StateListView, StateMapView}
-import org.apache.flink.table.functions.AggregateFunction
+import org.apache.flink.table.functions.{AccumulateFunction, AggregateFunction}
 import org.apache.flink.table.functions.aggfunctions.DistinctAccumulator
 import org.apache.flink.table.functions.utils.UserDefinedFunctionUtils
 import org.apache.flink.table.functions.utils.UserDefinedFunctionUtils.{getUserDefinedMethod, signatureToString}
@@ -95,7 +96,7 @@ class AggregationCodeGenerator(
   def generateAggregations(
       name: String,
       physicalInputTypes: Seq[TypeInformation[_]],
-      aggregates: Array[AggregateFunction[_ <: Any, _ <: Any]],
+      aggregates: Array[AccumulateFunction[_ <: Any, _ <: Any]],
       aggFields: Array[Array[Int]],
       aggMapping: Array[Int],
       isDistinctAggs: Array[Boolean],
@@ -107,7 +108,9 @@ class AggregationCodeGenerator(
       needRetract: Boolean,
       needMerge: Boolean,
       needReset: Boolean,
-      accConfig: Option[Array[Seq[DataViewSpec[_]]]])
+      accConfig: Option[Array[Seq[DataViewSpec[_]]]],
+      isTableAgg: Boolean = false,
+      tableAggExternalTypeInfo: TypeInformation[_] = null)
     : GeneratedAggregationsFunction = {
 
     // get unique function name
@@ -454,6 +457,69 @@ class AggregationCodeGenerator(
          |  }""".stripMargin
     }
 
+    def genTableAggCollector: String = {
+      assert(isTableAgg)
+      val generator = new CollectorCodeGenerator(config, nullableInput, tableAggExternalTypeInfo)
+      generator.generateDataSetWindowTableAggregateFunctionCollector(
+        "TableAggCollector",
+        outputArity,
+        aggMapping.head).code
+    }
+
+    def genEmitAggregationResultsForTableAgg: String = {
+      assert(isTableAgg)
+      if (partialResults) {
+        return genSetAggregationResults
+      }
+
+      val sig: String =
+        j"""
+           |  public final void setAggregationResults(
+           |    org.apache.flink.types.Row accs,
+           |    org.apache.flink.util.Collector output)
+           |     throws Exception """.stripMargin
+
+      val i = aggs.indices(0)
+
+      val setAccOutput =
+        j"""
+           |    TableAggCollector collector = new TableAggCollector();
+           |    collector.setCollector(output);
+           |    ${genAccDataViewFieldSetter(s"acc$i", i)}
+           |    ${aggs(i)}.emitValue(acc$i, collector);
+           """.stripMargin
+
+      val setAggs: String = if (isDistinctAggs(i)) {
+        j"""
+           |    org.apache.flink.table.functions.TableAggregateFunction baseClass$i =
+           |      (org.apache.flink.table.functions.TableAggregateFunction) ${aggs(i)};
+           |    $distinctAccType distinctAcc$i = ($distinctAccType) accs.getField($i);
+           |    ${accTypes(i)} acc$i = (${accTypes(i)}) distinctAcc$i.getRealAcc();
+           |    $setAccOutput
+                   """.stripMargin
+      } else {
+        j"""
+           |    org.apache.flink.table.functions.TableAggregateFunction baseClass$i =
+           |      (org.apache.flink.table.functions.TableAggregateFunction) ${aggs(i)};
+           |    ${accTypes(i)} acc$i = (${accTypes(i)}) accs.getField($i);
+           |    $setAccOutput
+                   """.stripMargin
+      }
+
+      val emptySig =
+        j"""
+           |  public final void setAggregationResults(
+           |    org.apache.flink.types.Row accs,
+           |    org.apache.flink.types.Row output) throws Exception """.stripMargin
+
+      j"""
+         |$sig {
+         |$setAggs
+         |  }
+         |
+         |$emptySig {}""".stripMargin
+    }
+
     def genAccumulate: String = {
 
       val sig: String =
@@ -730,7 +796,8 @@ class AggregationCodeGenerator(
     }
 
     val aggFuncCode = Seq(
-      genSetAggregationResults,
+      if (isTableAgg && !partialResults) genTableAggCollector else "",
+      if (!isTableAgg) genSetAggregationResults else genEmitAggregationResultsForTableAgg,
       genAccumulate,
       genRetract,
       genCreateAccumulators,

@@ -22,6 +22,7 @@ import java.lang.Iterable
 import org.apache.flink.api.common.functions.RichGroupReduceFunction
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.table.codegen.{Compiler, GeneratedAggregationsFunction}
+import org.apache.flink.table.runtime.aggregate.DataSetTumbleTimeWindowAggReduceGroupFunction.WrappedCollector
 import org.apache.flink.table.util.Logging
 import org.apache.flink.types.Row
 import org.apache.flink.util.Collector
@@ -45,7 +46,8 @@ class DataSetTumbleTimeWindowAggReduceGroupFunction(
     windowStartPos: Option[Int],
     windowEndPos: Option[Int],
     windowRowtimePos: Option[Int],
-    keysAndAggregatesArity: Int)
+    keysAndAggregatesArity: Int,
+    isTableAgg: Boolean = false)
   extends RichGroupReduceFunction[Row, Row]
     with Compiler[GeneratedAggregations]
     with Logging {
@@ -90,21 +92,72 @@ class DataSetTumbleTimeWindowAggReduceGroupFunction(
       last = record
     }
 
-    // set group keys value to final output.
-    function.setForwardedFields(last, output)
+    if (!isTableAgg) {
+      // set group keys value to final output.
+      function.setForwardedFields(last, output)
 
-    // get final aggregate value and set to output.
-    function.setAggregationResults(accumulators, output)
+      // get final aggregate value and set to output.
+      function.setAggregationResults(accumulators, output)
 
-    // get window start timestamp
-    val startTs: Long = last.getField(keysAndAggregatesArity).asInstanceOf[Long]
+      // get window start timestamp
+      val startTs: Long = last.getField(keysAndAggregatesArity).asInstanceOf[Long]
 
-    // set collector and window
-    collector.wrappedCollector = out
-    collector.windowStart = startTs
-    collector.windowEnd = startTs + windowSize
+      // set collector and window
+      collector.wrappedCollector = out
+      collector.windowStart = startTs
+      collector.windowEnd = startTs + windowSize
 
-    collector.collect(output)
+      collector.collect(output)
+    } else {
+      val collector = new WrappedCollector
+      collector.collector = this.collector
+      collector.function = function
+      collector.last = last
+      collector.out = out
+      collector.windowSize = windowSize
+      collector.keysAndAggregatesArity = keysAndAggregatesArity
+
+      function.setAggregationResults(accumulators, collector)
+    }
   }
 
+}
+
+object DataSetTumbleTimeWindowAggReduceGroupFunction {
+
+  class WrappedCollector extends Collector[Row] {
+
+    var collector: DataSetTimeWindowPropertyCollector = _
+    var function: GeneratedAggregations = _
+    var last: Row = _
+    var out: Collector[Row] = _
+    var windowSize: Long = _
+    var keysAndAggregatesArity: Int = _
+
+    /**
+      * Emits a record.
+      *
+      * @param record The record to collect.
+      */
+    override def collect(output: Row): Unit = {
+      // set group keys value to final output.
+      function.setForwardedFields(last, output)
+      // get window start timestamp
+      val startTs: Long = last.getField(keysAndAggregatesArity).asInstanceOf[Long]
+
+      // set collector and window
+      collector.wrappedCollector = out
+      collector.windowStart = startTs
+      collector.windowEnd = startTs + windowSize
+
+      collector.collect(output)
+    }
+
+    /**
+      * Closes the collector. If any data was buffered, that data will be flushed.
+      */
+    override def close(): Unit = {
+
+    }
+  }
 }

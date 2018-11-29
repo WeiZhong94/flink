@@ -32,7 +32,9 @@ import org.apache.calcite.tools.{FrameworkConfig, RelBuilder}
 import org.apache.flink.table.calcite.FlinkRelBuilder.NamedWindowProperty
 import org.apache.flink.table.expressions.WindowProperty
 import org.apache.flink.table.plan.logical.LogicalWindow
-import org.apache.flink.table.plan.logical.rel.LogicalWindowAggregate
+import org.apache.flink.table.plan.logical.rel.{LogicalWindowAggregate, LogicalWindowTableAggregate}
+
+import scala.collection.JavaConverters._
 
 /**
   * Flink specific [[RelBuilder]] that changes the default type factory to a [[FlinkTypeFactory]].
@@ -69,6 +71,19 @@ class FlinkRelBuilder(
     this
   }
 
+  def aggregate(
+      window: LogicalWindow,
+      groupKey: GroupKey,
+      namedProperties: Seq[NamedWindowProperty],
+      tableAggCall: AggCall)
+  : RelBuilder = {
+    // build logical aggregate
+    val aggregate = super.aggregate(groupKey, Seq(tableAggCall).asJava).build().asInstanceOf[LogicalAggregate]
+
+    // build logical window aggregate from it
+    push(LogicalWindowTableAggregate.create(window, namedProperties, aggregate))
+    this
+  }
 }
 
 object FlinkRelBuilder {

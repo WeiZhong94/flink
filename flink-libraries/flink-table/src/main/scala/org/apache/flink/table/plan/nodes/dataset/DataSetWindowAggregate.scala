@@ -151,7 +151,7 @@ class DataSetWindowAggregate(
     }
   }
 
-  private def createEventTimeTumblingWindowDataSet(
+  protected def createEventTimeTumblingWindowDataSet(
       generator: AggregationCodeGenerator,
       inputDS: DataSet[Row],
       isTimeWindow: Boolean,
@@ -217,7 +217,7 @@ class DataSetWindowAggregate(
     }
   }
 
-  private[this] def createEventTimeSessionWindowDataSet(
+  protected[this] def createEventTimeSessionWindowDataSet(
       generator: AggregationCodeGenerator,
       inputDS: DataSet[Row],
       isParserCaseSensitive: Boolean,
@@ -368,7 +368,7 @@ class DataSetWindowAggregate(
     }
   }
 
-  private def createEventTimeSlidingWindowDataSet(
+  protected def createEventTimeSlidingWindowDataSet(
       generator: AggregationCodeGenerator,
       inputDS: DataSet[Row],
       isTimeWindow: Boolean,
@@ -484,7 +484,7 @@ class DataSetWindowAggregate(
       .name(aggregateOperatorName)
   }
 
-  private def prepareOperatorName: String = {
+  protected def prepareOperatorName: String = {
     val aggString = aggregationToString(
       inputType,
       grouping,
@@ -494,7 +494,7 @@ class DataSetWindowAggregate(
     s"prepare select: ($aggString)"
   }
 
-  private def aggregateOperatorName: String = {
+  protected def aggregateOperatorName: String = {
     val aggString = aggregationToString(
       inputType,
       grouping,

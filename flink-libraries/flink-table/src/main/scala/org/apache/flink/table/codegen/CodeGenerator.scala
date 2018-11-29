@@ -1048,7 +1048,7 @@ abstract class CodeGenerator(
   // generator helping methods
   // ----------------------------------------------------------------------------------------------
 
-  private def generateCodeSplits(splits: Seq[String]): String = {
+  protected def generateCodeSplits(splits: Seq[String]): String = {
     val totalLen = splits.map(_.length + 1).sum // 1 for a line break
 
     // split

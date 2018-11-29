@@ -20,6 +20,7 @@ package org.apache.flink.table.runtime.aggregate
 
 import org.apache.flink.api.common.functions.{Function, RuntimeContext}
 import org.apache.flink.types.Row
+import org.apache.flink.util.Collector
 
 /**
   * Base class for code-generated aggregations.
@@ -112,6 +113,8 @@ abstract class GeneratedAggregations extends Function {
     * It can be used for clean up work. By default, this method does nothing.
     */
   def close()
+
+  def setAggregationResults(accumulators: Row, output: Collector[Row]) {}
 }
 
 class SingleElementIterable[T] extends java.lang.Iterable[T] {

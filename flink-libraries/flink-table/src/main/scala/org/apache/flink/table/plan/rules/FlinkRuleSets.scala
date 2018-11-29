@@ -127,6 +127,7 @@ object FlinkRuleSets {
     // translate to flink logical rel nodes
     FlinkLogicalAggregate.CONVERTER,
     FlinkLogicalWindowAggregate.CONVERTER,
+    FlinkLogicalWindowTableAggregate.CONVERTER,
     FlinkLogicalOverWindow.CONVERTER,
     FlinkLogicalCalc.CONVERTER,
     FlinkLogicalCorrelate.CONVERTER,
@@ -175,6 +176,7 @@ object FlinkRuleSets {
   val DATASET_OPT_RULES: RuleSet = RuleSets.ofList(
     // translate to Flink DataSet nodes
     DataSetWindowAggregateRule.INSTANCE,
+    DataSetWindowTableAggregateRule.INSTANCE,
     DataSetAggregateRule.INSTANCE,
     DataSetDistinctRule.INSTANCE,
     DataSetCalcRule.INSTANCE,

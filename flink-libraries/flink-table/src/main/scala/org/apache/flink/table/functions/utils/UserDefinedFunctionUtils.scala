@@ -38,7 +38,7 @@ import org.apache.flink.table.api.{TableEnvironment, TableException, ValidationE
 import org.apache.flink.table.calcite.FlinkTypeFactory
 import org.apache.flink.table.dataview._
 import org.apache.flink.table.expressions._
-import org.apache.flink.table.functions.{AggregateFunction, ScalarFunction, TableFunction, UserDefinedFunction}
+import org.apache.flink.table.functions._
 import org.apache.flink.table.plan.logical._
 import org.apache.flink.table.plan.schema.FlinkTableFunctionImpl
 import org.apache.flink.util.InstantiationUtil
@@ -99,11 +99,11 @@ object UserDefinedFunctionUtils {
     * of [[TypeInformation]]. Elements of the signature can be null (act as a wildcard).
     */
   def getAccumulateMethodSignature(
-      function: AggregateFunction[_, _],
+      function: AccumulateFunction[_, _],
       signature: Seq[TypeInformation[_]])
   : Option[Array[Class[_]]] = {
     val accType = TypeExtractor.createTypeInfo(
-      function, classOf[AggregateFunction[_, _]], function.getClass, 1)
+      function, classOf[AccumulateFunction[_, _]], function.getClass, 1)
     val input = (Array(accType) ++ signature).toSeq
     getUserDefinedMethod(
       function,
@@ -472,7 +472,7 @@ object UserDefinedFunctionUtils {
     */
   def removeStateViewFieldsFromAccTypeInfo(
       index: Int,
-      aggFun: AggregateFunction[_, _],
+      aggFun: AccumulateFunction[_, _],
       accType: TypeInformation[_],
       isStateBackedDataViews: Boolean)
     : (TypeInformation[_], Option[Seq[DataViewSpec[_]]]) = {
@@ -574,7 +574,7 @@ object UserDefinedFunctionUtils {
     * @return The inferred result type of the AggregateFunction.
     */
   def getResultTypeOfAggregateFunction(
-      aggregateFunction: AggregateFunction[_, _],
+      aggregateFunction: AccumulateFunction[_, _],
       extractedType: TypeInformation[_] = null)
     : TypeInformation[_] = {
 
@@ -606,7 +606,7 @@ object UserDefinedFunctionUtils {
     * @return The inferred accumulator type of the AggregateFunction.
     */
   def getAccumulatorTypeOfAggregateFunction(
-    aggregateFunction: AggregateFunction[_, _],
+    aggregateFunction: AccumulateFunction[_, _],
     extractedType: TypeInformation[_] = null)
   : TypeInformation[_] = {
 
@@ -639,7 +639,7 @@ object UserDefinedFunctionUtils {
     */
   @throws(classOf[InvalidTypesException])
   private def extractTypeFromAggregateFunction(
-      aggregateFunction: AggregateFunction[_, _],
+      aggregateFunction: AccumulateFunction[_, _],
       parameterTypePos: Int): TypeInformation[_] = {
 
     TypeExtractor.createTypeInfo(

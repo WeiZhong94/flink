@@ -48,14 +48,16 @@ class DataSetTumbleTimeWindowAggReduceCombineFunction(
     windowStartPos: Option[Int],
     windowEndPos: Option[Int],
     windowRowtimePos: Option[Int],
-    keysAndAggregatesArity: Int)
+    keysAndAggregatesArity: Int,
+    isTableAgg: Boolean = false)
   extends DataSetTumbleTimeWindowAggReduceGroupFunction(
     genFinalAggregations,
     windowSize,
     windowStartPos,
     windowEndPos,
     windowRowtimePos,
-    keysAndAggregatesArity)
+    keysAndAggregatesArity,
+    isTableAgg)
     with CombineFunction[Row, Row] {
 
   protected var preAggfunction: GeneratedAggregations = _

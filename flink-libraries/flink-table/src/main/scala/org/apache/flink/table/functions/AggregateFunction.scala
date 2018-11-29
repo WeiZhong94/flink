@@ -94,13 +94,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation
   *             AggregateFunction represents its state using accumulator, thereby the state of the
   *             AggregateFunction must be put into the accumulator.
   */
-abstract class AggregateFunction[T, ACC] extends UserDefinedFunction {
-  /**
-    * Creates and init the Accumulator for this [[AggregateFunction]].
-    *
-    * @return the accumulator with the initial value
-    */
-  def createAccumulator(): ACC
+abstract class AggregateFunction[T, ACC] extends AccumulateFunction[T, ACC] {
 
   /**
     * Called every time when an aggregation result should be materialized.
@@ -120,20 +114,4 @@ abstract class AggregateFunction[T, ACC] extends UserDefinedFunction {
     * @return true if the AggregateFunction requires an OVER window, false otherwise.
     */
   def requiresOver: Boolean = false
-
-  /**
-    * Returns the TypeInformation of the AggregateFunction's result.
-    *
-    * @return The TypeInformation of the AggregateFunction's result or null if the result type
-    *         should be automatically inferred.
-    */
-  def getResultType: TypeInformation[T] = null
-
-  /**
-    * Returns the TypeInformation of the AggregateFunction's accumulator.
-    *
-    * @return The TypeInformation of the AggregateFunction's accumulator or null if the
-    *         accumulator type should be automatically inferred.
-    */
-  def getAccumulatorType: TypeInformation[ACC] = null
 }

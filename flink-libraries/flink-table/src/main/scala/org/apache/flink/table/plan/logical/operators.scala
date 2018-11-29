@@ -686,6 +686,138 @@ case class WindowAggregate(
   }
 }
 
+case class WindowTableAggregate(
+    groupingExpressions: Seq[Expression],
+    window: LogicalWindow,
+    propertyExpressions: Seq[NamedExpression],
+    tableAggFunctionCall: TableAggFunctionCall,
+    child: LogicalNode) extends UnaryNode {
+  private val (generatedNames, fieldIndexes, fieldTypes) = getFieldInfo(tableAggFunctionCall.resultTypeInfo)
+
+  override def output: Seq[Attribute] =
+    (groupingExpressions ++ generatedNames.zip(fieldTypes).map {
+      case (n, t) => ResolvedFieldReference(n, t)
+    }  ++ propertyExpressions) map {
+      case ne: NamedExpression => ne.toAttribute
+      case e => Alias(e, e.toString).toAttribute
+    }
+
+  // resolve references of this operator's parameters
+  override def resolveReference(
+      tableEnv: TableEnvironment,
+      name: String)
+  : Option[NamedExpression] = {
+
+    def resolveAlias(alias: String) = {
+      // check if reference can already be resolved by input fields
+      val found = super.resolveReference(tableEnv, name)
+      if (found.isDefined) {
+        failValidation(s"Reference $name is ambiguous.")
+      } else {
+        // resolve type of window reference
+        val resolvedType = window.timeAttribute match {
+          case UnresolvedFieldReference(n) =>
+            super.resolveReference(tableEnv, n) match {
+              case Some(ResolvedFieldReference(_, tpe)) => Some(tpe)
+              case _ => None
+            }
+          case _ => None
+        }
+        // let validation phase throw an error if type could not be resolved
+        Some(WindowReference(name, resolvedType))
+      }
+    }
+
+    window.aliasAttribute match {
+      // resolve reference to this window's name
+      case UnresolvedFieldReference(alias) if name == alias =>
+        resolveAlias(alias)
+
+      case _ =>
+        // resolve references as usual
+        super.resolveReference(tableEnv, name)
+    }
+  }
+
+  override def validate(tableEnv: TableEnvironment): LogicalNode = {
+    implicit val relBuilder: RelBuilder = tableEnv.getRelBuilder
+    val resolvedWindowAggregate = super.validate(tableEnv).asInstanceOf[WindowTableAggregate]
+    val groupingExprs = resolvedWindowAggregate.groupingExpressions
+    val aggregateExprs = Seq(resolvedWindowAggregate.tableAggFunctionCall)
+    aggregateExprs.foreach(validateAggregateExpression)
+    groupingExprs.foreach(validateGroupingExpression)
+
+    def validateAggregateExpression(expr: Expression): Unit = expr match {
+      // check aggregate function
+      case aggExpr: Aggregation
+        if aggExpr.getSqlAggFunction.requiresOver =>
+        failValidation(s"OVER clause is necessary for window functions: [${aggExpr.getClass}].")
+      // check no nested aggregation exists.
+      case aggExpr: Aggregation =>
+        aggExpr.children.foreach { child =>
+          child.preOrderVisit {
+            case agg: Aggregation =>
+              failValidation(
+                "It's not allowed to use an aggregate function as " +
+                  "input of another aggregate function")
+            case _ => // ok
+          }
+        }
+      case a: Attribute if !groupingExprs.exists(_.checkEquals(a)) =>
+        failValidation(
+          s"Expression '$a' is invalid because it is neither" +
+            " present in group by nor an aggregate function")
+      case e if groupingExprs.exists(_.checkEquals(e)) => // ok
+      case e => e.children.foreach(validateAggregateExpression)
+    }
+
+    def validateGroupingExpression(expr: Expression): Unit = {
+      if (!expr.resultType.isKeyType) {
+        failValidation(
+          s"Expression $expr cannot be used as a grouping expression " +
+            "because it's not a valid key type which must be hashable and comparable")
+      }
+    }
+
+    // validate window
+    resolvedWindowAggregate.window.validate(tableEnv) match {
+      case ValidationFailure(msg) =>
+        failValidation(s"$window is invalid: $msg")
+      case ValidationSuccess => // ok
+    }
+
+    // validate property
+    if (propertyExpressions.nonEmpty) {
+      resolvedWindowAggregate.window match {
+        case TumblingGroupWindow(_, _, size) if isRowCountLiteral(size) =>
+          failValidation("Window start and Window end cannot be selected " +
+            "for a row-count Tumbling window.")
+
+        case SlidingGroupWindow(_, _, size, _) if isRowCountLiteral(size) =>
+          failValidation("Window start and Window end cannot be selected " +
+            "for a row-count Sliding window.")
+
+        case _ => // ok
+      }
+    }
+
+    resolvedWindowAggregate
+  }
+
+  override protected[logical] def construct(relBuilder: RelBuilder): RelBuilder = {
+    val flinkRelBuilder = relBuilder.asInstanceOf[FlinkRelBuilder]
+    child.construct(flinkRelBuilder)
+    flinkRelBuilder.aggregate(
+      window,
+      relBuilder.groupKey(groupingExpressions.map(_.toRexNode(relBuilder)).asJava),
+      propertyExpressions.map {
+        case Alias(prop: WindowProperty, name, _) => prop.toNamedWindowProperty(name)
+        case _ => throw new RuntimeException("This should never happen.")
+      },
+      tableAggFunctionCall.toAggCall("agg")(relBuilder))
+  }
+}
+
 case class TemporalTable(
     timeAttribute: Expression,
     primaryKey: Expression,

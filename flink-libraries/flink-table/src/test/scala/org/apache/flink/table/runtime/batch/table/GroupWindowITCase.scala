@@ -20,14 +20,17 @@ package org.apache.flink.table.runtime.batch.table
 
 import java.math.BigDecimal
 
+import org.apache.flink.api.java.tuple.{Tuple2 => JTuple2}
 import org.apache.flink.api.scala._
 import org.apache.flink.table.api.scala._
 import org.apache.flink.table.api.TableEnvironment
+import org.apache.flink.table.functions.TableAggregateFunction
 import org.apache.flink.table.runtime.utils.TableProgramsClusterTestBase
 import org.apache.flink.table.runtime.utils.TableProgramsTestBase.TableConfigMode
 import org.apache.flink.test.util.MultipleProgramsTestBase.TestExecutionMode
 import org.apache.flink.test.util.TestBaseUtils
 import org.apache.flink.types.Row
+import org.apache.flink.util.Collector
 import org.junit._
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -111,6 +114,35 @@ class GroupWindowITCase(
       "Hello,3,1970-01-01 00:00:00.005,1970-01-01 00:00:00.01,1970-01-01 00:00:00.009\n" +
       "Hallo,2,1970-01-01 00:00:00.0,1970-01-01 00:00:00.005,1970-01-01 00:00:00.004\n" +
       "Hi,1,1970-01-01 00:00:00.0,1970-01-01 00:00:00.005,1970-01-01 00:00:00.004\n"
+
+    val results = windowedTable.toDataSet[Row].collect()
+    TestBaseUtils.compareResultAsText(results.asJava, expected)
+  }
+
+  @Test
+  def testEventTimeTumblingGroupWindowOverTime2(): Unit = {
+    val env = ExecutionEnvironment.getExecutionEnvironment
+    val tEnv = TableEnvironment.getTableEnvironment(env, config)
+
+    val table = env
+      .fromCollection(data)
+      .toTable(tEnv, 'long, 'int, 'double, 'float, 'bigdec, 'string)
+      .select('int, 'long, 'string) // keep this select to enforce that the 'string key comes last
+
+    val testTableAgg = new TestTableAgg
+
+    val windowedTable = table
+      .window(Tumble over 5.milli on 'long as 'w)
+      .groupBy('w, 'string)
+      .flatAgg(testTableAgg('int + 0L))
+
+    val expected =
+      "Hello world,3,1970-01-01 00:00:00.005,1970-01-01 00:00:00.01,1970-01-01 00:00:00.009\n" +
+        "Hello world,4,1970-01-01 00:00:00.015,1970-01-01 00:00:00.02,1970-01-01 00:00:00.019\n" +
+        "Hello,7,1970-01-01 00:00:00.0,1970-01-01 00:00:00.005,1970-01-01 00:00:00.004\n" +
+        "Hello,3,1970-01-01 00:00:00.005,1970-01-01 00:00:00.01,1970-01-01 00:00:00.009\n" +
+        "Hallo,2,1970-01-01 00:00:00.0,1970-01-01 00:00:00.005,1970-01-01 00:00:00.004\n" +
+        "Hi,1,1970-01-01 00:00:00.0,1970-01-01 00:00:00.005,1970-01-01 00:00:00.004\n"
 
     val results = windowedTable.toDataSet[Row].collect()
     TestBaseUtils.compareResultAsText(results.asJava, expected)
@@ -370,5 +402,38 @@ class GroupWindowITCase(
 
     val results = windowedTable.toDataSet[Row].collect()
     TestBaseUtils.compareResultAsText(results.asJava, expected)
+  }
+}
+
+class TestTableAgg extends TableAggregateFunction[JTuple2[Long, String], JTuple2[Long, String]] {
+  /**
+    * Creates and init the Accumulator for this [[TableAggregateFunction]].
+    *
+    * @return the accumulator with the initial value
+    */
+  override def createAccumulator(): JTuple2[Long, String] = {
+    new JTuple2(0L, "")
+  }
+
+  def accumulate(acc: JTuple2[Long, String], param: Long): Unit = {
+    acc.f0 += 1
+    acc.f1 = "hello world!"
+  }
+
+  def emitValue(acc: JTuple2[Long, String], out: Collector[JTuple2[Long, String]]): Unit = {
+    out.collect(acc)
+    out.collect(new JTuple2(0L, "hello?"))
+  }
+
+  def resetAccumulator(acc: JTuple2[Long, String]): Unit = {
+    acc.f0 = 0L
+    acc.f1 = ""
+  }
+
+  def merge(accumulator: JTuple2[Long, String], its: java.lang.Iterable[JTuple2[Long, String]]): Unit = {
+    val iter = its.iterator()
+    while(iter.hasNext) {
+      accumulator.f0 += iter.next().f0
+    }
   }
 }
