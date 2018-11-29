@@ -21,7 +21,7 @@ import org.apache.calcite.rel.RelNode
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.operators.join.JoinType
 import org.apache.flink.table.calcite.{FlinkRelBuilder, FlinkTypeFactory}
-import org.apache.flink.table.expressions.{Alias, Asc, Expression, ExpressionParser, Ordering, ResolvedFieldReference, TableAggFunctionCall, UnresolvedAlias, UnresolvedFieldReference, WindowProperty}
+import org.apache.flink.table.expressions.{Alias, Asc, Expression, ExpressionParser, Ordering, ResolvedFieldReference, RowtimeAttribute, TableAggFunctionCall, UnresolvedAlias, UnresolvedFieldReference, WindowEnd, WindowProperty, WindowStart}
 import org.apache.flink.table.functions.TemporalTableFunction
 import org.apache.flink.table.functions.utils.UserDefinedFunctionUtils
 import org.apache.flink.table.plan.ProjectionTranslator._
@@ -1231,7 +1231,15 @@ class WindowGroupedTable(
       WindowTableAggregate(
         groupKeys,
         window.toLogicalWindow,
-        Seq(),
+        Seq(Alias(WindowStart(
+          UnresolvedFieldReference(
+            window.alias.asInstanceOf[UnresolvedFieldReference].name)), "_wstart"),
+          Alias(WindowEnd(
+            UnresolvedFieldReference(
+              window.alias.asInstanceOf[UnresolvedFieldReference].name)), "_wend"),
+          Alias(RowtimeAttribute(
+            UnresolvedFieldReference(
+              window.alias.asInstanceOf[UnresolvedFieldReference].name)), "_wrowtime")),
         tableAggFunctionCall,
         table.logicalPlan)
         .validate(table.tableEnv))

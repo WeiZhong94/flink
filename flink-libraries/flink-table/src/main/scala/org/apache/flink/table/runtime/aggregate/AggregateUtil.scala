@@ -42,7 +42,7 @@ import org.apache.flink.table.expressions._
 import org.apache.flink.table.functions.aggfunctions._
 import org.apache.flink.table.functions.utils.{AggSqlFunction, TableAggSqlFunction}
 import org.apache.flink.table.functions.utils.UserDefinedFunctionUtils._
-import org.apache.flink.table.functions.{AccumulateFunction => TableAggregateFunction}
+import org.apache.flink.table.functions.{TableAggregateFunction, AccumulateFunction => TableAccumulateFunction}
 import org.apache.flink.table.plan.logical._
 import org.apache.flink.table.runtime.types.{CRow, CRowTypeInfo}
 import org.apache.flink.table.typeutils.TypeCheckUtils._
@@ -602,7 +602,11 @@ object AggregateUtil {
       needReset = true,
       None,
       isTableAgg,
-      namedAggregates.head.left.getAggregation.asInstanceOf[TableAggSqlFunction].tableReturnType
+      if (isTableAgg) {
+        namedAggregates.head.left.getAggregation.asInstanceOf[TableAggSqlFunction].tableReturnType
+      } else {
+        null
+      }
     )
 
     val genFinalAggFunction = generator.generateAggregations(
@@ -622,7 +626,11 @@ object AggregateUtil {
       needReset = true,
       None,
       isTableAgg,
-      namedAggregates.head.left.getAggregation.asInstanceOf[TableAggSqlFunction].tableReturnType
+      if (isTableAgg) {
+        namedAggregates.head.left.getAggregation.asInstanceOf[TableAggSqlFunction].tableReturnType
+      } else {
+        null
+      }
     )
 
     val keysAndAggregatesArity = groupings.length + namedAggregates.length
@@ -1119,7 +1127,7 @@ object AggregateUtil {
     * Return true if all aggregates can be partially merged. False otherwise.
     */
   private[flink] def doAllSupportPartialMerge(
-      aggregateList: Array[TableAggregateFunction[_ <: Any, _ <: Any]]): Boolean = {
+      aggregateList: Array[TableAccumulateFunction[_ <: Any, _ <: Any]]): Boolean = {
     aggregateList.forall(ifMethodExistInFunction("merge", _))
   }
 
@@ -1196,14 +1204,14 @@ object AggregateUtil {
       tableConfig: TableConfig,
       isStateBackedDataViews: Boolean = false)
   : (Array[Array[Int]],
-    Array[TableAggregateFunction[_, _]],
+    Array[TableAccumulateFunction[_, _]],
     Array[Boolean],
     Array[TypeInformation[_]],
     Array[Seq[DataViewSpec[_]]]) = {
 
     // store the aggregate fields of each aggregate function, by the same order of aggregates.
     val aggFieldIndexes = new Array[Array[Int]](aggregateCalls.size)
-    val aggregates = new Array[TableAggregateFunction[_ <: Any, _ <: Any]](aggregateCalls.size)
+    val aggregates = new Array[TableAccumulateFunction[_ <: Any, _ <: Any]](aggregateCalls.size)
     val accTypes = new Array[TypeInformation[_]](aggregateCalls.size)
 
     // create aggregate function instances by function type and aggregate field data type.
@@ -1538,7 +1546,7 @@ object AggregateUtil {
 
   private def createRowTypeForKeysAndAggregates(
       groupings: Array[Int],
-      aggregates: Array[TableAggregateFunction[_, _]],
+      aggregates: Array[TableAccumulateFunction[_, _]],
       aggTypes: Array[TypeInformation[_]],
       inputType: RelDataType,
       windowKeyTypes: Option[Array[TypeInformation[_]]] = None): RowTypeInfo = {

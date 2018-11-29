@@ -417,7 +417,7 @@ class TestTableAgg extends TableAggregateFunction[JTuple2[Long, String], JTuple2
 
   def accumulate(acc: JTuple2[Long, String], param: Long): Unit = {
     acc.f0 += 1
-    acc.f1 = "hello world!"
+    acc.f1 = acc.f1 + "hello world!"
   }
 
   def emitValue(acc: JTuple2[Long, String], out: Collector[JTuple2[Long, String]]): Unit = {
@@ -433,7 +433,9 @@ class TestTableAgg extends TableAggregateFunction[JTuple2[Long, String], JTuple2
   def merge(accumulator: JTuple2[Long, String], its: java.lang.Iterable[JTuple2[Long, String]]): Unit = {
     val iter = its.iterator()
     while(iter.hasNext) {
-      accumulator.f0 += iter.next().f0
+      val value = iter.next()
+      accumulator.f0 += value.f0
+      accumulator.f1 = accumulator.f1 + value.f1
     }
   }
 }
