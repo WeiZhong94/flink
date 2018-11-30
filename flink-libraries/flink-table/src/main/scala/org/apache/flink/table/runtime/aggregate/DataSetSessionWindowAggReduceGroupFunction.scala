@@ -22,6 +22,7 @@ import java.lang.Iterable
 import org.apache.flink.api.common.functions.RichGroupReduceFunction
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.table.codegen.{Compiler, GeneratedAggregationsFunction}
+import org.apache.flink.table.runtime.aggregate.DataSetSessionWindowAggReduceGroupFunction.WrappedCollector
 import org.apache.flink.table.util.Logging
 import org.apache.flink.types.Row
 import org.apache.flink.util.Collector
@@ -54,7 +55,8 @@ class DataSetSessionWindowAggReduceGroupFunction(
     finalRowWindowEndPos: Option[Int],
     finalRowWindowRowtimePos: Option[Int],
     gap: Long,
-    isInputCombined: Boolean)
+    isInputCombined: Boolean,
+    isTableAgg: Boolean = false)
   extends RichGroupReduceFunction[Row, Row]
     with Compiler[GeneratedAggregations]
     with Logging {
@@ -106,9 +108,9 @@ class DataSetSessionWindowAggReduceGroupFunction(
     function.resetAccumulator(accumulators)
 
     val iterator = records.iterator()
-
+    var record: Row = null
     while (iterator.hasNext) {
-      val record = iterator.next()
+      record = iterator.next()
       currentRowTime = record.getField(intermediateRowWindowStartPos).asInstanceOf[Long]
       // initial traversal or opening a new window
       if (null == windowEnd ||
@@ -117,7 +119,7 @@ class DataSetSessionWindowAggReduceGroupFunction(
         // calculate the current window and open a new window
         if (null != windowEnd) {
           // evaluate and emit the current window's result.
-          doEvaluateAndCollect(out, windowStart, windowEnd)
+          doEvaluateAndCollect(out, windowStart, windowEnd, record)
           // reset accumulator
           function.resetAccumulator(accumulators)
         } else {
@@ -139,7 +141,7 @@ class DataSetSessionWindowAggReduceGroupFunction(
       }
     }
     // evaluate and emit the current window's result.
-    doEvaluateAndCollect(out, windowStart, windowEnd)
+    doEvaluateAndCollect(out, windowStart, windowEnd, record)
   }
 
   /**
@@ -154,21 +156,65 @@ class DataSetSessionWindowAggReduceGroupFunction(
   def doEvaluateAndCollect(
       out: Collector[Row],
       windowStart: Long,
-      windowEnd: Long): Unit = {
+      windowEnd: Long,
+      forwardRecord: Row): Unit = {
 
-    // set value for the final output
-    function.setAggregationResults(accumulators, output)
+    if (!isTableAgg) {
+      // set value for the final output
+      function.setAggregationResults(accumulators, output)
 
-    // adds TimeWindow properties to output then emit output
-    if (finalRowWindowStartPos.isDefined || finalRowWindowEndPos.isDefined) {
-      collector.wrappedCollector = out
-      collector.windowStart = windowStart
-      collector.windowEnd = windowEnd
+      // adds TimeWindow properties to output then emit output
+      if (finalRowWindowStartPos.isDefined || finalRowWindowEndPos.isDefined) {
+        collector.wrappedCollector = out
+        collector.windowStart = windowStart
+        collector.windowEnd = windowEnd
 
-      collector.collect(output)
+        collector.collect(output)
+      } else {
+        out.collect(output)
+      }
     } else {
-      out.collect(output)
+      val wrappedCollector = new WrappedCollector
+
+      if (finalRowWindowStartPos.isDefined || finalRowWindowEndPos.isDefined) {
+        collector.wrappedCollector = out
+        collector.windowStart = windowStart
+        collector.windowEnd = windowEnd
+        wrappedCollector.collector = collector
+      } else {
+        wrappedCollector.collector = out
+      }
+
+      wrappedCollector.forwardRecord = forwardRecord
+      wrappedCollector.function = function
+
+      function.setAggregationResults(accumulators, wrappedCollector)
     }
   }
 
+}
+
+object DataSetSessionWindowAggReduceGroupFunction {
+  class WrappedCollector extends Collector[Row] {
+    var collector: Collector[Row] = _
+    var forwardRecord: Row = _
+    var function: GeneratedAggregations = _
+
+    /**
+      * Emits a record.
+      *
+      * @param record The record to collect.
+      */
+    override def collect(output: Row): Unit = {
+      if (forwardRecord != null) {
+        function.setForwardedFields(forwardRecord, output)
+      }
+      collector.collect(output)
+    }
+
+    /**
+      * Closes the collector. If any data was buffered, that data will be flushed.
+      */
+    override def close(): Unit = {}
+  }
 }

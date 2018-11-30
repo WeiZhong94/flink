@@ -132,7 +132,7 @@ class GroupWindowITCase(
     val testTableAgg = new TestTableAgg
 
     val windowedTable = table
-      .window(Tumble over 5.milli on 'long as 'w)
+      .window(Slide over 5.milli every 2.milli on 'long as 'w)
       .groupBy('w, 'string)
       .flatAgg(testTableAgg('int + 0L))
 

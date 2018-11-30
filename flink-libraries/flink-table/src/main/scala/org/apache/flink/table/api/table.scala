@@ -21,12 +21,13 @@ import org.apache.calcite.rel.RelNode
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.operators.join.JoinType
 import org.apache.flink.table.calcite.{FlinkRelBuilder, FlinkTypeFactory}
-import org.apache.flink.table.expressions.{Alias, Asc, Expression, ExpressionParser, Ordering, ResolvedFieldReference, RowtimeAttribute, TableAggFunctionCall, UnresolvedAlias, UnresolvedFieldReference, WindowEnd, WindowProperty, WindowStart}
+import org.apache.flink.table.expressions.{Alias, Asc, Expression, ExpressionParser, Literal, Ordering, ResolvedFieldReference, RowtimeAttribute, TableAggFunctionCall, UnresolvedAlias, UnresolvedFieldReference, WindowEnd, WindowProperty, WindowStart}
 import org.apache.flink.table.functions.TemporalTableFunction
 import org.apache.flink.table.functions.utils.UserDefinedFunctionUtils
 import org.apache.flink.table.plan.ProjectionTranslator._
 import org.apache.flink.table.plan.logical.{Minus, _}
 import org.apache.flink.table.sinks.TableSink
+import org.apache.flink.table.typeutils.RowIntervalTypeInfo
 
 import _root_.scala.annotation.varargs
 import _root_.scala.collection.JavaConverters._
@@ -1227,19 +1228,46 @@ class WindowGroupedTable(
   }
 
   def flatAgg(tableAggFunctionCall: TableAggFunctionCall): Table = {
+    val logicalWindow = window.toLogicalWindow
+    val isCountWindow = logicalWindow match {
+      case tumbling: TumblingGroupWindow =>
+        tumbling.size match {
+          case Literal(_, RowIntervalTypeInfo.INTERVAL_ROWS) =>
+            true
+          case _ =>
+            false
+        }
+      case slide: SlidingGroupWindow =>
+        slide.size match {
+          case Literal(_, RowIntervalTypeInfo.INTERVAL_ROWS) =>
+            true
+          case _ =>
+            false
+        }
+      case session: SessionGroupWindow =>
+        false
+      case _ =>
+        throw new ValidationException(
+          "Window type can't be recongnized!")
+    }
+    val windowProperty = if (isCountWindow) {
+      Seq()
+    } else {
+      Seq(Alias(WindowStart(
+        UnresolvedFieldReference(
+          window.alias.asInstanceOf[UnresolvedFieldReference].name)), "_wstart"),
+        Alias(WindowEnd(
+          UnresolvedFieldReference(
+            window.alias.asInstanceOf[UnresolvedFieldReference].name)), "_wend"),
+        Alias(RowtimeAttribute(
+          UnresolvedFieldReference(
+            window.alias.asInstanceOf[UnresolvedFieldReference].name)), "_wrowtime"))
+    }
     new Table(table.tableEnv,
       WindowTableAggregate(
         groupKeys,
-        window.toLogicalWindow,
-        Seq(Alias(WindowStart(
-          UnresolvedFieldReference(
-            window.alias.asInstanceOf[UnresolvedFieldReference].name)), "_wstart"),
-          Alias(WindowEnd(
-            UnresolvedFieldReference(
-              window.alias.asInstanceOf[UnresolvedFieldReference].name)), "_wend"),
-          Alias(RowtimeAttribute(
-            UnresolvedFieldReference(
-              window.alias.asInstanceOf[UnresolvedFieldReference].name)), "_wrowtime")),
+        logicalWindow,
+        windowProperty,
         tableAggFunctionCall,
         table.logicalPlan)
         .validate(table.tableEnv))

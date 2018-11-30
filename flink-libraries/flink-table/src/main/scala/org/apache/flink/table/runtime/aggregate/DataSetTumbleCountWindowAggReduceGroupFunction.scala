@@ -22,6 +22,7 @@ import java.lang.Iterable
 import org.apache.flink.api.common.functions.RichGroupReduceFunction
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.table.codegen.{Compiler, GeneratedAggregationsFunction}
+import org.apache.flink.table.runtime.aggregate.DataSetTumbleCountWindowAggReduceGroupFunction.WrappedCollector
 import org.apache.flink.table.util.Logging
 import org.apache.flink.types.Row
 import org.apache.flink.util.Collector
@@ -36,7 +37,8 @@ import org.apache.flink.util.Collector
   */
 class DataSetTumbleCountWindowAggReduceGroupFunction(
     private val genAggregations: GeneratedAggregationsFunction,
-    private val windowSize: Long)
+    private val windowSize: Long,
+    isTableAgg: Boolean = false)
   extends RichGroupReduceFunction[Row, Row]
     with Compiler[GeneratedAggregations]
     with Logging {
@@ -77,14 +79,45 @@ class DataSetTumbleCountWindowAggReduceGroupFunction(
       accumulators = function.mergeAccumulatorsPair(accumulators, record)
 
       if (windowSize == count) {
-        // set group keys value to final output.
-        function.setForwardedFields(record, output)
+        if (!isTableAgg) {
+          // set group keys value to final output.
+          function.setForwardedFields(record, output)
 
-        function.setAggregationResults(accumulators, output)
-        // emit the output
-        out.collect(output)
+          function.setAggregationResults(accumulators, output)
+          // emit the output
+          out.collect(output)
+        } else {
+          val wrappedCollector = new WrappedCollector
+          wrappedCollector.collector = out
+          wrappedCollector.forwardRecord = record
+          wrappedCollector.function = function
+          function.setAggregationResults(accumulators, wrappedCollector)
+        }
         count = 0
       }
     }
+  }
+}
+
+object DataSetTumbleCountWindowAggReduceGroupFunction {
+  class WrappedCollector extends Collector[Row] {
+    var collector: Collector[Row] = _
+    var forwardRecord: Row = _
+    var function: GeneratedAggregations = _
+
+    /**
+      * Emits a record.
+      *
+      * @param record The record to collect.
+      */
+    override def collect(output: Row): Unit = {
+      function.setForwardedFields(forwardRecord, output)
+      collector.collect(output)
+    }
+
+    /**
+      * Closes the collector. If any data was buffered, that data will be flushed.
+      */
+    override def close(): Unit = {}
   }
 }

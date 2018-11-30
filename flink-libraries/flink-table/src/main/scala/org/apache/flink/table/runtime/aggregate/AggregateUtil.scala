@@ -666,7 +666,8 @@ object AggregateUtil {
         // tumbling count window
         new DataSetTumbleCountWindowAggReduceGroupFunction(
           genFinalAggFunction,
-          asLong(size))
+          asLong(size),
+          isTableAgg)
 
       case SessionGroupWindow(_, _, gap) =>
         val (startPos, endPos, timePos) = computeWindowPropertyPos(properties)
@@ -677,7 +678,8 @@ object AggregateUtil {
           endPos,
           timePos,
           asLong(gap),
-          isInputCombined)
+          isInputCombined,
+          isTableAgg)
 
       case SlidingGroupWindow(_, _, size, _) if isTimeInterval(size.resultType) =>
         val (startPos, endPos, timePos) = computeWindowPropertyPos(properties)
@@ -690,7 +692,8 @@ object AggregateUtil {
             startPos,
             endPos,
             timePos,
-            asLong(size))
+            asLong(size),
+            isTableAgg)
         }
         else {
           // for non-partial aggregations
@@ -700,7 +703,8 @@ object AggregateUtil {
             startPos,
             endPos,
             timePos,
-            asLong(size))
+            asLong(size),
+            isTableAgg)
         }
 
       case SlidingGroupWindow(_, _, size, _) =>
@@ -710,7 +714,8 @@ object AggregateUtil {
             None,
             None,
             None,
-            asLong(size))
+            asLong(size),
+            isTableAgg)
 
       case _ =>
         throw new UnsupportedOperationException(s"$window is currently not supported on batch")

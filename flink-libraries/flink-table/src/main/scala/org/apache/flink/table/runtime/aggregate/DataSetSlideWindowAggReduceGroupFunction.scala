@@ -22,6 +22,7 @@ import java.lang.Iterable
 import org.apache.flink.api.common.functions.RichGroupReduceFunction
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.table.codegen.{Compiler, GeneratedAggregationsFunction}
+import org.apache.flink.table.runtime.aggregate.DataSetSlideWindowAggReduceGroupFunction.WrappedCollector
 import org.apache.flink.table.util.Logging
 import org.apache.flink.types.Row
 import org.apache.flink.util.Collector
@@ -46,7 +47,8 @@ class DataSetSlideWindowAggReduceGroupFunction(
     finalRowWindowStartPos: Option[Int],
     finalRowWindowEndPos: Option[Int],
     finalRowWindowRowtimePos: Option[Int],
-    windowSize: Long)
+    windowSize: Long,
+    isTableAgg: Boolean = false)
   extends RichGroupReduceFunction[Row, Row]
     with Compiler[GeneratedAggregations]
     with Logging {
@@ -88,25 +90,68 @@ class DataSetSlideWindowAggReduceGroupFunction(
       record = iterator.next()
       function.mergeAccumulatorsPair(accumulators, record)
     }
+    if (!isTableAgg) {
+      // set group keys value to final output
+      function.setForwardedFields(record, output)
 
-    // set group keys value to final output
-    function.setForwardedFields(record, output)
+      // get final aggregate value and set to output
+      function.setAggregationResults(accumulators, output)
 
-    // get final aggregate value and set to output
-    function.setAggregationResults(accumulators, output)
+      // adds TimeWindow properties to output then emit output
+      if (finalRowWindowStartPos.isDefined ||
+          finalRowWindowEndPos.isDefined ||
+          finalRowWindowRowtimePos.isDefined) {
 
-    // adds TimeWindow properties to output then emit output
-    if (finalRowWindowStartPos.isDefined ||
+        collector.wrappedCollector = out
+        collector.windowStart = record.getField(windowStartPos).asInstanceOf[Long]
+        collector.windowEnd = collector.windowStart + windowSize
+
+        collector.collect(output)
+      } else {
+        out.collect(output)
+      }
+    } else {
+      val wrappedCollector = new WrappedCollector
+      wrappedCollector.forwardRecord = record
+      wrappedCollector.function = function
+      if (finalRowWindowStartPos.isDefined ||
         finalRowWindowEndPos.isDefined ||
         finalRowWindowRowtimePos.isDefined) {
 
-      collector.wrappedCollector = out
-      collector.windowStart = record.getField(windowStartPos).asInstanceOf[Long]
-      collector.windowEnd = collector.windowStart + windowSize
+        collector.wrappedCollector = out
+        collector.windowStart = record.getField(windowStartPos).asInstanceOf[Long]
+        collector.windowEnd = collector.windowStart + windowSize
 
-      collector.collect(output)
-    } else {
-      out.collect(output)
+        wrappedCollector.collector = collector
+      } else {
+        wrappedCollector.collector = out
+      }
+      function.setAggregationResults(accumulators, wrappedCollector)
     }
+  }
+}
+
+object DataSetSlideWindowAggReduceGroupFunction {
+  class WrappedCollector extends Collector[Row] {
+    var collector: Collector[Row] = _
+    var forwardRecord: Row = _
+    var function: GeneratedAggregations = _
+
+    /**
+      * Emits a record.
+      *
+      * @param record The record to collect.
+      */
+    override def collect(output: Row): Unit = {
+      if (forwardRecord != null) {
+        function.setForwardedFields(forwardRecord, output)
+      }
+      collector.collect(output)
+    }
+
+    /**
+      * Closes the collector. If any data was buffered, that data will be flushed.
+      */
+    override def close(): Unit = {}
   }
 }
