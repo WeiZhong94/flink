@@ -20,9 +20,9 @@ package org.apache.flink.table.examples.java;
 
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
+import org.apache.flink.table.api.GeneralBatchTableEnvironment;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableEnvironment;
-import org.apache.flink.table.api.java.BatchTableEnvironment;
 
 /**
  * Simple example for demonstrating the use of the Table API for a Word Count in Java.
@@ -39,7 +39,7 @@ public class WordCountTable {
 
 	public static void main(String[] args) throws Exception {
 		ExecutionEnvironment env = ExecutionEnvironment.createCollectionsEnvironment();
-		BatchTableEnvironment tEnv = TableEnvironment.getTableEnvironment(env);
+		GeneralBatchTableEnvironment tEnv = TableEnvironment.getTableEnvironment(env);
 
 		DataSet<WC> input = env.fromElements(
 				new WC("Hello", 1),
