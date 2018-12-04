@@ -82,6 +82,17 @@ class Table(
     this(tableEnv, UserDefinedFunctionUtils.createLogicalFunctionCall(tableEnv, udtfCall))
   }
 
+  def this(tableEnv: GeneralTableEnvironment, udtfCall: String) {
+    this(tableEnv.getActualTableEnviroment,
+      UserDefinedFunctionUtils.createLogicalFunctionCall(
+        tableEnv.getActualTableEnviroment, udtfCall))
+  }
+
+  def this(tableEnv: GeneralTableEnvironment, logicalPlan: LogicalNode) {
+    this(tableEnv.getActualTableEnviroment,
+      logicalPlan)
+  }
+
   private lazy val tableSchema: TableSchema = new TableSchema(
     logicalPlan.output.map(_.name).toArray,
     logicalPlan.output.map(_.resultType).toArray)

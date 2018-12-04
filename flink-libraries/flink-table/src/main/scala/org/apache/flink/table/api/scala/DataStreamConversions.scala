@@ -18,7 +18,7 @@
 package org.apache.flink.table.api.scala
 
 import org.apache.flink.api.common.typeinfo.TypeInformation
-import org.apache.flink.table.api.Table
+import org.apache.flink.table.api.{GeneralTableEnvironment, Table, TableException}
 import org.apache.flink.table.expressions.Expression
 import org.apache.flink.streaming.api.scala.DataStream
 
@@ -56,6 +56,18 @@ class DataStreamConversions[T](dataStream: DataStream[T], inputType: TypeInforma
       tableEnv.fromDataStream(dataStream)
     } else {
       tableEnv.fromDataStream(dataStream, fields:_*)
+    }
+  }
+
+  def toTable(tableEnv: GeneralTableEnvironment, fields: Expression*): Table = {
+    if (tableEnv.isStream) {
+      if (fields.isEmpty) {
+        tableEnv.fromDataStream(dataStream)
+      } else {
+        tableEnv.fromDataStream(dataStream, fields:_*)
+      }
+    } else {
+      throw new TableException("this method only used in stream mode!")
     }
   }
 

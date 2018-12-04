@@ -24,7 +24,7 @@ import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.table.api.scala._
 import org.apache.flink.table.runtime.utils.StreamITCase.RetractingSink
-import org.apache.flink.table.api.{StreamQueryConfig, TableEnvironment, Types}
+import org.apache.flink.table.api._
 import org.apache.flink.table.expressions.Null
 import org.apache.flink.table.runtime.utils.JavaUserDefinedAggFunctions.{CountDistinct, DataViewTestAgg, WeightedAvg}
 import org.apache.flink.table.runtime.utils.{JavaUserDefinedAggFunctions, StreamITCase, StreamTestData, StreamingWithStateTestBase}
@@ -32,7 +32,7 @@ import org.apache.flink.types.Row
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-import scala.collection.mutable
+import _root_.scala.collection.mutable
 
 /**
   * Tests of groupby (without window) aggregations
@@ -45,7 +45,7 @@ class AggregateITCase extends StreamingWithStateTestBase {
   def testDistinctUDAGG(): Unit = {
     val env = StreamExecutionEnvironment.getExecutionEnvironment
     env.setStateBackend(getStateBackend)
-    val tEnv = TableEnvironment.getTableEnvironment(env)
+    val tEnv = new GeneralTableEnvironment(env, new TableConfig)
     StreamITCase.clear
 
     val testAgg = new DataViewTestAgg
