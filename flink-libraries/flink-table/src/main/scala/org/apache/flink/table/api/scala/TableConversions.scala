@@ -47,7 +47,7 @@ class TableConversions(table: Table) {
 
     table.tableEnv match {
       case tEnv: ScalaBatchTableEnv =>
-        tEnv.toDataSet(table)
+        tEnv.toDataSetScala(table)
       case _ =>
         throw new TableException(
           "Only tables that originate from Scala DataSets can be converted to Scala DataSets.")
@@ -70,7 +70,7 @@ class TableConversions(table: Table) {
 
     table.tableEnv match {
       case tEnv: ScalaBatchTableEnv =>
-        tEnv.toDataSet(table, queryConfig)
+        tEnv.toDataSetScala(table, queryConfig)
       case _ =>
         throw new TableException(
           "Only tables that originate from Scala DataSets can be converted to Scala DataSets.")

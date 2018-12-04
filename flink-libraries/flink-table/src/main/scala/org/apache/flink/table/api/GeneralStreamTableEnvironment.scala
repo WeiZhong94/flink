@@ -24,7 +24,7 @@ import org.apache.flink.streaming.api.datastream.DataStream
 import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment => ScalaStreamExecEnv}
 import org.apache.flink.table.api.scala.{StreamTableEnvironment => ScalaStreamTableEnv}
 import org.apache.flink.table.expressions.ExpressionParser
-import org.apache.flink.table.functions.{AggregateFunction, TableFunction, UserDefinedFunction}
+import org.apache.flink.table.functions.{AggregateFunction, TableFunction}
 import _root_.java.lang.{Boolean => JBool}
 
 import org.apache.flink.api.java.tuple.{Tuple2 => JTuple2}

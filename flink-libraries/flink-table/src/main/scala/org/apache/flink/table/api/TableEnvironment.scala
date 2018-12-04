@@ -1451,4 +1451,22 @@ object TableEnvironment {
   : GeneralStreamTableEnvironment = {
     new GeneralStreamTableEnvironment(executionEnvironment, config)
   }
+
+  def getStreamGeneralTableEnvironment(config: TableConfig)
+  : GeneralStreamTableEnvironment = {
+    getGeneralTableEnvironment(ScalaStreamExecEnv.getExecutionEnvironment, config)
+  }
+
+  def getBatchGeneralTableEnvironment(config: TableConfig)
+  : GeneralBatchTableEnvironment = {
+    getGeneralTableEnvironment(ScalaBatchExecEnv.getExecutionEnvironment, config)
+  }
+
+  def getStreamGeneralTableEnvironment: GeneralStreamTableEnvironment = {
+    getGeneralTableEnvironment(ScalaStreamExecEnv.getExecutionEnvironment, new TableConfig)
+  }
+
+  def getBatchGeneralTableEnvironment: GeneralBatchTableEnvironment = {
+    getGeneralTableEnvironment(ScalaBatchExecEnv.getExecutionEnvironment, new TableConfig)
+  }
 }
