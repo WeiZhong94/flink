@@ -333,21 +333,12 @@ class GeneralStreamTableEnvironment(env: ScalaStreamExecEnv, config: TableConfig
     * @param tf The TableFunction to register.
     * @tparam T The type of the output row.
     */
-  def registerFunctionJava[T](name: String, tf: TableFunction[T]): Unit = {
+  def registerFunction[T](name: String, tf: TableFunction[T]): Unit = {
     implicit val typeInfo: TypeInformation[T] = TypeExtractor
       .createTypeInfo(tf, classOf[TableFunction[_]], tf.getClass, 0)
       .asInstanceOf[TypeInformation[T]]
 
     registerTableFunctionInternal[T](name, tf)
-  }
-
-  def registerTableFunction[T](name: String, tf: TableFunction[T])
-      (implicit tType: TypeInformation[T] = null): Unit = {
-    if (tType == null) {
-      registerFunctionJava(name, tf)
-    } else {
-      super.registerFunction(name, tf)
-    }
   }
 
   /**
@@ -359,7 +350,7 @@ class GeneralStreamTableEnvironment(env: ScalaStreamExecEnv, config: TableConfig
     * @tparam T The type of the output value.
     * @tparam ACC The type of aggregate accumulator.
     */
-  def registerFunctionJava[T, ACC](
+  def registerFunction[T, ACC](
       name: String,
       f: AggregateFunction[T, ACC])
   : Unit = {
@@ -372,17 +363,5 @@ class GeneralStreamTableEnvironment(env: ScalaStreamExecEnv, config: TableConfig
       .asInstanceOf[TypeInformation[ACC]]
 
     registerAggregateFunctionInternal[T, ACC](name, f)
-  }
-
-  def registerAggregateFunction[T, ACC](
-      name: String,
-      f: AggregateFunction[T, ACC])
-      (implicit tType: TypeInformation[T] = null, accType: TypeInformation[ACC] = null)
-  : Unit = {
-    if (tType == null || accType == null) {
-      registerFunctionJava(name, f)
-    } else {
-      super.registerFunction(name, f)
-    }
   }
 }

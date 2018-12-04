@@ -125,7 +125,7 @@ class CorrelateITCase extends AbstractTestBase {
   @Test
   def testUserDefinedTableFunctionWithParameter(): Unit = {
     val tableFunc1 = new RichTableFunc1
-    tEnv.registerFunction("RichTableFunc1", tableFunc1)
+    tEnv.registerFunctionScala("RichTableFunc1", tableFunc1)
     UserDefinedFunctionTestUtils.setJobParameters(env, Map("word_separator" -> " "))
     StreamITCase.testResults = mutable.MutableList()
 
@@ -146,7 +146,7 @@ class CorrelateITCase extends AbstractTestBase {
   def testUserDefinedTableFunctionWithUserDefinedScalarFunction(): Unit = {
     val tableFunc1 = new RichTableFunc1
     val richFunc2 = new RichFunc2
-    tEnv.registerFunction("RichTableFunc1", tableFunc1)
+    tEnv.registerFunctionScala("RichTableFunc1", tableFunc1)
     tEnv.registerFunction("RichFunc2", richFunc2)
     UserDefinedFunctionTestUtils.setJobParameters(
       env,
@@ -206,7 +206,7 @@ class CorrelateITCase extends AbstractTestBase {
   @Test
   def testTableFunctionWithVariableArguments(): Unit = {
     val varArgsFunc0 = new VarArgsFunc0
-    tEnv.registerFunction("VarArgsFunc0", varArgsFunc0)
+    tEnv.registerFunctionScala("VarArgsFunc0", varArgsFunc0)
 
     val result = testData(env)
       .toTable(tEnv, 'a, 'b, 'c)
