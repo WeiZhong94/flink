@@ -212,7 +212,7 @@ class StreamTableEnvironment(
     * @param name The name under which the function is registered.
     * @param tf The TableFunction to register
     */
-  def registerFunction[T: TypeInformation](name: String, tf: TableFunction[T]): Unit = {
+  def registerFunctionScala[T: TypeInformation](name: String, tf: TableFunction[T]): Unit = {
     registerTableFunctionInternal(name, tf)
   }
 
@@ -225,7 +225,7 @@ class StreamTableEnvironment(
     * @tparam T The type of the output value.
     * @tparam ACC The type of aggregate accumulator.
     */
-  def registerFunction[T: TypeInformation, ACC: TypeInformation](
+  def registerFunctionScala[T: TypeInformation, ACC: TypeInformation](
       name: String,
       f: AggregateFunction[T, ACC])
   : Unit = {
