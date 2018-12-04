@@ -19,15 +19,20 @@
 package org.apache.flink.table.api
 
 import org.apache.flink.api.common.typeinfo.TypeInformation
-import org.apache.flink.api.java.DataSet
+import org.apache.flink.api.java.{DataSet, ExecutionEnvironment}
 import org.apache.flink.api.java.typeutils.TypeExtractor
-import org.apache.flink.api.scala.{ExecutionEnvironment => ScalaBatchExecEnv}
-import org.apache.flink.table.api.scala.{BatchTableEnvironment => ScalaBatchTableEnv}
-import org.apache.flink.table.expressions.ExpressionParser
+import org.apache.flink.api.scala.{DataSet => ScalaDataSet, wrap, ExecutionEnvironment => ScalaBatchExecEnv}
+import org.apache.flink.table.expressions.{Expression, ExpressionParser}
 import org.apache.flink.table.functions.{AggregateFunction, TableFunction}
 
+import _root_.scala.reflect.ClassTag
+
 class GeneralBatchTableEnvironment(env: ScalaBatchExecEnv, config: TableConfig)
-  extends ScalaBatchTableEnv(env: ScalaBatchExecEnv, config) {
+  extends BatchTableEnvironment(env.getJavaEnv, config) {
+
+  def this(env: ExecutionEnvironment, config: TableConfig) {
+    this(new ScalaBatchExecEnv(env), config)
+  }
 
   /**
     * Converts the given [[DataSet]] into a [[Table]].
@@ -228,6 +233,149 @@ class GeneralBatchTableEnvironment(env: ScalaBatchExecEnv, config: TableConfig)
       .createTypeInfo(f, classOf[AggregateFunction[T, ACC]], f.getClass, 1)
       .asInstanceOf[TypeInformation[ACC]]
 
+    registerAggregateFunctionInternal[T, ACC](name, f)
+  }
+
+
+  /**
+    * Converts the given [[DataSet]] into a [[Table]].
+    *
+    * The field names of the [[Table]] are automatically derived from the type of the [[DataSet]].
+    *
+    * @param dataSet The [[DataSet]] to be converted.
+    * @tparam T The type of the [[DataSet]].
+    * @return The converted [[Table]].
+    */
+  def fromDataSet[T](dataSet: ScalaDataSet[T]): Table = {
+
+    val name = createUniqueTableName()
+    registerDataSetInternal(name, dataSet.javaSet)
+    scan(name)
+  }
+
+  /**
+    * Converts the given [[DataSet]] into a [[Table]] with specified field names.
+    *
+    * Example:
+    *
+    * {{{
+    *   val set: DataSet[(String, Long)] = ...
+    *   val tab: Table = tableEnv.fromDataSet(set, 'a, 'b)
+    * }}}
+    *
+    * @param dataSet The [[DataSet]] to be converted.
+    * @param fields The field names of the resulting [[Table]].
+    * @tparam T The type of the [[DataSet]].
+    * @return The converted [[Table]].
+    */
+  def fromDataSet[T](dataSet: ScalaDataSet[T], fields: Expression*): Table = {
+
+    val name = createUniqueTableName()
+    registerDataSetInternal(name, dataSet.javaSet, fields.toArray)
+    scan(name)
+  }
+
+  /**
+    * Registers the given [[DataSet]] as table in the
+    * [[TableEnvironment]]'s catalog.
+    * Registered tables can be referenced in SQL queries.
+    *
+    * The field names of the [[Table]] are automatically derived from the type of the [[DataSet]].
+    *
+    * @param name The name under which the [[DataSet]] is registered in the catalog.
+    * @param dataSet The [[DataSet]] to register.
+    * @tparam T The type of the [[DataSet]] to register.
+    */
+  def registerDataSet[T](name: String, dataSet: ScalaDataSet[T]): Unit = {
+
+    checkValidTableName(name)
+    registerDataSetInternal(name, dataSet.javaSet)
+  }
+
+  /**
+    * Registers the given [[DataSet]] as table with specified field names in the
+    * [[TableEnvironment]]'s catalog.
+    * Registered tables can be referenced in SQL queries.
+    *
+    * Example:
+    *
+    * {{{
+    *   val set: DataSet[(String, Long)] = ...
+    *   tableEnv.registerDataSet("myTable", set, 'a, 'b)
+    * }}}
+    *
+    * @param name The name under which the [[DataSet]] is registered in the catalog.
+    * @param dataSet The [[DataSet]] to register.
+    * @param fields The field names of the registered table.
+    * @tparam T The type of the [[DataSet]] to register.
+    */
+  def registerDataSet[T](name: String, dataSet: ScalaDataSet[T], fields: Expression*): Unit = {
+
+    checkValidTableName(name)
+    registerDataSetInternal(name, dataSet.javaSet, fields.toArray)
+  }
+
+  /**
+    * Converts the given [[Table]] into a [[DataSet]] of a specified type.
+    *
+    * The fields of the [[Table]] are mapped to [[DataSet]] fields as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataSet]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table The [[Table]] to convert.
+    * @tparam T The type of the resulting [[DataSet]].
+    * @return The converted [[DataSet]].
+    */
+  def toDataSetScala[T: TypeInformation](table: Table): ScalaDataSet[T] = {
+    // Use the default batch query config.
+    wrap[T](translate(table, queryConfig))(ClassTag.AnyRef.asInstanceOf[ClassTag[T]])
+  }
+
+  /**
+    * Converts the given [[Table]] into a [[DataSet]] of a specified type.
+    *
+    * The fields of the [[Table]] are mapped to [[DataSet]] fields as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataSet]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table The [[Table]] to convert.
+    * @param queryConfig The configuration of the query to generate.
+    * @tparam T The type of the resulting [[DataSet]].
+    * @return The converted [[DataSet]].
+    */
+  def toDataSetScala[T: TypeInformation](
+      table: Table,
+      queryConfig: BatchQueryConfig): ScalaDataSet[T] = {
+    wrap[T](translate(table, queryConfig))(ClassTag.AnyRef.asInstanceOf[ClassTag[T]])
+  }
+
+  /**
+    * Registers a [[TableFunction]] under a unique name in the TableEnvironment's catalog.
+    * Registered functions can be referenced in Table API and SQL queries.
+    *
+    * @param name The name under which the function is registered.
+    * @param tf The TableFunction to register.
+    * @tparam T The type of the output row.
+    */
+  def registerFunctionScala[T: TypeInformation](name: String, tf: TableFunction[T]): Unit = {
+    registerTableFunctionInternal(name, tf)
+  }
+
+  /**
+    * Registers an [[AggregateFunction]] under a unique name in the TableEnvironment's catalog.
+    * Registered functions can be referenced in Table API and SQL queries.
+    *
+    * @param name The name under which the function is registered.
+    * @param f The AggregateFunction to register.
+    * @tparam T The type of the output value.
+    * @tparam ACC The type of aggregate accumulator.
+    */
+  def registerFunctionScala[T: TypeInformation, ACC: TypeInformation](
+      name: String,
+      f: AggregateFunction[T, ACC])
+  : Unit = {
     registerAggregateFunctionInternal[T, ACC](name, f)
   }
 }
