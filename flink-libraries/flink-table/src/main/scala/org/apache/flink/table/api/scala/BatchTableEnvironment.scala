@@ -136,7 +136,7 @@ class BatchTableEnvironment(
     * @tparam T The type of the resulting [[DataSet]].
     * @return The converted [[DataSet]].
     */
-  def toDataSet[T: TypeInformation](table: Table): DataSet[T] = {
+  def toDataSetScala[T: TypeInformation](table: Table): DataSet[T] = {
     // Use the default batch query config.
     wrap[T](translate(table, queryConfig))(ClassTag.AnyRef.asInstanceOf[ClassTag[T]])
   }
@@ -154,7 +154,9 @@ class BatchTableEnvironment(
     * @tparam T The type of the resulting [[DataSet]].
     * @return The converted [[DataSet]].
     */
-  def toDataSet[T: TypeInformation](table: Table, queryConfig: BatchQueryConfig): DataSet[T] = {
+  def toDataSetScala[T: TypeInformation](
+      table: Table,
+      queryConfig: BatchQueryConfig): DataSet[T] = {
     wrap[T](translate(table, queryConfig))(ClassTag.AnyRef.asInstanceOf[ClassTag[T]])
   }
 
