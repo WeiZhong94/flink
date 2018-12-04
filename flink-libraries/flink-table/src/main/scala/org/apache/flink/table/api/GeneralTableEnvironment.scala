@@ -37,20 +37,20 @@ import _root_.scala.annotation.varargs
 class GeneralTableEnvironment private{
   private var config: TableConfig = _
   private[flink] var isStream: Boolean = false
-  private[flink] var streamEnv: GeneralStreamTableEnvironment = _
-  private[flink] var batchEnv: GeneralBatchTableEnvironment = _
+  private[flink] var streamEnv: StreamTableEnvironment = _
+  private[flink] var batchEnv: BatchTableEnvironment = _
 
   def this(env: ScalaBatchExecEnv, config: TableConfig) = {
     this()
     this.config = config
-    batchEnv = new GeneralBatchTableEnvironment(env, config)
+    batchEnv = new BatchTableEnvironment(env, config)
     isStream = false
   }
 
   def this(env: ScalaStreamExecEnv, config: TableConfig) = {
     this()
     this.config = config
-    streamEnv = new GeneralStreamTableEnvironment(env, config)
+    streamEnv = new StreamTableEnvironment(env, config)
     isStream = true
   }
 

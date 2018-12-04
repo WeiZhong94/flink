@@ -20,7 +20,7 @@ package org.apache.flink.table.examples.java;
 
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.table.api.GeneralStreamTableEnvironment;
+import org.apache.flink.table.api.StreamTableEnvironment;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableEnvironment;
 
@@ -45,7 +45,7 @@ public class StreamSQLExample {
 
 		// set up execution environment
 		StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-		GeneralStreamTableEnvironment tEnv = TableEnvironment.getTableEnvironment(env);
+		StreamTableEnvironment tEnv = TableEnvironment.getTableEnvironment(env);
 
 		DataStream<Order> orderA = env.fromCollection(Arrays.asList(
 			new Order(1L, "beer", 3),

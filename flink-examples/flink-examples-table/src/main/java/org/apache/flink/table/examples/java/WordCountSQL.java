@@ -20,7 +20,7 @@ package org.apache.flink.table.examples.java;
 
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
-import org.apache.flink.table.api.GeneralBatchTableEnvironment;
+import org.apache.flink.table.api.BatchTableEnvironment;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableEnvironment;
 
@@ -42,7 +42,7 @@ public class WordCountSQL {
 
 		// set up execution environment
 		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-		GeneralBatchTableEnvironment tEnv = TableEnvironment.getTableEnvironment(env);
+		BatchTableEnvironment tEnv = TableEnvironment.getTableEnvironment(env);
 
 		DataSet<WC> input = env.fromElements(
 			new WC("Hello", 1),

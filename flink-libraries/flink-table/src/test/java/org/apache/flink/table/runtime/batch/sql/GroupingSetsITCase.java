@@ -23,7 +23,7 @@ import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.operators.MapOperator;
 import org.apache.flink.api.java.tuple.Tuple3;
-import org.apache.flink.table.api.GeneralBatchTableEnvironment;
+import org.apache.flink.table.api.BatchTableEnvironment;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableConfig;
 import org.apache.flink.table.api.TableEnvironment;
@@ -50,7 +50,7 @@ public class GroupingSetsITCase extends TableProgramsClusterTestBase {
 
 	private static final String TABLE_NAME = "MyTable";
 	private static final String TABLE_WITH_NULLS_NAME = "MyTableWithNulls";
-	private GeneralBatchTableEnvironment tableEnv;
+	private BatchTableEnvironment tableEnv;
 
 	public GroupingSetsITCase(TestExecutionMode mode, TableConfigMode tableConfigMode) {
 		super(mode, tableConfigMode);

@@ -44,7 +44,7 @@ class TableConversions(table: Table) {
   def toDataSet[T: TypeInformation]: DataSet[T] = {
 
     table.tableEnv match {
-      case tEnv: GeneralBatchTableEnvironment =>
+      case tEnv: BatchTableEnvironment =>
         tEnv.toDataSetScala(table)
       case _ =>
         throw new TableException(
@@ -67,7 +67,7 @@ class TableConversions(table: Table) {
   def toDataSet[T: TypeInformation](queryConfig: BatchQueryConfig): DataSet[T] = {
 
     table.tableEnv match {
-      case tEnv: GeneralBatchTableEnvironment =>
+      case tEnv: BatchTableEnvironment =>
         tEnv.toDataSetScala(table, queryConfig)
       case _ =>
         throw new TableException(
@@ -92,7 +92,7 @@ class TableConversions(table: Table) {
   def toAppendStream[T: TypeInformation]: DataStream[T] = {
 
     table.tableEnv match {
-      case tEnv: GeneralStreamTableEnvironment =>
+      case tEnv: StreamTableEnvironment =>
         tEnv.toAppendStreamScala(table)
       case _ =>
         throw new TableException(
@@ -118,7 +118,7 @@ class TableConversions(table: Table) {
     */
   def toAppendStream[T: TypeInformation](queryConfig: StreamQueryConfig): DataStream[T] = {
     table.tableEnv match {
-      case tEnv: GeneralStreamTableEnvironment =>
+      case tEnv: StreamTableEnvironment =>
         tEnv.toAppendStreamScala(table, queryConfig)
       case _ =>
         throw new TableException(
@@ -137,7 +137,7 @@ class TableConversions(table: Table) {
   def toRetractStream[T: TypeInformation]: DataStream[(Boolean, T)] = {
 
     table.tableEnv match {
-      case tEnv: GeneralStreamTableEnvironment =>
+      case tEnv: StreamTableEnvironment =>
         tEnv.toRetractStreamScala(table)
       case _ =>
         throw new TableException(
@@ -159,7 +159,7 @@ class TableConversions(table: Table) {
       queryConfig: StreamQueryConfig): DataStream[(Boolean, T)] = {
 
     table.tableEnv match {
-      case tEnv: GeneralStreamTableEnvironment =>
+      case tEnv: StreamTableEnvironment =>
         tEnv.toRetractStreamScala(table, queryConfig)
       case _ =>
         throw new TableException(
