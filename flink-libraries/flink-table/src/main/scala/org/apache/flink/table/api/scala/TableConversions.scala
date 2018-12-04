@@ -95,7 +95,7 @@ class TableConversions(table: Table) {
 
     table.tableEnv match {
       case tEnv: ScalaStreamTableEnv =>
-        tEnv.toAppendStream(table)
+        tEnv.toAppendStreamScala(table)
       case _ =>
         throw new TableException(
           "Only tables that originate from Scala DataStreams " +
@@ -121,7 +121,7 @@ class TableConversions(table: Table) {
   def toAppendStream[T: TypeInformation](queryConfig: StreamQueryConfig): DataStream[T] = {
     table.tableEnv match {
       case tEnv: ScalaStreamTableEnv =>
-        tEnv.toAppendStream(table, queryConfig)
+        tEnv.toAppendStreamScala(table, queryConfig)
       case _ =>
         throw new TableException(
           "Only tables that originate from Scala DataStreams " +
@@ -140,7 +140,7 @@ class TableConversions(table: Table) {
 
     table.tableEnv match {
       case tEnv: ScalaStreamTableEnv =>
-        tEnv.toRetractStream(table)
+        tEnv.toRetractStreamScala(table)
       case _ =>
         throw new TableException(
           "Only tables that originate from Scala DataStreams " +
@@ -162,7 +162,7 @@ class TableConversions(table: Table) {
 
     table.tableEnv match {
       case tEnv: ScalaStreamTableEnv =>
-        tEnv.toRetractStream(table, queryConfig)
+        tEnv.toRetractStreamScala(table, queryConfig)
       case _ =>
         throw new TableException(
           "Only tables that originate from Scala DataStreams " +

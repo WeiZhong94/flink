@@ -142,8 +142,8 @@ class StreamTableEnvironment(
     * @tparam T The type of the resulting [[DataStream]].
     * @return The converted [[DataStream]].
     */
-  def toAppendStream[T: TypeInformation](table: Table): DataStream[T] = {
-    toAppendStream(table, queryConfig)
+  def toAppendStreamScala[T: TypeInformation](table: Table): DataStream[T] = {
+    toAppendStreamScala(table, queryConfig)
   }
 
   /**
@@ -162,7 +162,7 @@ class StreamTableEnvironment(
     * @tparam T The type of the resulting [[DataStream]].
     * @return The converted [[DataStream]].
     */
-  def toAppendStream[T: TypeInformation](
+  def toAppendStreamScala[T: TypeInformation](
     table: Table,
     queryConfig: StreamQueryConfig): DataStream[T] = {
     val returnType = createTypeInformation[T]
@@ -181,8 +181,8 @@ class StreamTableEnvironment(
   * @tparam T The type of the requested data type.
   * @return The converted [[DataStream]].
   */
-  def toRetractStream[T: TypeInformation](table: Table): DataStream[(Boolean, T)] = {
-    toRetractStream(table, queryConfig)
+  def toRetractStreamScala[T: TypeInformation](table: Table): DataStream[(Boolean, T)] = {
+    toRetractStreamScala(table, queryConfig)
   }
 
   /**
@@ -197,7 +197,7 @@ class StreamTableEnvironment(
     * @tparam T The type of the requested data type.
     * @return The converted [[DataStream]].
     */
-  def toRetractStream[T: TypeInformation](
+  def toRetractStreamScala[T: TypeInformation](
       table: Table,
       queryConfig: StreamQueryConfig): DataStream[(Boolean, T)] = {
     val returnType = createTypeInformation[(Boolean, T)]
