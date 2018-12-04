@@ -39,12 +39,12 @@ import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.graph.StreamGraph;
 import org.apache.flink.table.api.BatchQueryConfig;
+import org.apache.flink.table.api.GeneralBatchTableEnvironment;
+import org.apache.flink.table.api.GeneralStreamTableEnvironment;
 import org.apache.flink.table.api.QueryConfig;
 import org.apache.flink.table.api.StreamQueryConfig;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableEnvironment;
-import org.apache.flink.table.api.java.BatchTableEnvironment;
-import org.apache.flink.table.api.java.StreamTableEnvironment;
 import org.apache.flink.table.client.config.Environment;
 import org.apache.flink.table.client.config.entries.DeploymentEntry;
 import org.apache.flink.table.client.config.entries.ExecutionEntry;
@@ -390,8 +390,8 @@ public class ExecutionContext<T> {
 		}
 
 		private void registerFunctions() {
-			if (tableEnv instanceof StreamTableEnvironment) {
-				StreamTableEnvironment streamTableEnvironment = (StreamTableEnvironment) tableEnv;
+			if (tableEnv instanceof GeneralStreamTableEnvironment) {
+				GeneralStreamTableEnvironment streamTableEnvironment = (GeneralStreamTableEnvironment) tableEnv;
 				functions.forEach((k, v) -> {
 					if (v instanceof ScalarFunction) {
 						streamTableEnvironment.registerFunction(k, (ScalarFunction) v);
@@ -404,7 +404,7 @@ public class ExecutionContext<T> {
 					}
 				});
 			} else {
-				BatchTableEnvironment batchTableEnvironment = (BatchTableEnvironment) tableEnv;
+				GeneralBatchTableEnvironment batchTableEnvironment = (GeneralBatchTableEnvironment) tableEnv;
 				functions.forEach((k, v) -> {
 					if (v instanceof ScalarFunction) {
 						batchTableEnvironment.registerFunction(k, (ScalarFunction) v);
@@ -435,11 +435,11 @@ public class ExecutionContext<T> {
 				final TableFunction<?> function = table.createTemporalTableFunction(
 					temporalTableEntry.getTimeAttribute(),
 					String.join(",", temporalTableEntry.getPrimaryKeyFields()));
-				if (tableEnv instanceof StreamTableEnvironment) {
-					StreamTableEnvironment streamTableEnvironment = (StreamTableEnvironment) tableEnv;
+				if (tableEnv instanceof GeneralStreamTableEnvironment) {
+					GeneralStreamTableEnvironment streamTableEnvironment = (GeneralStreamTableEnvironment) tableEnv;
 					streamTableEnvironment.registerFunction(temporalTableEntry.getName(), function);
 				} else {
-					BatchTableEnvironment batchTableEnvironment = (BatchTableEnvironment) tableEnv;
+					GeneralBatchTableEnvironment batchTableEnvironment = (GeneralBatchTableEnvironment) tableEnv;
 					batchTableEnvironment.registerFunction(temporalTableEntry.getName(), function);
 				}
 			} catch (Exception e) {

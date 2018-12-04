@@ -857,7 +857,10 @@ class GeneralTableEnvironment private{
     * @param fields The field names of the registered table.
     * @tparam T The type of the [[DataStream]] to register.
     */
-  def registerDataStream[T](name: String, dataStream: ScalaDataStream[T], fields: Expression*): Unit = {
+  def registerDataStream[T](
+      name: String,
+      dataStream: ScalaDataStream[T],
+      fields: Expression*): Unit = {
     if (isStream) {
       streamEnv.registerDataStream(name, dataStream, fields: _*)
     } else {

@@ -22,8 +22,6 @@ import org.apache.flink.types.Row
 import org.apache.flink.api.scala._
 import org.apache.flink.api.scala.DataSet
 import org.apache.flink.streaming.api.scala.DataStream
-import org.apache.flink.table.api.scala.{StreamTableEnvironment => ScalaStreamTableEnv}
-import org.apache.flink.table.api.scala.{BatchTableEnvironment => ScalaBatchTableEnv}
 import org.apache.flink.table.functions.TableFunction
 
 import _root_.scala.language.implicitConversions
@@ -77,7 +75,7 @@ package object scala extends ImplicitExpressionConversions {
   }
 
   implicit def table2RowDataSet(table: Table): DataSet[Row] = {
-    val tableEnv = table.tableEnv.asInstanceOf[ScalaBatchTableEnv]
+    val tableEnv = table.tableEnv.asInstanceOf[GeneralBatchTableEnvironment]
     tableEnv.toDataSetScala[Row](table)
   }
 
@@ -86,7 +84,7 @@ package object scala extends ImplicitExpressionConversions {
   }
 
   implicit def table2RowDataStream(table: Table): DataStream[Row] = {
-    val tableEnv = table.tableEnv.asInstanceOf[ScalaStreamTableEnv]
+    val tableEnv = table.tableEnv.asInstanceOf[GeneralStreamTableEnvironment]
     tableEnv.toAppendStreamScala[Row](table)
   }
 

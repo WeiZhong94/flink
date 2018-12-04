@@ -25,7 +25,7 @@ import org.apache.flink.cep.pattern.Pattern
 import org.apache.flink.streaming.api.datastream.{DataStream => JDataStream}
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.apache.flink.table.api.scala._
-import org.apache.flink.table.api.{TableConfig, TableEnvironment}
+import org.apache.flink.table.api.{GeneralStreamTableEnvironment, TableConfig, TableEnvironment}
 import org.apache.flink.table.calcite.FlinkPlannerImpl
 import org.apache.flink.table.plan.nodes.datastream.{DataStreamMatch, DataStreamScan}
 import org.apache.flink.types.Row
@@ -52,7 +52,7 @@ abstract class PatternTranslatorTestBase extends TestLogger{
     context._2.getTypeFactory)
 
   private def prepareContext(typeInfo: TypeInformation[Row])
-  : (RelBuilder, StreamTableEnvironment, StreamExecutionEnvironment) = {
+  : (RelBuilder, GeneralStreamTableEnvironment, StreamExecutionEnvironment) = {
     // create DataStreamTable
     val dataStreamMock = mock(classOf[DataStream[Row]])
     val jDataStreamMock = mock(classOf[JDataStream[Row]])
