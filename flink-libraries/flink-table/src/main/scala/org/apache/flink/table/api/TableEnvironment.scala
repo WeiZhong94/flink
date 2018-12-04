@@ -1252,16 +1252,16 @@ abstract class TableEnvironment(val config: TableConfig) {
 object TableEnvironment {
 
   /**
-    * Returns a [[GeneralBatchTableEnvironment]] for a Java [[JavaBatchExecEnv]].
+    * Returns a [[BatchTableEnvironment]] for a Java [[JavaBatchExecEnv]].
     *
     * @param executionEnvironment The Java batch ExecutionEnvironment.
     */
-  def getTableEnvironment(executionEnvironment: JavaBatchExecEnv): GeneralBatchTableEnvironment = {
+  def getTableEnvironment(executionEnvironment: JavaBatchExecEnv): BatchTableEnvironment = {
     getGeneralTableEnvironment(executionEnvironment, new TableConfig())
   }
 
   /**
-    * Returns a [[GeneralBatchTableEnvironment]] for a Java [[JavaBatchExecEnv]]
+    * Returns a [[BatchTableEnvironment]] for a Java [[JavaBatchExecEnv]]
     * and a given [[TableConfig]].
     *
     * @param executionEnvironment The Java batch ExecutionEnvironment.
@@ -1269,23 +1269,23 @@ object TableEnvironment {
     */
   def getTableEnvironment(
     executionEnvironment: JavaBatchExecEnv,
-    tableConfig: TableConfig): GeneralBatchTableEnvironment = {
+    tableConfig: TableConfig): BatchTableEnvironment = {
 
     getGeneralTableEnvironment(executionEnvironment, tableConfig)
   }
 
   /**
-    * Returns a [[GeneralBatchTableEnvironment]] for a Scala [[ScalaBatchExecEnv]].
+    * Returns a [[BatchTableEnvironment]] for a Scala [[ScalaBatchExecEnv]].
     *
     * @param executionEnvironment The Scala batch ExecutionEnvironment.
     */
   def getTableEnvironment(executionEnvironment: ScalaBatchExecEnv)
-  : GeneralBatchTableEnvironment = {
+  : BatchTableEnvironment = {
     getGeneralTableEnvironment(executionEnvironment, new TableConfig())
   }
 
   /**
-    * Returns a [[GeneralBatchTableEnvironment]] for a Scala [[ScalaBatchExecEnv]] and a given
+    * Returns a [[BatchTableEnvironment]] for a Scala [[ScalaBatchExecEnv]] and a given
     * [[TableConfig]].
     *
     * @param executionEnvironment The Scala batch ExecutionEnvironment.
@@ -1293,23 +1293,23 @@ object TableEnvironment {
     */
   def getTableEnvironment(
     executionEnvironment: ScalaBatchExecEnv,
-    tableConfig: TableConfig): GeneralBatchTableEnvironment = {
+    tableConfig: TableConfig): BatchTableEnvironment = {
 
     getGeneralTableEnvironment(executionEnvironment, tableConfig)
   }
 
   /**
-    * Returns a [[GeneralStreamTableEnvironment]] for a Java [[JavaStreamExecEnv]].
+    * Returns a [[StreamTableEnvironment]] for a Java [[JavaStreamExecEnv]].
     *
     * @param executionEnvironment The Java StreamExecutionEnvironment.
     */
   def getTableEnvironment(executionEnvironment: JavaStreamExecEnv)
-  : GeneralStreamTableEnvironment = {
+  : StreamTableEnvironment = {
     getGeneralTableEnvironment(executionEnvironment, new TableConfig())
   }
 
   /**
-    * Returns a [[GeneralStreamTableEnvironment]] for a Java [[JavaStreamExecEnv]]
+    * Returns a [[StreamTableEnvironment]] for a Java [[JavaStreamExecEnv]]
     * and a given [[TableConfig]].
     *
     * @param executionEnvironment The Java StreamExecutionEnvironment.
@@ -1317,30 +1317,30 @@ object TableEnvironment {
     */
   def getTableEnvironment(
     executionEnvironment: JavaStreamExecEnv,
-    tableConfig: TableConfig): GeneralStreamTableEnvironment = {
+    tableConfig: TableConfig): StreamTableEnvironment = {
 
     getGeneralTableEnvironment(executionEnvironment, tableConfig)
   }
 
   /**
-    * Returns a [[GeneralStreamTableEnvironment]] for a Scala stream [[ScalaStreamExecEnv]].
+    * Returns a [[StreamTableEnvironment]] for a Scala stream [[ScalaStreamExecEnv]].
     *
     * @param executionEnvironment The Scala StreamExecutionEnvironment.
     */
   def getTableEnvironment(executionEnvironment: ScalaStreamExecEnv)
-  : GeneralStreamTableEnvironment = {
+  : StreamTableEnvironment = {
     getGeneralTableEnvironment(executionEnvironment, new TableConfig())
   }
 
   /**
-    * Returns a [[GeneralStreamTableEnvironment]] for a Scala stream [[ScalaStreamExecEnv]].
+    * Returns a [[StreamTableEnvironment]] for a Scala stream [[ScalaStreamExecEnv]].
     *
     * @param executionEnvironment The Scala StreamExecutionEnvironment.
     * @param tableConfig The TableConfig for the new TableEnvironment.
     */
   def getTableEnvironment(
     executionEnvironment: ScalaStreamExecEnv,
-    tableConfig: TableConfig): GeneralStreamTableEnvironment = {
+    tableConfig: TableConfig): StreamTableEnvironment = {
 
     getGeneralTableEnvironment(executionEnvironment, tableConfig)
   }
@@ -1409,60 +1409,60 @@ object TableEnvironment {
   }
 
   def getGeneralTableEnvironment(executionEnvironment: JavaBatchExecEnv)
-  : GeneralBatchTableEnvironment = {
-    new GeneralBatchTableEnvironment(executionEnvironment, new TableConfig)
+  : BatchTableEnvironment = {
+    new BatchTableEnvironment(executionEnvironment, new TableConfig)
   }
 
   def getGeneralTableEnvironment(executionEnvironment: ScalaBatchExecEnv)
-  : GeneralBatchTableEnvironment = {
-    new GeneralBatchTableEnvironment(executionEnvironment, new TableConfig)
+  : BatchTableEnvironment = {
+    new BatchTableEnvironment(executionEnvironment, new TableConfig)
   }
 
   def getGeneralTableEnvironment(executionEnvironment: JavaStreamExecEnv)
-  : GeneralStreamTableEnvironment = {
-    new GeneralStreamTableEnvironment(executionEnvironment, new TableConfig)
+  : StreamTableEnvironment = {
+    new StreamTableEnvironment(executionEnvironment, new TableConfig)
   }
 
   def getGeneralTableEnvironment(executionEnvironment: ScalaStreamExecEnv)
-  : GeneralStreamTableEnvironment = {
-    new GeneralStreamTableEnvironment(executionEnvironment, new TableConfig)
+  : StreamTableEnvironment = {
+    new StreamTableEnvironment(executionEnvironment, new TableConfig)
   }
 
   def getGeneralTableEnvironment(executionEnvironment: JavaBatchExecEnv, config: TableConfig)
-  : GeneralBatchTableEnvironment = {
-    new GeneralBatchTableEnvironment(executionEnvironment, config)
+  : BatchTableEnvironment = {
+    new BatchTableEnvironment(executionEnvironment, config)
   }
 
   def getGeneralTableEnvironment(executionEnvironment: ScalaBatchExecEnv, config: TableConfig)
-  : GeneralBatchTableEnvironment = {
-    new GeneralBatchTableEnvironment(executionEnvironment, config)
+  : BatchTableEnvironment = {
+    new BatchTableEnvironment(executionEnvironment, config)
   }
 
   def getGeneralTableEnvironment(executionEnvironment: JavaStreamExecEnv, config: TableConfig)
-  : GeneralStreamTableEnvironment = {
-    new GeneralStreamTableEnvironment(executionEnvironment, config)
+  : StreamTableEnvironment = {
+    new StreamTableEnvironment(executionEnvironment, config)
   }
 
   def getGeneralTableEnvironment(executionEnvironment: ScalaStreamExecEnv, config: TableConfig)
-  : GeneralStreamTableEnvironment = {
-    new GeneralStreamTableEnvironment(executionEnvironment, config)
+  : StreamTableEnvironment = {
+    new StreamTableEnvironment(executionEnvironment, config)
   }
 
   def getStreamGeneralTableEnvironment(config: TableConfig)
-  : GeneralStreamTableEnvironment = {
+  : StreamTableEnvironment = {
     getGeneralTableEnvironment(ScalaStreamExecEnv.getExecutionEnvironment, config)
   }
 
   def getBatchGeneralTableEnvironment(config: TableConfig)
-  : GeneralBatchTableEnvironment = {
+  : BatchTableEnvironment = {
     getGeneralTableEnvironment(ScalaBatchExecEnv.getExecutionEnvironment, config)
   }
 
-  def getStreamGeneralTableEnvironment: GeneralStreamTableEnvironment = {
+  def getStreamGeneralTableEnvironment: StreamTableEnvironment = {
     getGeneralTableEnvironment(ScalaStreamExecEnv.getExecutionEnvironment, new TableConfig)
   }
 
-  def getBatchGeneralTableEnvironment: GeneralBatchTableEnvironment = {
+  def getBatchGeneralTableEnvironment: BatchTableEnvironment = {
     getGeneralTableEnvironment(ScalaBatchExecEnv.getExecutionEnvironment, new TableConfig)
   }
 }

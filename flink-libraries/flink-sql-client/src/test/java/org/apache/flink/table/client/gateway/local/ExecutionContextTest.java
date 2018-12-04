@@ -23,7 +23,7 @@ import org.apache.flink.api.common.restartstrategy.RestartStrategies;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.client.cli.DefaultCLI;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.table.api.GeneralStreamTableEnvironment;
+import org.apache.flink.table.api.StreamTableEnvironment;
 import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.Types;
 import org.apache.flink.table.client.config.Environment;
@@ -134,7 +134,7 @@ public class ExecutionContextTest {
 			new HashSet<>(Arrays.asList("EnrichmentSource", "HistorySource")),
 			context.getTableSources().keySet());
 
-		final GeneralStreamTableEnvironment tableEnv = (GeneralStreamTableEnvironment) context.createEnvironmentInstance().getTableEnvironment();
+		final StreamTableEnvironment tableEnv = (StreamTableEnvironment) context.createEnvironmentInstance().getTableEnvironment();
 
 		assertArrayEquals(
 			new String[]{"EnrichmentSource", "HistorySource", "HistoryView", "TemporalTableUsage"},

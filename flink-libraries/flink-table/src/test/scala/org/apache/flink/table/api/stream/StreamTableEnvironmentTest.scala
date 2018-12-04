@@ -27,7 +27,7 @@ import org.apache.flink.streaming.api.TimeCharacteristic
 import org.apache.flink.streaming.api.datastream.DataStream
 import org.apache.flink.streaming.api.environment.{StreamExecutionEnvironment => JStreamExecEnv}
 import org.apache.flink.table.api.scala._
-import org.apache.flink.table.api.{GeneralStreamTableEnvironment, TableEnvironment, Types}
+import org.apache.flink.table.api.{StreamTableEnvironment, TableEnvironment, Types}
 import org.apache.flink.table.utils.TableTestUtil.{binaryNode, streamTableNode, term, unaryNode}
 import org.apache.flink.table.utils.TableTestBase
 import org.junit.Test
@@ -170,12 +170,12 @@ class StreamTableEnvironmentTest extends TableTestBase {
   }
 
   private def prepareSchemaExpressionParser:
-    (GeneralStreamTableEnvironment, DataStream[JTuple5[JLong, JInt, String, JInt, JLong]]) = {
+    (StreamTableEnvironment, DataStream[JTuple5[JLong, JInt, String, JInt, JLong]]) = {
 
     val jStreamExecEnv = mock(classOf[JStreamExecEnv])
     when(jStreamExecEnv.getStreamTimeCharacteristic).thenReturn(TimeCharacteristic.EventTime)
     val jTEnv = TableEnvironment.getTableEnvironment(jStreamExecEnv)
-      .asInstanceOf[GeneralStreamTableEnvironment]
+      .asInstanceOf[StreamTableEnvironment]
 
     val sType = new TupleTypeInfo(Types.LONG, Types.INT, Types.STRING, Types.INT, Types.LONG)
       .asInstanceOf[TupleTypeInfo[JTuple5[JLong, JInt, String, JInt, JLong]]]
