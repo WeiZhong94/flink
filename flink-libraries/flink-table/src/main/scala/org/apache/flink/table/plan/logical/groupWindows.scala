@@ -18,7 +18,7 @@
 
 package org.apache.flink.table.plan.logical
 
-import org.apache.flink.table.api.{BatchTableEnvironment, StreamTableEnvironment, TableEnvironment}
+import org.apache.flink.table.api.{BatchTableEnvironment, StreamTableEnvironment, AbstractTableEnvironment}
 import org.apache.flink.table.expressions.ExpressionUtils.{isRowCountLiteral, isRowtimeAttribute, isTimeAttribute, isTimeIntervalLiteral}
 import org.apache.flink.table.expressions._
 import org.apache.flink.table.typeutils.TypeCheckUtils.{isTimePoint, isLong}
@@ -42,7 +42,7 @@ case class TumblingGroupWindow(
       resolve(timeField),
       resolve(size))
 
-  override def validate(tableEnv: TableEnvironment): ValidationResult =
+  override def validate(tableEnv: AbstractTableEnvironment): ValidationResult =
     super.validate(tableEnv).orElse(
       tableEnv match {
 
@@ -96,7 +96,7 @@ case class SlidingGroupWindow(
       resolve(size),
       resolve(slide))
 
-  override def validate(tableEnv: TableEnvironment): ValidationResult =
+  override def validate(tableEnv: AbstractTableEnvironment): ValidationResult =
     super.validate(tableEnv).orElse(
       tableEnv match {
 
@@ -158,7 +158,7 @@ case class SessionGroupWindow(
       resolve(timeField),
       resolve(gap))
 
-  override def validate(tableEnv: TableEnvironment): ValidationResult =
+  override def validate(tableEnv: AbstractTableEnvironment): ValidationResult =
     super.validate(tableEnv).orElse(
       tableEnv match {
 

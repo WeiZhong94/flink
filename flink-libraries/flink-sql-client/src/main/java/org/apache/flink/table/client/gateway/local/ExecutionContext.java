@@ -38,11 +38,12 @@ import org.apache.flink.runtime.jobgraph.JobGraph;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.graph.StreamGraph;
+import org.apache.flink.table.api.AbstractTableEnvironment;
 import org.apache.flink.table.api.BatchQueryConfig;
 import org.apache.flink.table.api.BatchTableEnvironment;
-import org.apache.flink.table.api.StreamTableEnvironment;
 import org.apache.flink.table.api.QueryConfig;
 import org.apache.flink.table.api.StreamQueryConfig;
+import org.apache.flink.table.api.StreamTableEnvironment;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.client.config.Environment;
@@ -268,7 +269,7 @@ public class ExecutionContext<T> {
 		private final QueryConfig queryConfig;
 		private final ExecutionEnvironment execEnv;
 		private final StreamExecutionEnvironment streamExecEnv;
-		private final TableEnvironment tableEnv;
+		private final AbstractTableEnvironment tableEnv;
 
 		private EnvironmentInstance() {
 			// create environments
@@ -322,7 +323,7 @@ public class ExecutionContext<T> {
 			return streamExecEnv;
 		}
 
-		public TableEnvironment getTableEnvironment() {
+		public AbstractTableEnvironment getTableEnvironment() {
 			return tableEnv;
 		}
 

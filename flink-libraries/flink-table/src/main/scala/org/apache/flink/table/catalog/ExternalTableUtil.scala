@@ -41,7 +41,7 @@ object ExternalTableUtil extends Logging {
     * @return converted [[TableSourceTable]] instance from the input catalog table
     */
   def fromExternalCatalogTable[T1, T2](
-      tableEnv: TableEnvironment,
+      tableEnv: AbstractTableEnvironment,
       externalTable: ExternalCatalogTable)
     : TableSourceSinkTable[T1, T2] = {
 
@@ -63,7 +63,7 @@ object ExternalTableUtil extends Logging {
   }
 
   private def createTableSource[T](
-      tableEnv: TableEnvironment,
+      tableEnv: AbstractTableEnvironment,
       externalTable: ExternalCatalogTable,
       statistics: FlinkStatistic)
     : TableSourceTable[T] = tableEnv match {
@@ -82,7 +82,7 @@ object ExternalTableUtil extends Logging {
   }
 
   private def createTableSink[T](
-      tableEnv: TableEnvironment,
+      tableEnv: AbstractTableEnvironment,
       externalTable: ExternalCatalogTable,
       statistics: FlinkStatistic)
     : TableSinkTable[T] = tableEnv match {
