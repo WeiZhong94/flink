@@ -15,379 +15,62 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.flink.table.api
 
+import _root_.java.lang.{Boolean => JBool}
 import _root_.java.lang.reflect.Modifier
-import _root_.java.util.concurrent.atomic.AtomicInteger
 
-import com.google.common.collect.ImmutableList
-import org.apache.calcite.config.Lex
-import org.apache.calcite.jdbc.CalciteSchema
-import org.apache.calcite.plan.RelOptPlanner.CannotPlanException
-import org.apache.calcite.plan.hep.{HepMatchOrder, HepPlanner, HepProgram, HepProgramBuilder}
-import org.apache.calcite.plan.{Convention, RelOptPlanner, RelOptUtil, RelTraitSet}
-import org.apache.calcite.rel.RelNode
-import org.apache.calcite.schema.SchemaPlus
-import org.apache.calcite.schema.impl.AbstractTable
-import org.apache.calcite.sql._
-import org.apache.calcite.sql.parser.SqlParser
-import org.apache.calcite.sql.util.ChainedSqlOperatorTable
-import org.apache.calcite.sql2rel.SqlToRelConverter
-import org.apache.calcite.tools._
-import org.apache.flink.api.common.functions.MapFunction
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.common.typeutils.CompositeType
-import org.apache.flink.api.java.typeutils.{RowTypeInfo, _}
 import org.apache.flink.api.java.{ExecutionEnvironment => JavaBatchExecEnv}
-import org.apache.flink.api.scala.typeutils.CaseClassTypeInfo
-import org.apache.flink.api.scala.{ExecutionEnvironment => ScalaBatchExecEnv}
+import org.apache.flink.api.java.DataSet
+import org.apache.flink.api.java.tuple.{Tuple2 => JTuple2}
+import org.apache.flink.api.scala.{DataSet => ScalaDataSet, ExecutionEnvironment => ScalaBatchExecEnv}
+import org.apache.flink.streaming.api.datastream.DataStream
 import org.apache.flink.streaming.api.environment.{StreamExecutionEnvironment => JavaStreamExecEnv}
-import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment => ScalaStreamExecEnv}
-import org.apache.flink.table.calcite.{FlinkPlannerImpl, FlinkRelBuilder, FlinkTypeFactory, FlinkTypeSystem}
-import org.apache.flink.table.catalog.{ExternalCatalog, ExternalCatalogSchema}
-import org.apache.flink.table.codegen.{ExpressionReducer, FunctionCodeGenerator, GeneratedFunction}
-import org.apache.flink.table.descriptors.{ConnectorDescriptor, TableDescriptor}
-import org.apache.flink.table.expressions._
-import org.apache.flink.table.functions.utils.UserDefinedFunctionUtils._
+import org.apache.flink.streaming.api.scala.{DataStream => ScalaDataStream, StreamExecutionEnvironment => ScalaStreamExecEnv}
+import org.apache.flink.table.catalog.ExternalCatalog
+import org.apache.flink.table.descriptors.{BatchTableDescriptor, ConnectorDescriptor, StreamTableDescriptor, TableDescriptor}
+import org.apache.flink.table.expressions.Expression
 import org.apache.flink.table.functions.{AggregateFunction, ScalarFunction, TableFunction}
-import org.apache.flink.table.plan.cost.DataSetCostFactory
-import org.apache.flink.table.plan.logical.{CatalogNode, LogicalRelNode}
-import org.apache.flink.table.plan.nodes.FlinkConventions
-import org.apache.flink.table.plan.rules.FlinkRuleSets
-import org.apache.flink.table.plan.schema.{RelTable, RowSchema, TableSourceSinkTable}
 import org.apache.flink.table.sinks.TableSink
 import org.apache.flink.table.sources.TableSource
-import org.apache.flink.table.typeutils.TimeIndicatorTypeInfo
-import org.apache.flink.table.validate.FunctionCatalog
-import org.apache.flink.types.Row
 
 import _root_.scala.annotation.varargs
-import _root_.scala.collection.JavaConverters._
-import _root_.scala.collection.mutable
 
-/**
-  * The abstract base class for batch and stream TableEnvironments.
-  *
-  * @param config The configuration of the TableEnvironment
-  */
-abstract class TableEnvironment(val config: TableConfig) {
+class TableEnvironment private{
+  private var config: TableConfig = _
+  private[flink] var isStream: Boolean = false
+  private[flink] var streamEnv: StreamTableEnvironment = _
+  private[flink] var batchEnv: BatchTableEnvironment = _
 
-  // the catalog to hold all registered and translated tables
-  // we disable caching here to prevent side effects
-  private val internalSchema: CalciteSchema = CalciteSchema.createRootSchema(false, false)
-  private val rootSchema: SchemaPlus = internalSchema.plus()
-
-  // Table API/SQL function catalog
-  private[flink] val functionCatalog: FunctionCatalog = FunctionCatalog.withBuiltIns
-
-  // the configuration to create a Calcite planner
-  private lazy val frameworkConfig: FrameworkConfig = Frameworks
-    .newConfigBuilder
-    .defaultSchema(rootSchema)
-    .parserConfig(getSqlParserConfig)
-    .costFactory(new DataSetCostFactory)
-    .typeSystem(new FlinkTypeSystem)
-    .operatorTable(getSqlOperatorTable)
-    .sqlToRelConverterConfig(getSqlToRelConverterConfig)
-    // set the executor to evaluate constant expressions
-    .executor(new ExpressionReducer(config))
-    .build
-
-  // the builder for Calcite RelNodes, Calcite's representation of a relational expression tree.
-  protected lazy val relBuilder: FlinkRelBuilder = FlinkRelBuilder.create(frameworkConfig)
-
-  // the planner instance used to optimize queries of this TableEnvironment
-  private lazy val planner: RelOptPlanner = relBuilder.getPlanner
-
-  private lazy val typeFactory: FlinkTypeFactory = relBuilder.getTypeFactory
-
-  // a counter for unique attribute names
-  private[flink] val attrNameCntr: AtomicInteger = new AtomicInteger(0)
-
-  // registered external catalog names -> catalog
-  private val externalCatalogs = new mutable.HashMap[String, ExternalCatalog]
-
-  /** Returns the table config to define the runtime behavior of the Table API. */
-  def getConfig: TableConfig = config
-
-  /** Returns the [[QueryConfig]] depends on the concrete type of this TableEnvironment. */
-  private[flink] def queryConfig: QueryConfig = this match {
-    case _: BatchTableEnvironment => new BatchQueryConfig
-    case _: StreamTableEnvironment => new StreamQueryConfig
-    case _ => null
+  def this(env: ScalaBatchExecEnv, config: TableConfig) = {
+    this()
+    this.config = config
+    batchEnv = new BatchTableEnvironment(env, config)
+    isStream = false
   }
 
-  /**
-    * Returns the SqlToRelConverter config.
-    */
-  protected def getSqlToRelConverterConfig: SqlToRelConverter.Config = {
-    val calciteConfig = config.getCalciteConfig
-    calciteConfig.getSqlToRelConverterConfig match {
-
-      case None =>
-        SqlToRelConverter.configBuilder()
-          .withTrimUnusedFields(false)
-          .withConvertTableAccess(false)
-          .withInSubQueryThreshold(Integer.MAX_VALUE)
-          .build()
-
-      case Some(c) => c
-    }
+  def this(env: ScalaStreamExecEnv, config: TableConfig) = {
+    this()
+    this.config = config
+    streamEnv = new StreamTableEnvironment(env, config)
+    isStream = true
   }
 
-  /**
-    * Returns the operator table for this environment including a custom Calcite configuration.
-    */
-  protected def getSqlOperatorTable: SqlOperatorTable = {
-    val calciteConfig = config.getCalciteConfig
-    calciteConfig.getSqlOperatorTable match {
-
-      case None =>
-        functionCatalog.getSqlOperatorTable
-
-      case Some(table) =>
-        if (calciteConfig.replacesSqlOperatorTable) {
-          table
-        } else {
-          ChainedSqlOperatorTable.of(functionCatalog.getSqlOperatorTable, table)
-        }
-    }
+  def this(env: JavaBatchExecEnv, config: TableConfig) = {
+    this()
+    this.config = config
+    batchEnv = new BatchTableEnvironment(env, config)
+    isStream = false
   }
 
-  /**
-    * Returns the normalization rule set for this environment
-    * including a custom RuleSet configuration.
-    */
-  protected def getNormRuleSet: RuleSet = {
-    val calciteConfig = config.getCalciteConfig
-    calciteConfig.getNormRuleSet match {
-
-      case None =>
-        getBuiltInNormRuleSet
-
-      case Some(ruleSet) =>
-        if (calciteConfig.replacesNormRuleSet) {
-          ruleSet
-        } else {
-          RuleSets.ofList((getBuiltInNormRuleSet.asScala ++ ruleSet.asScala).asJava)
-        }
-    }
-  }
-
-  /**
-    * Returns the logical optimization rule set for this environment
-    * including a custom RuleSet configuration.
-    */
-  protected def getLogicalOptRuleSet: RuleSet = {
-    val calciteConfig = config.getCalciteConfig
-    calciteConfig.getLogicalOptRuleSet match {
-
-      case None =>
-        getBuiltInLogicalOptRuleSet
-
-      case Some(ruleSet) =>
-        if (calciteConfig.replacesLogicalOptRuleSet) {
-          ruleSet
-        } else {
-          RuleSets.ofList((getBuiltInLogicalOptRuleSet.asScala ++ ruleSet.asScala).asJava)
-        }
-    }
-  }
-
-  /**
-    * Returns the physical optimization rule set for this environment
-    * including a custom RuleSet configuration.
-    */
-  protected def getPhysicalOptRuleSet: RuleSet = {
-    val calciteConfig = config.getCalciteConfig
-    calciteConfig.getPhysicalOptRuleSet match {
-
-      case None =>
-        getBuiltInPhysicalOptRuleSet
-
-      case Some(ruleSet) =>
-        if (calciteConfig.replacesPhysicalOptRuleSet) {
-          ruleSet
-        } else {
-          RuleSets.ofList((getBuiltInPhysicalOptRuleSet.asScala ++ ruleSet.asScala).asJava)
-        }
-    }
-  }
-
-  /**
-    * Returns the SQL parser config for this environment including a custom Calcite configuration.
-    */
-  protected def getSqlParserConfig: SqlParser.Config = {
-    val calciteConfig = config.getCalciteConfig
-    calciteConfig.getSqlParserConfig match {
-
-      case None =>
-        // we use Java lex because back ticks are easier than double quotes in programming
-        // and cases are preserved
-        SqlParser
-          .configBuilder()
-          .setLex(Lex.JAVA)
-          .build()
-
-      case Some(sqlParserConfig) =>
-        sqlParserConfig
-    }
-  }
-
-  /**
-    * Returns the built-in normalization rules that are defined by the environment.
-    */
-  protected def getBuiltInNormRuleSet: RuleSet
-
-  /**
-    * Returns the built-in logical optimization rules that are defined by the environment.
-    */
-  protected def getBuiltInLogicalOptRuleSet: RuleSet = {
-    FlinkRuleSets.LOGICAL_OPT_RULES
-  }
-
-  /**
-    * Returns the built-in physical optimization rules that are defined by the environment.
-    */
-  protected def getBuiltInPhysicalOptRuleSet: RuleSet
-
-  protected def optimizeConvertSubQueries(relNode: RelNode): RelNode = {
-    runHepPlannerSequentially(
-      HepMatchOrder.BOTTOM_UP,
-      FlinkRuleSets.TABLE_SUBQUERY_RULES,
-      relNode,
-      relNode.getTraitSet)
-  }
-
-  protected def optimizeExpandPlan(relNode: RelNode): RelNode = {
-    val result = runHepPlannerSimultaneously(
-      HepMatchOrder.TOP_DOWN,
-      FlinkRuleSets.EXPAND_PLAN_RULES,
-      relNode,
-      relNode.getTraitSet)
-
-    runHepPlannerSequentially(
-      HepMatchOrder.TOP_DOWN,
-      FlinkRuleSets.POST_EXPAND_CLEAN_UP_RULES,
-      result,
-      result.getTraitSet)
-  }
-
-  protected def optimizeNormalizeLogicalPlan(relNode: RelNode): RelNode = {
-    val normRuleSet = getNormRuleSet
-    if (normRuleSet.iterator().hasNext) {
-      runHepPlannerSequentially(HepMatchOrder.BOTTOM_UP, normRuleSet, relNode, relNode.getTraitSet)
+  def getActualTableEnviroment: AbstractTableEnvironment = {
+    if (isStream) {
+      streamEnv
     } else {
-      relNode
+      batchEnv
     }
-  }
-
-  protected def optimizeLogicalPlan(relNode: RelNode): RelNode = {
-    val logicalOptRuleSet = getLogicalOptRuleSet
-    val logicalOutputProps = relNode.getTraitSet.replace(FlinkConventions.LOGICAL).simplify()
-    if (logicalOptRuleSet.iterator().hasNext) {
-      runVolcanoPlanner(logicalOptRuleSet, relNode, logicalOutputProps)
-    } else {
-      relNode
-    }
-  }
-
-  protected def optimizePhysicalPlan(relNode: RelNode, convention: Convention): RelNode = {
-    val physicalOptRuleSet = getPhysicalOptRuleSet
-    val physicalOutputProps = relNode.getTraitSet.replace(convention).simplify()
-    if (physicalOptRuleSet.iterator().hasNext) {
-      runVolcanoPlanner(physicalOptRuleSet, relNode, physicalOutputProps)
-    } else {
-      relNode
-    }
-  }
-
-  /**
-    * run HEP planner with rules applied one by one. First apply one rule to all of the nodes
-    * and only then apply the next rule. If a rule creates a new node preceding rules will not
-    * be applied to the newly created node.
-    */
-  protected def runHepPlannerSequentially(
-    hepMatchOrder: HepMatchOrder,
-    ruleSet: RuleSet,
-    input: RelNode,
-    targetTraits: RelTraitSet): RelNode = {
-
-    val builder = new HepProgramBuilder
-    builder.addMatchOrder(hepMatchOrder)
-
-    val it = ruleSet.iterator()
-    while (it.hasNext) {
-      builder.addRuleInstance(it.next())
-    }
-    runHepPlanner(builder.build(), input, targetTraits)
-  }
-
-  /**
-    * run HEP planner with rules applied simultaneously. Apply all of the rules to the given
-    * node before going to the next one. If a rule creates a new node all of the rules will
-    * be applied to this new node.
-    */
-  protected def runHepPlannerSimultaneously(
-    hepMatchOrder: HepMatchOrder,
-    ruleSet: RuleSet,
-    input: RelNode,
-    targetTraits: RelTraitSet): RelNode = {
-
-    val builder = new HepProgramBuilder
-    builder.addMatchOrder(hepMatchOrder)
-
-    builder.addRuleCollection(ruleSet.asScala.toList.asJava)
-    runHepPlanner(builder.build(), input, targetTraits)
-  }
-
-  /**
-    * run HEP planner
-    */
-  protected def runHepPlanner(
-    hepProgram: HepProgram,
-    input: RelNode,
-    targetTraits: RelTraitSet): RelNode = {
-
-    val planner = new HepPlanner(hepProgram, frameworkConfig.getContext)
-    planner.setRoot(input)
-    if (input.getTraitSet != targetTraits) {
-      planner.changeTraits(input, targetTraits.simplify)
-    }
-    planner.findBestExp
-  }
-
-  /**
-    * run VOLCANO planner
-    */
-  protected def runVolcanoPlanner(
-    ruleSet: RuleSet,
-    input: RelNode,
-    targetTraits: RelTraitSet): RelNode = {
-    val optProgram = Programs.ofRules(ruleSet)
-
-    val output = try {
-      optProgram.run(getPlanner, input, targetTraits,
-        ImmutableList.of(), ImmutableList.of())
-    } catch {
-      case e: CannotPlanException =>
-        throw new TableException(
-          s"Cannot generate a valid execution plan for the given query: \n\n" +
-            s"${RelOptUtil.toString(input)}\n" +
-            s"This exception indicates that the query uses an unsupported SQL feature.\n" +
-            s"Please check the documentation for the set of currently supported SQL features.")
-      case t: TableException =>
-        throw new TableException(
-          s"Cannot generate a valid execution plan for the given query: \n\n" +
-            s"${RelOptUtil.toString(input)}\n" +
-            s"${t.getMessage}\n" +
-            s"Please check the documentation for the set of currently supported SQL features.")
-      case a: AssertionError =>
-        // keep original exception stack for caller
-        throw a
-    }
-    output
   }
 
   /**
@@ -396,9 +79,11 @@ abstract class TableEnvironment(val config: TableConfig) {
     * @param source table source used as table
     */
   def fromTableSource(source: TableSource[_]): Table = {
-    val name = createUniqueTableName()
-    registerTableSourceInternal(name, source)
-    scan(name)
+    if (isStream) {
+      streamEnv.fromTableSource(source)
+    } else {
+      batchEnv.fromTableSource(source)
+    }
   }
 
   /**
@@ -409,13 +94,13 @@ abstract class TableEnvironment(val config: TableConfig) {
     * @param externalCatalog The externalCatalog to register
     */
   def registerExternalCatalog(name: String, externalCatalog: ExternalCatalog): Unit = {
-    if (rootSchema.getSubSchema(name) != null) {
-      throw new ExternalCatalogAlreadyExistException(name)
+    if (isStream) {
+      streamEnv.registerExternalCatalog(name, externalCatalog)
+    } else {
+      batchEnv.registerExternalCatalog(name, externalCatalog)
     }
-    this.externalCatalogs.put(name, externalCatalog)
-    // create an external catalog Calcite schema, register it on the root schema
-    ExternalCatalogSchema.registerCatalog(this, rootSchema, name, externalCatalog)
   }
+
 
   /**
     * Gets a registered [[ExternalCatalog]] by name.
@@ -424,9 +109,10 @@ abstract class TableEnvironment(val config: TableConfig) {
     * @return The [[ExternalCatalog]]
     */
   def getRegisteredExternalCatalog(name: String): ExternalCatalog = {
-    this.externalCatalogs.get(name) match {
-      case Some(catalog) => catalog
-      case None => throw new ExternalCatalogNotExistException(name)
+    if (isStream) {
+      streamEnv.getRegisteredExternalCatalog(name)
+    } else {
+      batchEnv.getRegisteredExternalCatalog(name)
     }
   }
 
@@ -435,76 +121,11 @@ abstract class TableEnvironment(val config: TableConfig) {
     * user-defined functions under this name.
     */
   def registerFunction(name: String, function: ScalarFunction): Unit = {
-    // check if class could be instantiated
-    checkForInstantiation(function.getClass)
-
-    // register in Table API
-
-    functionCatalog.registerFunction(name, function.getClass)
-
-    // register in SQL API
-    functionCatalog.registerSqlFunction(
-      createScalarSqlFunction(name, name, function, typeFactory)
-    )
-  }
-
-  /**
-    * Registers a [[TableFunction]] under a unique name. Replaces already existing
-    * user-defined functions under this name.
-    */
-  private[flink] def registerTableFunctionInternal[T: TypeInformation](
-    name: String, function: TableFunction[T]): Unit = {
-    // check if class not Scala object
-    checkNotSingleton(function.getClass)
-    // check if class could be instantiated
-    checkForInstantiation(function.getClass)
-
-    val typeInfo: TypeInformation[_] = if (function.getResultType != null) {
-      function.getResultType
+    if (isStream) {
+      streamEnv.registerFunction(name, function)
     } else {
-      implicitly[TypeInformation[T]]
+      batchEnv.registerFunction(name, function)
     }
-
-    // register in Table API
-    functionCatalog.registerFunction(name, function.getClass)
-
-    // register in SQL API
-    val sqlFunction = createTableSqlFunction(name, name, function, typeInfo, typeFactory)
-    functionCatalog.registerSqlFunction(sqlFunction)
-  }
-
-  /**
-    * Registers an [[AggregateFunction]] under a unique name. Replaces already existing
-    * user-defined functions under this name.
-    */
-  private[flink] def registerAggregateFunctionInternal[T: TypeInformation, ACC: TypeInformation](
-      name: String, function: AggregateFunction[T, ACC]): Unit = {
-    // check if class not Scala object
-    checkNotSingleton(function.getClass)
-    // check if class could be instantiated
-    checkForInstantiation(function.getClass)
-
-    val resultTypeInfo: TypeInformation[_] = getResultTypeOfAggregateFunction(
-      function,
-      implicitly[TypeInformation[T]])
-
-    val accTypeInfo: TypeInformation[_] = getAccumulatorTypeOfAggregateFunction(
-      function,
-      implicitly[TypeInformation[ACC]])
-
-    // register in Table API
-    functionCatalog.registerFunction(name, function.getClass)
-
-    // register in SQL API
-    val sqlFunctions = createAggregateSqlFunction(
-      name,
-      name,
-      function,
-      resultTypeInfo,
-      accTypeInfo,
-      typeFactory)
-
-    functionCatalog.registerSqlFunction(sqlFunctions)
   }
 
   /**
@@ -515,42 +136,31 @@ abstract class TableEnvironment(val config: TableConfig) {
     * @param table The table to register.
     */
   def registerTable(name: String, table: Table): Unit = {
-
-    // check that table belongs to this table environment
-    if (table.tableEnv != this) {
-      throw new TableException(
-        "Only tables that belong to this TableEnvironment can be registered.")
+    if (isStream) {
+      streamEnv.registerTable(name, table)
+    } else {
+      batchEnv.registerTable(name, table)
     }
-
-    checkValidTableName(name)
-    val tableTable = new RelTable(table.getRelNode)
-    registerTableInternal(name, tableTable)
   }
 
   /**
-    * Registers an external [[TableSource]] in this [[TableEnvironment]]'s catalog.
+    * Registers an external [[TableSource]] in this [[AbstractTableEnvironment]]'s catalog.
     * Registered tables can be referenced in SQL queries.
     *
     * @param name        The name under which the [[TableSource]] is registered.
     * @param tableSource The [[TableSource]] to register.
     */
   def registerTableSource(name: String, tableSource: TableSource[_]): Unit = {
-    checkValidTableName(name)
-    registerTableSourceInternal(name, tableSource)
+    if (isStream) {
+      streamEnv.registerTableSource(name, tableSource)
+    } else {
+      batchEnv.registerTableSource(name, tableSource)
+    }
   }
 
   /**
-    * Registers an internal [[TableSource]] in this [[TableEnvironment]]'s catalog without
-    * name checking. Registered tables can be referenced in SQL queries.
-    *
-    * @param name        The name under which the [[TableSource]] is registered.
-    * @param tableSource The [[TableSource]] to register.
-    */
-  protected def registerTableSourceInternal(name: String, tableSource: TableSource[_]): Unit
-
-  /**
     * Registers an external [[TableSink]] with given field names and types in this
-    * [[TableEnvironment]]'s catalog.
+    * [[AbstractTableEnvironment]]'s catalog.
     * Registered sink tables can be referenced in SQL DML statements.
     *
     * @param name The name under which the [[TableSink]] is registered.
@@ -562,32 +172,27 @@ abstract class TableEnvironment(val config: TableConfig) {
       name: String,
       fieldNames: Array[String],
       fieldTypes: Array[TypeInformation[_]],
-      tableSink: TableSink[_]): Unit
+      tableSink: TableSink[_]): Unit = {
+    if (isStream) {
+      streamEnv.registerTableSink(name, fieldNames, fieldTypes, tableSink)
+    } else {
+      batchEnv.registerTableSink(name, fieldNames, fieldTypes, tableSink)
+    }
+  }
 
   /**
     * Registers an external [[TableSink]] with already configured field names and field types in
-    * this [[TableEnvironment]]'s catalog.
+    * this [[AbstractTableEnvironment]]'s catalog.
     * Registered sink tables can be referenced in SQL DML statements.
     *
     * @param name The name under which the [[TableSink]] is registered.
     * @param configuredSink The configured [[TableSink]] to register.
     */
-  def registerTableSink(name: String, configuredSink: TableSink[_]): Unit
-
-  /**
-    * Replaces a registered Table with another Table under the same name.
-    * We use this method to replace a [[org.apache.flink.table.plan.schema.DataStreamTable]]
-    * with a [[org.apache.calcite.schema.TranslatableTable]].
-    *
-    * @param name Name of the table to replace.
-    * @param table The table that replaces the previous table.
-    */
-  protected def replaceRegisteredTable(name: String, table: AbstractTable): Unit = {
-
-    if (isRegistered(name)) {
-      rootSchema.add(name, table)
+  def registerTableSink(name: String, configuredSink: TableSink[_]): Unit = {
+    if (isStream) {
+      streamEnv.registerTableSink(name, configuredSink)
     } else {
-      throw new TableException(s"Table \'$name\' is not registered.")
+      batchEnv.registerTableSink(name, configuredSink)
     }
   }
 
@@ -616,9 +221,10 @@ abstract class TableEnvironment(val config: TableConfig) {
   @throws[TableException]
   @varargs
   def scan(tablePath: String*): Table = {
-    scanInternal(tablePath.toArray) match {
-      case Some(table) => table
-      case None => throw new TableException(s"Table '${tablePath.mkString(".")}' was not found.")
+    if (isStream) {
+      streamEnv.scan(tablePath: _*)
+    } else {
+      batchEnv.scan(tablePath: _*)
     }
   }
 
@@ -651,31 +257,28 @@ abstract class TableEnvironment(val config: TableConfig) {
     *
     * @param connectorDescriptor connector descriptor describing the external system
     */
-  def connect(connectorDescriptor: ConnectorDescriptor): TableDescriptor
-
-  private[flink] def scanInternal(tablePath: Array[String]): Option[Table] = {
-    require(tablePath != null && !tablePath.isEmpty, "tablePath must not be null or empty.")
-    val schemaPaths = tablePath.slice(0, tablePath.length - 1)
-    val schema = getSchema(schemaPaths)
-    if (schema != null) {
-      val tableName = tablePath(tablePath.length - 1)
-      val table = schema.getTable(tableName)
-      if (table != null) {
-        return Some(new Table(this, CatalogNode(tablePath, table.getRowType(typeFactory))))
-      }
+  def connect(connectorDescriptor: ConnectorDescriptor): TableDescriptor = {
+    if (isStream) {
+      streamEnv.connect(connectorDescriptor)
+    } else {
+      batchEnv.connect(connectorDescriptor)
     }
-    None
   }
 
-  private def getSchema(schemaPath: Array[String]): SchemaPlus = {
-    var schema = rootSchema
-    for (schemaName <- schemaPath) {
-      schema = schema.getSubSchema(schemaName)
-      if (schema == null) {
-        return schema
-      }
+  def connectForStream(connectorDescriptor: ConnectorDescriptor): StreamTableDescriptor = {
+    if (isStream) {
+      streamEnv.connect(connectorDescriptor)
+    } else {
+      throw new TableException("this method only used in stream mode!")
     }
-    schema
+  }
+
+  def connectForBatch(connectorDescriptor: ConnectorDescriptor): BatchTableDescriptor = {
+    if (isStream) {
+      throw new TableException("this method only used in batch mode!")
+    } else {
+      batchEnv.connect(connectorDescriptor)
+    }
   }
 
   /**
@@ -684,14 +287,22 @@ abstract class TableEnvironment(val config: TableConfig) {
     * @return A list of the names of all registered tables.
     */
   def listTables(): Array[String] = {
-    rootSchema.getTableNames.asScala.toArray
+    if (isStream) {
+      streamEnv.listTables()
+    } else {
+      batchEnv.listTables()
+    }
   }
 
   /**
     * Gets the names of all functions registered in this environment.
     */
   def listUserDefinedFunctions(): Array[String] = {
-    functionCatalog.getUserDefinedFunctions.toArray
+    if (isStream) {
+      streamEnv.listUserDefinedFunctions()
+    } else {
+      batchEnv.listUserDefinedFunctions()
+    }
   }
 
   /**
@@ -700,7 +311,13 @@ abstract class TableEnvironment(val config: TableConfig) {
     *
     * @param table The table for which the AST and execution plan will be returned.
     */
-  def explain(table: Table): String
+  def explain(table: Table): String = {
+    if (isStream) {
+      streamEnv.explain(table)
+    } else {
+      batchEnv.explain(table)
+    }
+  }
 
   /**
     * Returns completion hints for the given statement at the given cursor position.
@@ -711,11 +328,11 @@ abstract class TableEnvironment(val config: TableConfig) {
     * @return completion hints that fit at the current cursor position
     */
   def getCompletionHints(statement: String, position: Int): Array[String] = {
-    val planner = new FlinkPlannerImpl(
-      getFrameworkConfig,
-      getPlanner,
-      getTypeFactory)
-    planner.getCompletionHints(statement, position)
+    if (isStream) {
+      streamEnv.getCompletionHints(statement, position)
+    } else {
+      batchEnv.getCompletionHints(statement, position)
+    }
   }
 
   /**
@@ -736,19 +353,10 @@ abstract class TableEnvironment(val config: TableConfig) {
     * @return The result of the query as Table
     */
   def sqlQuery(query: String): Table = {
-    val planner = new FlinkPlannerImpl(getFrameworkConfig, getPlanner, getTypeFactory)
-    // parse the sql query
-    val parsed = planner.parse(query)
-    if (null != parsed && parsed.getKind.belongsTo(SqlKind.QUERY)) {
-      // validate the sql query
-      val validated = planner.validate(parsed)
-      // transform to a relational tree
-      val relational = planner.rel(validated)
-      new Table(this, LogicalRelNode(relational.rel))
+    if (isStream) {
+      streamEnv.sqlQuery(query)
     } else {
-      throw new TableException(
-        "Unsupported SQL query! sqlQuery() only accepts SQL queries of type " +
-          "SELECT, UNION, INTERSECT, EXCEPT, VALUES, and ORDER_BY.")
+      batchEnv.sqlQuery(query)
     }
   }
 
@@ -772,7 +380,11 @@ abstract class TableEnvironment(val config: TableConfig) {
     * @param stmt The SQL statement to evaluate.
     */
   def sqlUpdate(stmt: String): Unit = {
-    sqlUpdate(stmt, this.queryConfig)
+    if (isStream) {
+      streamEnv.sqlUpdate(stmt)
+    } else {
+      batchEnv.sqlUpdate(stmt)
+    }
   }
 
   /**
@@ -796,452 +408,867 @@ abstract class TableEnvironment(val config: TableConfig) {
     * @param config The [[QueryConfig]] to use.
     */
   def sqlUpdate(stmt: String, config: QueryConfig): Unit = {
-    val planner = new FlinkPlannerImpl(getFrameworkConfig, getPlanner, getTypeFactory)
-    // parse the sql query
-    val parsed = planner.parse(stmt)
-    parsed match {
-      case insert: SqlInsert =>
-        // validate the SQL query
-        val query = insert.getSource
-        val validatedQuery = planner.validate(query)
-
-        // get query result as Table
-        val queryResult = new Table(this, LogicalRelNode(planner.rel(validatedQuery).rel))
-
-        // get name of sink table
-        val targetTableName = insert.getTargetTable.asInstanceOf[SqlIdentifier].names.get(0)
-
-        // insert query result into sink table
-        insertInto(queryResult, targetTableName, config)
-      case _ =>
-        throw new TableException(
-          "Unsupported SQL query! sqlUpdate() only accepts SQL statements of type INSERT.")
-    }
-  }
-
-  /**
-    * Writes a [[Table]] to a [[TableSink]].
-    *
-    * @param table The [[Table]] to write.
-    * @param sink The [[TableSink]] to write the [[Table]] to.
-    * @param conf The [[QueryConfig]] to use.
-    * @tparam T The data type that the [[TableSink]] expects.
-    */
-  private[flink] def writeToSink[T](table: Table, sink: TableSink[T], conf: QueryConfig): Unit
-
-  /**
-    * Writes the [[Table]] to a [[TableSink]] that was registered under the specified name.
-    *
-    * @param table The table to write to the TableSink.
-    * @param sinkTableName The name of the registered TableSink.
-    * @param conf The query configuration to use.
-    */
-  private[flink] def insertInto(table: Table, sinkTableName: String, conf: QueryConfig): Unit = {
-
-    // check that sink table exists
-    if (null == sinkTableName) throw new TableException("Name of TableSink must not be null.")
-    if (sinkTableName.isEmpty) throw new TableException("Name of TableSink must not be empty.")
-
-    getTable(sinkTableName) match {
-
-      case None =>
-        throw new TableException(s"No table was registered under the name $sinkTableName.")
-
-      case Some(s: TableSourceSinkTable[_, _]) if s.tableSinkTable.isDefined =>
-        val tableSink = s.tableSinkTable.get.tableSink
-        // validate schema of source table and table sink
-        val srcFieldTypes = table.getSchema.getFieldTypes
-        val sinkFieldTypes = tableSink.getFieldTypes
-
-        if (srcFieldTypes.length != sinkFieldTypes.length ||
-          srcFieldTypes.zip(sinkFieldTypes).exists { case (srcF, snkF) => srcF != snkF }) {
-
-          val srcFieldNames = table.getSchema.getFieldNames
-          val sinkFieldNames = tableSink.getFieldNames
-
-          // format table and table sink schema strings
-          val srcSchema = srcFieldNames.zip(srcFieldTypes)
-            .map { case (n, t) => s"$n: ${t.getTypeClass.getSimpleName}" }
-            .mkString("[", ", ", "]")
-          val sinkSchema = sinkFieldNames.zip(sinkFieldTypes)
-            .map { case (n, t) => s"$n: ${t.getTypeClass.getSimpleName}" }
-            .mkString("[", ", ", "]")
-
-          throw new ValidationException(
-            s"Field types of query result and registered TableSink " +
-              s"$sinkTableName do not match.\n" +
-              s"Query result schema: $srcSchema\n" +
-              s"TableSink schema:    $sinkSchema")
-        }
-        // emit the table to the configured table sink
-        writeToSink(table, tableSink, conf)
-
-      case Some(_) =>
-        throw new TableException(s"The table registered as $sinkTableName is not a TableSink. " +
-          s"You can only emit query results to a registered TableSink.")
-    }
-  }
-
-  /**
-    * Registers a Calcite [[AbstractTable]] in the TableEnvironment's catalog.
-    *
-    * @param name The name under which the table will be registered.
-    * @param table The table to register in the catalog
-    * @throws TableException if another table is registered under the provided name.
-    */
-  @throws[TableException]
-  protected def registerTableInternal(name: String, table: AbstractTable): Unit = {
-
-    if (isRegistered(name)) {
-      throw new TableException(s"Table \'$name\' already exists. " +
-        s"Please, choose a different name.")
+    if (isStream) {
+      streamEnv.sqlUpdate(stmt, config)
     } else {
-      rootSchema.add(name, table)
-    }
-  }
-
-  /** Returns a unique table name according to the internal naming pattern. */
-  protected def createUniqueTableName(): String
-
-  /**
-    * Checks if the chosen table name is valid.
-    *
-    * @param name The table name to check.
-    */
-  protected def checkValidTableName(name: String): Unit
-
-  /**
-    * Checks if a table is registered under the given name.
-    *
-    * @param name The table name to check.
-    * @return true, if a table is registered under the name, false otherwise.
-    */
-  protected[flink] def isRegistered(name: String): Boolean = {
-    rootSchema.getTableNames.contains(name)
-  }
-
-  /**
-    * Get a table from either internal or external catalogs.
-    *
-    * @param name The name of the table.
-    * @return The table registered either internally or externally, None otherwise.
-    */
-  protected def getTable(name: String): Option[org.apache.calcite.schema.Table] = {
-
-    // recursively fetches a table from a schema.
-    def getTableFromSchema(
-        schema: SchemaPlus,
-        path: List[String]): Option[org.apache.calcite.schema.Table] = {
-
-      path match {
-        case tableName :: Nil =>
-          // look up table
-          Option(schema.getTable(tableName))
-        case subschemaName :: remain =>
-          // look up subschema
-          val subschema = Option(schema.getSubSchema(subschemaName))
-          subschema match {
-            case Some(s) =>
-              // search for table in subschema
-              getTableFromSchema(s, remain)
-            case None =>
-              // subschema does not exist
-              None
-          }
-      }
-    }
-
-    val pathNames = name.split('.').toList
-    getTableFromSchema(rootSchema, pathNames)
-  }
-
-  /** Returns a unique temporary attribute name. */
-  private[flink] def createUniqueAttributeName(): String = {
-    "TMP_" + attrNameCntr.getAndIncrement()
-  }
-
-  /** Returns the [[FlinkRelBuilder]] of this TableEnvironment. */
-  private[flink] def getRelBuilder: FlinkRelBuilder = {
-    relBuilder
-  }
-
-  /** Returns the Calcite [[org.apache.calcite.plan.RelOptPlanner]] of this TableEnvironment. */
-  private[flink] def getPlanner: RelOptPlanner = {
-    planner
-  }
-
-  /** Returns the [[FlinkTypeFactory]] of this TableEnvironment. */
-  private[flink] def getTypeFactory: FlinkTypeFactory = {
-    typeFactory
-  }
-
-  private[flink] def getFunctionCatalog: FunctionCatalog = {
-    functionCatalog
-  }
-
-  /** Returns the Calcite [[FrameworkConfig]] of this TableEnvironment. */
-  private[flink] def getFrameworkConfig: FrameworkConfig = {
-    frameworkConfig
-  }
-
-  /**
-    * Reference input fields by name:
-    * All fields in the schema definition are referenced by name
-    * (and possibly renamed using an alias (as). In this mode, fields can be reordered and
-    * projected out. Moreover, we can define proctime and rowtime attributes at arbitrary
-    * positions using arbitrary names (except those that exist in the result schema). This mode
-    * can be used for any input type, including POJOs.
-    *
-    * Reference input fields by position:
-    * In this mode, fields are simply renamed. Event-time attributes can
-    * replace the field on their position in the input data (if it is of correct type) or be
-    * appended at the end. Proctime attributes must be appended at the end. This mode can only be
-    * used if the input type has a defined field order (tuple, case class, Row) and no of fields
-    * references a field of the input type.
-    */
-  protected def isReferenceByPosition(ct: CompositeType[_], fields: Array[Expression]): Boolean = {
-    if (!ct.isInstanceOf[TupleTypeInfoBase[_]]) {
-      return false
-    }
-
-    val inputNames = ct.getFieldNames
-
-    // Use the by-position mode if no of the fields exists in the input.
-    // This prevents confusing cases like ('f2, 'f0, 'myName) for a Tuple3 where fields are renamed
-    // by position but the user might assume reordering instead of renaming.
-    fields.forall {
-      case UnresolvedFieldReference(name) => !inputNames.contains(name)
-      case _ => true
+      batchEnv.sqlUpdate(stmt, config)
     }
   }
 
   /**
-    * Returns field names and field positions for a given [[TypeInformation]].
+    * Converts the given [[DataSet]] into a [[Table]].
     *
-    * @param inputType The TypeInformation extract the field names and positions from.
-    * @tparam A The type of the TypeInformation.
-    * @return A tuple of two arrays holding the field names and corresponding field positions.
+    * The field names of the [[Table]] are automatically derived from the type of the [[DataSet]].
+    *
+    * @param dataSet The [[DataSet]] to be converted.
+    * @tparam T The type of the [[DataSet]].
+    * @return The converted [[Table]].
     */
-  protected[flink] def getFieldInfo[A](inputType: TypeInformation[A]):
-  (Array[String], Array[Int]) = {
-
-    if (inputType.isInstanceOf[GenericTypeInfo[A]] && inputType.getTypeClass == classOf[Row]) {
-      throw new TableException(
-        "An input of GenericTypeInfo<Row> cannot be converted to Table. " +
-          "Please specify the type of the input with a RowTypeInfo.")
+  def fromDataSet[T](dataSet: ScalaDataSet[T]): Table = {
+    if (isStream) {
+      throw new TableException("this method only used in batch mode!")
     } else {
-      (TableEnvironment.getFieldNames(inputType), TableEnvironment.getFieldIndices(inputType))
+      batchEnv.fromDataSet(dataSet)
     }
   }
 
   /**
-    * Returns field names and field positions for a given [[TypeInformation]] and [[Array]] of
-    * [[Expression]]. It does not handle time attributes but considers them in indices.
+    * Converts the given [[DataSet]] into a [[Table]] with specified field names.
     *
-    * @param inputType The [[TypeInformation]] against which the [[Expression]]s are evaluated.
-    * @param exprs     The expressions that define the field names.
-    * @tparam A The type of the TypeInformation.
-    * @return A tuple of two arrays holding the field names and corresponding field positions.
+    * Example:
+    *
+    * {{{
+    *   val set: DataSet[(String, Long)] = ...
+    *   val tab: Table = tableEnv.fromDataSet(set, 'a, 'b)
+    * }}}
+    *
+    * @param dataSet The [[DataSet]] to be converted.
+    * @param fields The field names of the resulting [[Table]].
+    * @tparam T The type of the [[DataSet]].
+    * @return The converted [[Table]].
     */
-  protected def getFieldInfo[A](
-      inputType: TypeInformation[A],
-      exprs: Array[Expression])
-    : (Array[String], Array[Int]) = {
-
-    TableEnvironment.validateType(inputType)
-
-    def referenceByName(name: String, ct: CompositeType[_]): Option[Int] = {
-      val inputIdx = ct.getFieldIndex(name)
-      if (inputIdx < 0) {
-        throw new TableException(s"$name is not a field of type $ct. " +
-                s"Expected: ${ct.getFieldNames.mkString(", ")}")
-      } else {
-        Some(inputIdx)
-      }
+  def fromDataSet[T](dataSet: ScalaDataSet[T], fields: Expression*): Table = {
+    if (isStream) {
+      throw new TableException("this method only used in batch mode!")
+    } else {
+      batchEnv.fromDataSet(dataSet, fields: _*)
     }
-
-    val indexedNames: Array[(Int, String)] = inputType match {
-
-      case g: GenericTypeInfo[A] if g.getTypeClass == classOf[Row] =>
-        throw new TableException(
-          "An input of GenericTypeInfo<Row> cannot be converted to Table. " +
-            "Please specify the type of the input with a RowTypeInfo.")
-
-      case t: TupleTypeInfoBase[A] if t.isInstanceOf[TupleTypeInfo[A]] ||
-        t.isInstanceOf[CaseClassTypeInfo[A]] || t.isInstanceOf[RowTypeInfo] =>
-
-        // determine schema definition mode (by position or by name)
-        val isRefByPos = isReferenceByPosition(t, exprs)
-
-        exprs.zipWithIndex flatMap {
-          case (UnresolvedFieldReference(name: String), idx) =>
-            if (isRefByPos) {
-              Some((idx, name))
-            } else {
-              referenceByName(name, t).map((_, name))
-            }
-          case (Alias(UnresolvedFieldReference(origName), name: String, _), _) =>
-            if (isRefByPos) {
-              throw new TableException(
-                s"Alias '$name' is not allowed if other fields are referenced by position.")
-            } else {
-              referenceByName(origName, t).map((_, name))
-            }
-          case (_: TimeAttribute, _) =>
-            None
-          case _ => throw new TableException(
-            "Field reference expression or alias on field expression expected.")
-        }
-
-      case p: PojoTypeInfo[A] =>
-        exprs flatMap {
-          case (UnresolvedFieldReference(name: String)) =>
-            referenceByName(name, p).map((_, name))
-          case Alias(UnresolvedFieldReference(origName), name: String, _) =>
-            referenceByName(origName, p).map((_, name))
-          case _: TimeAttribute =>
-            None
-          case _ => throw new TableException(
-            "Field reference expression or alias on field expression expected.")
-        }
-
-      case _: TypeInformation[_] => // atomic or other custom type information
-        var referenced = false
-        exprs flatMap {
-          case _: TimeAttribute =>
-            None
-          case UnresolvedFieldReference(_) if referenced =>
-            // only accept the first field for an atomic type
-            throw new TableException("Only the first field can reference an atomic type.")
-          case UnresolvedFieldReference(name: String) =>
-            referenced = true
-            // first field reference is mapped to atomic type
-            Some((0, name))
-          case _ => throw new TableException(
-            "Field reference expression expected.")
-        }
-    }
-
-    val (fieldIndexes, fieldNames) = indexedNames.unzip
-
-    if (fieldNames.contains("*")) {
-      throw new TableException("Field name can not be '*'.")
-    }
-
-    (fieldNames, fieldIndexes)
   }
 
-  protected def generateRowConverterFunction[OUT](
-      inputTypeInfo: TypeInformation[Row],
-      schema: RowSchema,
-      requestedTypeInfo: TypeInformation[OUT],
-      functionName: String)
-    : Option[GeneratedFunction[MapFunction[Row, OUT], OUT]] = {
-
-    // validate that at least the field types of physical and logical type match
-    // we do that here to make sure that plan translation was correct
-    if (schema.typeInfo != inputTypeInfo) {
-      throw new TableException(
-        s"The field types of physical and logical row types do not match. " +
-        s"Physical type is [${schema.typeInfo}], Logical type is [$inputTypeInfo]. " +
-        s"This is a bug and should not happen. Please file an issue.")
+  /**
+    * Registers the given [[DataSet]] as table in the
+    * [[AbstractTableEnvironment]]'s catalog.
+    * Registered tables can be referenced in SQL queries.
+    *
+    * The field names of the [[Table]] are automatically derived from the type of the [[DataSet]].
+    *
+    * @param name The name under which the [[DataSet]] is registered in the catalog.
+    * @param dataSet The [[DataSet]] to register.
+    * @tparam T The type of the [[DataSet]] to register.
+    */
+  def registerDataSet[T](name: String, dataSet: ScalaDataSet[T]): Unit = {
+    if (isStream) {
+      throw new TableException("this method only used in batch mode!")
+    } else {
+      batchEnv.registerDataSet(name, dataSet)
     }
+  }
 
-    // generic row needs no conversion
-    if (requestedTypeInfo.isInstanceOf[GenericTypeInfo[_]] &&
-        requestedTypeInfo.getTypeClass == classOf[Row]) {
-      return None
+  /**
+    * Registers the given [[DataSet]] as table with specified field names in the
+    * [[AbstractTableEnvironment]]'s catalog.
+    * Registered tables can be referenced in SQL queries.
+    *
+    * Example:
+    *
+    * {{{
+    *   val set: DataSet[(String, Long)] = ...
+    *   tableEnv.registerDataSet("myTable", set, 'a, 'b)
+    * }}}
+    *
+    * @param name The name under which the [[DataSet]] is registered in the catalog.
+    * @param dataSet The [[DataSet]] to register.
+    * @param fields The field names of the registered table.
+    * @tparam T The type of the [[DataSet]] to register.
+    */
+  def registerDataSet[T](name: String, dataSet: ScalaDataSet[T], fields: Expression*): Unit = {
+    if (isStream) {
+      throw new TableException("this method only used in batch mode!")
+    } else {
+      batchEnv.registerDataSet(name, dataSet, fields: _*)
     }
+  }
 
-    val fieldTypes = schema.fieldTypeInfos
-    val fieldNames = schema.fieldNames
-
-    // check for valid type info
-    if (requestedTypeInfo.getArity != fieldTypes.length) {
-      throw new TableException(
-        s"Arity [${fieldTypes.length}] of result [$fieldTypes] does not match " +
-        s"the number[${requestedTypeInfo.getArity}] of requested type [$requestedTypeInfo].")
+  /**
+    * Converts the given [[Table]] into a [[DataSet]] of a specified type.
+    *
+    * The fields of the [[Table]] are mapped to [[DataSet]] fields as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataSet]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table The [[Table]] to convert.
+    * @tparam T The type of the resulting [[DataSet]].
+    * @return The converted [[DataSet]].
+    */
+  def toDataSetScala[T: TypeInformation](table: Table): ScalaDataSet[T] = {
+    if (isStream) {
+      throw new TableException("this method only used in batch mode!")
+    } else {
+      batchEnv.toDataSetScala(table)
     }
+  }
 
-    // check requested types
-
-    def validateFieldType(fieldType: TypeInformation[_]): Unit = fieldType match {
-      case _: TimeIndicatorTypeInfo =>
-        throw new TableException("The time indicator type is an internal type only.")
-      case _ => // ok
+  /**
+    * Converts the given [[Table]] into a [[DataSet]] of a specified type.
+    *
+    * The fields of the [[Table]] are mapped to [[DataSet]] fields as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataSet]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table The [[Table]] to convert.
+    * @param queryConfig The configuration of the query to generate.
+    * @tparam T The type of the resulting [[DataSet]].
+    * @return The converted [[DataSet]].
+    */
+  def toDataSetScala[T: TypeInformation](
+      table: Table,
+      queryConfig: BatchQueryConfig): ScalaDataSet[T] = {
+    if (isStream) {
+      throw new TableException("this method only used in batch mode!")
+    } else {
+      batchEnv.toDataSetScala(table, queryConfig)
     }
+  }
 
-    requestedTypeInfo match {
-      // POJO type requested
-      case pt: PojoTypeInfo[_] =>
-        fieldNames.zip(fieldTypes) foreach {
-          case (fName, fType) =>
-            val pojoIdx = pt.getFieldIndex(fName)
-            if (pojoIdx < 0) {
-              throw new TableException(s"POJO does not define field name: $fName")
-            }
-            val requestedTypeInfo = pt.getTypeAt(pojoIdx)
-            validateFieldType(requestedTypeInfo)
-            if (fType != requestedTypeInfo) {
-              throw new TableException(s"Result field does not match requested type. " +
-                s"Requested: $requestedTypeInfo; Actual: $fType")
-            }
-        }
-
-      // Tuple/Case class/Row type requested
-      case tt: TupleTypeInfoBase[_] =>
-        fieldTypes.zipWithIndex foreach {
-          case (fieldTypeInfo, i) =>
-            val requestedTypeInfo = tt.getTypeAt(i)
-            validateFieldType(requestedTypeInfo)
-            if (fieldTypeInfo != requestedTypeInfo) {
-              throw new TableException(s"Result field does not match requested type. " +
-                s"Requested: $requestedTypeInfo; Actual: $fieldTypeInfo")
-            }
-        }
-
-      // atomic type requested
-      case t: TypeInformation[_] =>
-        if (fieldTypes.size != 1) {
-          throw new TableException(s"Requested result type is an atomic type but " +
-            s"result[$fieldTypes] has more or less than a single field.")
-        }
-        val requestedTypeInfo = fieldTypes.head
-        validateFieldType(requestedTypeInfo)
-        if (requestedTypeInfo != t) {
-          throw new TableException(s"Result field does not match requested type. " +
-            s"Requested: $t; Actual: $requestedTypeInfo")
-        }
-
-      case _ =>
-        throw new TableException(s"Unsupported result type: $requestedTypeInfo")
+  /**
+    * Registers a [[TableFunction]] under a unique name in the TableEnvironment's catalog.
+    * Registered functions can be referenced in Table API and SQL queries.
+    *
+    * @param name The name under which the function is registered.
+    * @param tf The TableFunction to register.
+    * @tparam T The type of the output row.
+    */
+  def registerFunctionScala[T: TypeInformation](name: String, tf: TableFunction[T]): Unit = {
+    if (isStream) {
+      streamEnv.registerFunctionScala(name, tf)
+    } else {
+      batchEnv.registerFunctionScala(name, tf)
     }
+  }
 
-    // code generate MapFunction
-    val generator = new FunctionCodeGenerator(
-      config,
-      false,
-      inputTypeInfo,
-      None,
-      None)
+  /**
+    * Registers an [[AggregateFunction]] under a unique name in the TableEnvironment's catalog.
+    * Registered functions can be referenced in Table API and SQL queries.
+    *
+    * @param name The name under which the function is registered.
+    * @param f The AggregateFunction to register.
+    * @tparam T The type of the output value.
+    * @tparam ACC The type of aggregate accumulator.
+    */
+  def registerFunctionScala[T: TypeInformation, ACC: TypeInformation](
+      name: String,
+      f: AggregateFunction[T, ACC])
+  : Unit = {
+    if (isStream) {
+      streamEnv.registerFunctionScala(name, f)
+    } else {
+      batchEnv.registerFunctionScala(name, f)
+    }
+  }
 
-    val conversion = generator.generateConverterResultExpression(
-      requestedTypeInfo,
-      fieldNames)
+  /**
+    * Converts the given [[DataSet]] into a [[Table]].
+    *
+    * The field names of the [[Table]] are automatically derived from the type of the [[DataSet]].
+    *
+    * @param dataSet The [[DataSet]] to be converted.
+    * @tparam T The type of the [[DataSet]].
+    * @return The converted [[Table]].
+    */
+  def fromDataSet[T](dataSet: DataSet[T]): Table = {
+    if (isStream) {
+      throw new TableException("this method only used in batch mode!")
+    } else {
+      batchEnv.fromDataSet(dataSet)
+    }
+  }
 
-    val body =
-      s"""
-         |${conversion.code}
-         |return ${conversion.resultTerm};
-         |""".stripMargin
+  /**
+    * Converts the given [[DataSet]] into a [[Table]] with specified field names.
+    *
+    * Example:
+    *
+    * {{{
+    *   DataSet<Tuple2<String, Long>> set = ...
+    *   Table tab = tableEnv.fromDataSet(set, "a, b")
+    * }}}
+    *
+    * @param dataSet The [[DataSet]] to be converted.
+    * @param fields The field names of the resulting [[Table]].
+    * @tparam T The type of the [[DataSet]].
+    * @return The converted [[Table]].
+    */
+  def fromDataSet[T](dataSet: DataSet[T], fields: String): Table = {
+    if (isStream) {
+      throw new TableException("this method only used in batch mode!")
+    } else {
+      batchEnv.fromDataSet(dataSet, fields)
+    }
+  }
 
-    val generated = generator.generateFunction(
-      functionName,
-      classOf[MapFunction[Row, OUT]],
-      body,
-      requestedTypeInfo)
+  /**
+    * Registers the given [[DataSet]] as table in the
+    * [[AbstractTableEnvironment]]'s catalog.
+    * Registered tables can be referenced in SQL queries.
+    *
+    * The field names of the [[Table]] are automatically derived from the type of the [[DataSet]].
+    *
+    * @param name The name under which the [[DataSet]] is registered in the catalog.
+    * @param dataSet The [[DataSet]] to register.
+    * @tparam T The type of the [[DataSet]] to register.
+    */
+  def registerDataSet[T](name: String, dataSet: DataSet[T]): Unit = {
+    if (isStream) {
+      throw new TableException("this method only used in batch mode!")
+    } else {
+      batchEnv.registerDataSet(name, dataSet)
+    }
+  }
 
-    Some(generated)
+  /**
+    * Registers the given [[DataSet]] as table with specified field names in the
+    * [[AbstractTableEnvironment]]'s catalog.
+    * Registered tables can be referenced in SQL queries.
+    *
+    * Example:
+    *
+    * {{{
+    *   DataSet<Tuple2<String, Long>> set = ...
+    *   tableEnv.registerDataSet("myTable", set, "a, b")
+    * }}}
+    *
+    * @param name The name under which the [[DataSet]] is registered in the catalog.
+    * @param dataSet The [[DataSet]] to register.
+    * @param fields The field names of the registered table.
+    * @tparam T The type of the [[DataSet]] to register.
+    */
+  def registerDataSet[T](name: String, dataSet: DataSet[T], fields: String): Unit = {
+    if (isStream) {
+      throw new TableException("this method only used in batch mode!")
+    } else {
+      batchEnv.registerDataSet(name, dataSet, fields)
+    }
+  }
+
+  /**
+    * Converts the given [[Table]] into a [[DataSet]] of a specified type.
+    *
+    * The fields of the [[Table]] are mapped to [[DataSet]] fields as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataSet]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table The [[Table]] to convert.
+    * @param clazz The class of the type of the resulting [[DataSet]].
+    * @tparam T The type of the resulting [[DataSet]].
+    * @return The converted [[DataSet]].
+    */
+  def toDataSet[T](table: Table, clazz: Class[T]): DataSet[T] = {
+    if (isStream) {
+      throw new TableException("this method only used in batch mode!")
+    } else {
+      batchEnv.toDataSet(table, clazz)
+    }
+  }
+
+  /**
+    * Converts the given [[Table]] into a [[DataSet]] of a specified type.
+    *
+    * The fields of the [[Table]] are mapped to [[DataSet]] fields as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataSet]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table The [[Table]] to convert.
+    * @param typeInfo The [[TypeInformation]] that specifies the type of the resulting [[DataSet]].
+    * @tparam T The type of the resulting [[DataSet]].
+    * @return The converted [[DataSet]].
+    */
+  def toDataSet[T](table: Table, typeInfo: TypeInformation[T]): DataSet[T] = {
+    if (isStream) {
+      throw new TableException("this method only used in batch mode!")
+    } else {
+      batchEnv.toDataSet(table, typeInfo)
+    }
+  }
+
+  /**
+    * Converts the given [[Table]] into a [[DataSet]] of a specified type.
+    *
+    * The fields of the [[Table]] are mapped to [[DataSet]] fields as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataSet]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table The [[Table]] to convert.
+    * @param clazz The class of the type of the resulting [[DataSet]].
+    * @param queryConfig The configuration for the query to generate.
+    * @tparam T The type of the resulting [[DataSet]].
+    * @return The converted [[DataSet]].
+    */
+  def toDataSet[T](
+      table: Table,
+      clazz: Class[T],
+      queryConfig: BatchQueryConfig): DataSet[T] = {
+    if (isStream) {
+      throw new TableException("this method only used in batch mode!")
+    } else {
+      batchEnv.toDataSet(table, clazz, queryConfig)
+    }
+  }
+
+  /**
+    * Converts the given [[Table]] into a [[DataSet]] of a specified type.
+    *
+    * The fields of the [[Table]] are mapped to [[DataSet]] fields as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataSet]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table The [[Table]] to convert.
+    * @param typeInfo The [[TypeInformation]] that specifies the type of the resulting [[DataSet]].
+    * @param queryConfig The configuration for the query to generate.
+    * @tparam T The type of the resulting [[DataSet]].
+    * @return The converted [[DataSet]].
+    */
+  def toDataSet[T](
+      table: Table,
+      typeInfo: TypeInformation[T],
+      queryConfig: BatchQueryConfig): DataSet[T] = {
+    if (isStream) {
+      throw new TableException("this method only used in batch mode!")
+    } else {
+      batchEnv.toDataSet(table, typeInfo, queryConfig)
+    }
+  }
+
+  /**
+    * Registers a [[TableFunction]] under a unique name in the TableEnvironment's catalog.
+    * Registered functions can be referenced in Table API and SQL queries.
+    *
+    * @param name The name under which the function is registered.
+    * @param tf The TableFunction to register.
+    * @tparam T The type of the output row.
+    */
+  def registerFunction[T](name: String, tf: TableFunction[T]): Unit = {
+    if (isStream) {
+      streamEnv.registerFunction(name, tf)
+    } else {
+      batchEnv.registerFunction(name, tf)
+    }
+  }
+
+  /**
+    * Registers an [[AggregateFunction]] under a unique name in the TableEnvironment's catalog.
+    * Registered functions can be referenced in Table API and SQL queries.
+    *
+    * @param name The name under which the function is registered.
+    * @param f The AggregateFunction to register.
+    * @tparam T The type of the output value.
+    * @tparam ACC The type of aggregate accumulator.
+    */
+  def registerFunction[T, ACC](
+      name: String,
+      f: AggregateFunction[T, ACC])
+  : Unit = {
+    if (isStream) {
+      streamEnv.registerFunction(name, f)
+    } else {
+      batchEnv.registerFunction(name, f)
+    }
+  }
+
+  /**
+    * Converts the given [[DataStream]] into a [[Table]].
+    *
+    * The field names of the [[Table]] are automatically derived from the type of the
+    * [[DataStream]].
+    *
+    * @param dataStream The [[DataStream]] to be converted.
+    * @tparam T The type of the [[DataStream]].
+    * @return The converted [[Table]].
+    */
+  def fromDataStream[T](dataStream: ScalaDataStream[T]): Table = {
+    if (isStream) {
+      streamEnv.fromDataStream(dataStream)
+    } else {
+      throw new TableException("this method only used in stream mode!")
+    }
+  }
+
+  /**
+    * Converts the given [[DataStream]] into a [[Table]] with specified field names.
+    *
+    * Example:
+    *
+    * {{{
+    *   val stream: DataStream[(String, Long)] = ...
+    *   val tab: Table = tableEnv.fromDataStream(stream, 'a, 'b)
+    * }}}
+    *
+    * @param dataStream The [[DataStream]] to be converted.
+    * @param fields The field names of the resulting [[Table]].
+    * @tparam T The type of the [[DataStream]].
+    * @return The converted [[Table]].
+    */
+  def fromDataStream[T](dataStream: ScalaDataStream[T], fields: Expression*): Table = {
+    if (isStream) {
+      streamEnv.fromDataStream(dataStream, fields: _*)
+    } else {
+      throw new TableException("this method only used in stream mode!")
+    }
+  }
+
+  /**
+    * Registers the given [[DataStream]] as table in the
+    * [[AbstractTableEnvironment]]'s catalog.
+    * Registered tables can be referenced in SQL queries.
+    *
+    * The field names of the [[Table]] are automatically derived
+    * from the type of the [[DataStream]].
+    *
+    * @param name The name under which the [[DataStream]] is registered in the catalog.
+    * @param dataStream The [[DataStream]] to register.
+    * @tparam T The type of the [[DataStream]] to register.
+    */
+  def registerDataStream[T](name: String, dataStream: ScalaDataStream[T]): Unit = {
+    if (isStream) {
+      streamEnv.registerDataStream(name, dataStream)
+    } else {
+      throw new TableException("this method only used in stream mode!")
+    }
+  }
+
+  /**
+    * Registers the given [[DataStream]] as table with specified field names in the
+    * [[AbstractTableEnvironment]]'s catalog.
+    * Registered tables can be referenced in SQL queries.
+    *
+    * Example:
+    *
+    * {{{
+    *   val set: DataStream[(String, Long)] = ...
+    *   tableEnv.registerDataStream("myTable", set, 'a, 'b)
+    * }}}
+    *
+    * @param name The name under which the [[DataStream]] is registered in the catalog.
+    * @param dataStream The [[DataStream]] to register.
+    * @param fields The field names of the registered table.
+    * @tparam T The type of the [[DataStream]] to register.
+    */
+  def registerDataStream[T](
+      name: String,
+      dataStream: ScalaDataStream[T],
+      fields: Expression*): Unit = {
+    if (isStream) {
+      streamEnv.registerDataStream(name, dataStream, fields: _*)
+    } else {
+      throw new TableException("this method only used in stream mode!")
+    }
+  }
+
+  /**
+    * Converts the given [[Table]] into an append [[DataStream]] of a specified type.
+    *
+    * The [[Table]] must only have insert (append) changes. If the [[Table]] is also modified
+    * by update or delete changes, the conversion will fail.
+    *
+    * The fields of the [[Table]] are mapped to [[DataStream]] fields as follows:
+    * - [[org.apache.flink.types.Row]] and Scala Tuple types: Fields are mapped by position, field
+    * types must match.
+    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table The [[Table]] to convert.
+    * @tparam T The type of the resulting [[DataStream]].
+    * @return The converted [[DataStream]].
+    */
+  def toAppendStreamScala[T: TypeInformation](table: Table): ScalaDataStream[T] = {
+    if (isStream) {
+      streamEnv.toAppendStreamScala(table)
+    } else {
+      throw new TableException("this method only used in stream mode!")
+    }
+  }
+
+  /**
+    * Converts the given [[Table]] into an append [[DataStream]] of a specified type.
+    *
+    * The [[Table]] must only have insert (append) changes. If the [[Table]] is also modified
+    * by update or delete changes, the conversion will fail.
+    *
+    * The fields of the [[Table]] are mapped to [[DataStream]] fields as follows:
+    * - [[org.apache.flink.types.Row]] and Scala Tuple types: Fields are mapped by position, field
+    * types must match.
+    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table The [[Table]] to convert.
+    * @param queryConfig The configuration of the query to generate.
+    * @tparam T The type of the resulting [[DataStream]].
+    * @return The converted [[DataStream]].
+    */
+  def toAppendStreamScala[T: TypeInformation](
+      table: Table,
+      queryConfig: StreamQueryConfig): ScalaDataStream[T] = {
+    if (isStream) {
+      streamEnv.toAppendStreamScala(table, queryConfig)
+    } else {
+      throw new TableException("this method only used in stream mode!")
+    }
+  }
+
+  /**
+    * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
+    * The message will be encoded as [[Tuple2]]. The first field is a [[Boolean]] flag,
+    * the second field holds the record of the specified type [[T]].
+    *
+    * A true [[Boolean]] flag indicates an add message, a false flag indicates a retract message.
+    *
+    * @param table The [[Table]] to convert.
+    * @tparam T The type of the requested data type.
+    * @return The converted [[DataStream]].
+    */
+  def toRetractStreamScala[T: TypeInformation](table: Table): ScalaDataStream[(Boolean, T)] = {
+    if (isStream) {
+      streamEnv.toRetractStreamScala(table)
+    } else {
+      throw new TableException("this method only used in stream mode!")
+    }
+  }
+
+  /**
+    * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
+    * The message will be encoded as [[Tuple2]]. The first field is a [[Boolean]] flag,
+    * the second field holds the record of the specified type [[T]].
+    *
+    * A true [[Boolean]] flag indicates an add message, a false flag indicates a retract message.
+    *
+    * @param table The [[Table]] to convert.
+    * @param queryConfig The configuration of the query to generate.
+    * @tparam T The type of the requested data type.
+    * @return The converted [[DataStream]].
+    */
+  def toRetractStreamScala[T: TypeInformation](
+      table: Table,
+      queryConfig: StreamQueryConfig): ScalaDataStream[(Boolean, T)] = {
+    if (isStream) {
+      streamEnv.toRetractStreamScala(table, queryConfig)
+    } else {
+      throw new TableException("this method only used in stream mode!")
+    }
+  }
+
+  /**
+    * Converts the given [[DataStream]] into a [[Table]].
+    *
+    * The field names of the [[Table]] are automatically derived from the type of the
+    * [[DataStream]].
+    *
+    * @param dataStream The [[DataStream]] to be converted.
+    * @tparam T The type of the [[DataStream]].
+    * @return The converted [[Table]].
+    */
+  def fromDataStream[T](dataStream: DataStream[T]): Table = {
+    if (isStream) {
+      streamEnv.fromDataStream(dataStream)
+    } else {
+      throw new TableException("this method only used in stream mode!")
+    }
+  }
+
+  /**
+    * Converts the given [[DataStream]] into a [[Table]] with specified field names.
+    *
+    * Example:
+    *
+    * {{{
+    *   DataStream<Tuple2<String, Long>> stream = ...
+    *   Table tab = tableEnv.fromDataStream(stream, "a, b")
+    * }}}
+    *
+    * @param dataStream The [[DataStream]] to be converted.
+    * @param fields The field names of the resulting [[Table]].
+    * @tparam T The type of the [[DataStream]].
+    * @return The converted [[Table]].
+    */
+  def fromDataStream[T](dataStream: DataStream[T], fields: String): Table = {
+    if (isStream) {
+      streamEnv.fromDataStream(dataStream, fields)
+    } else {
+      throw new TableException("this method only used in stream mode!")
+    }
+  }
+
+  /**
+    * Registers the given [[DataStream]] as table in the
+    * [[AbstractTableEnvironment]]'s catalog.
+    * Registered tables can be referenced in SQL queries.
+    *
+    * The field names of the [[Table]] are automatically derived
+    * from the type of the [[DataStream]].
+    *
+    * @param name The name under which the [[DataStream]] is registered in the catalog.
+    * @param dataStream The [[DataStream]] to register.
+    * @tparam T The type of the [[DataStream]] to register.
+    */
+  def registerDataStream[T](name: String, dataStream: DataStream[T]): Unit = {
+    if (isStream) {
+      streamEnv.registerDataStream(name, dataStream)
+    } else {
+      throw new TableException("this method only used in stream mode!")
+    }
+  }
+
+  /**
+    * Registers the given [[DataStream]] as table with specified field names in the
+    * [[AbstractTableEnvironment]]'s catalog.
+    * Registered tables can be referenced in SQL queries.
+    *
+    * Example:
+    *
+    * {{{
+    *   DataStream<Tuple2<String, Long>> set = ...
+    *   tableEnv.registerDataStream("myTable", set, "a, b")
+    * }}}
+    *
+    * @param name The name under which the [[DataStream]] is registered in the catalog.
+    * @param dataStream The [[DataStream]] to register.
+    * @param fields The field names of the registered table.
+    * @tparam T The type of the [[DataStream]] to register.
+    */
+  def registerDataStream[T](name: String, dataStream: DataStream[T], fields: String): Unit = {
+    if (isStream) {
+      streamEnv.registerDataStream(name, dataStream, fields)
+    } else {
+      throw new TableException("this method only used in stream mode!")
+    }
+  }
+
+  /**
+    * Converts the given [[Table]] into an append [[DataStream]] of a specified type.
+    *
+    * The [[Table]] must only have insert (append) changes. If the [[Table]] is also modified
+    * by update or delete changes, the conversion will fail.
+    *
+    * The fields of the [[Table]] are mapped to [[DataStream]] fields as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table The [[Table]] to convert.
+    * @param clazz The class of the type of the resulting [[DataStream]].
+    * @tparam T The type of the resulting [[DataStream]].
+    * @return The converted [[DataStream]].
+    */
+  def toAppendStream[T](table: Table, clazz: Class[T]): DataStream[T] = {
+    if (isStream) {
+      streamEnv.toAppendStream(table, clazz)
+    } else {
+      throw new TableException("this method only used in stream mode!")
+    }
+  }
+
+  /**
+    * Converts the given [[Table]] into an append [[DataStream]] of a specified type.
+    *
+    * The [[Table]] must only have insert (append) changes. If the [[Table]] is also modified
+    * by update or delete changes, the conversion will fail.
+    *
+    * The fields of the [[Table]] are mapped to [[DataStream]] fields as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table The [[Table]] to convert.
+    * @param typeInfo The [[TypeInformation]] that specifies the type of the [[DataStream]].
+    * @tparam T The type of the resulting [[DataStream]].
+    * @return The converted [[DataStream]].
+    */
+  def toAppendStream[T](table: Table, typeInfo: TypeInformation[T]): DataStream[T] = {
+    if (isStream) {
+      streamEnv.toAppendStream(table, typeInfo)
+    } else {
+      throw new TableException("this method only used in stream mode!")
+    }
+  }
+
+  /**
+    * Converts the given [[Table]] into an append [[DataStream]] of a specified type.
+    *
+    * The [[Table]] must only have insert (append) changes. If the [[Table]] is also modified
+    * by update or delete changes, the conversion will fail.
+    *
+    * The fields of the [[Table]] are mapped to [[DataStream]] fields as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table The [[Table]] to convert.
+    * @param clazz The class of the type of the resulting [[DataStream]].
+    * @param queryConfig The configuration of the query to generate.
+    * @tparam T The type of the resulting [[DataStream]].
+    * @return The converted [[DataStream]].
+    */
+  def toAppendStream[T](
+      table: Table,
+      clazz: Class[T],
+      queryConfig: StreamQueryConfig): DataStream[T] = {
+    if (isStream) {
+      streamEnv.toAppendStream(table, clazz, queryConfig)
+    } else {
+      throw new TableException("this method only used in stream mode!")
+    }
+  }
+
+  /**
+    * Converts the given [[Table]] into an append [[DataStream]] of a specified type.
+    *
+    * The [[Table]] must only have insert (append) changes. If the [[Table]] is also modified
+    * by update or delete changes, the conversion will fail.
+    *
+    * The fields of the [[Table]] are mapped to [[DataStream]] fields as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table The [[Table]] to convert.
+    * @param typeInfo The [[TypeInformation]] that specifies the type of the [[DataStream]].
+    * @param queryConfig The configuration of the query to generate.
+    * @tparam T The type of the resulting [[DataStream]].
+    * @return The converted [[DataStream]].
+    */
+  def toAppendStream[T](
+      table: Table,
+      typeInfo: TypeInformation[T],
+      queryConfig: StreamQueryConfig): DataStream[T] = {
+    if (isStream) {
+      streamEnv.toAppendStream(table, typeInfo, queryConfig)
+    } else {
+      throw new TableException("this method only used in stream mode!")
+    }
+  }
+
+  /**
+    * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
+    * The message will be encoded as [[JTuple2]]. The first field is a [[JBool]] flag,
+    * the second field holds the record of the specified type [[T]].
+    *
+    * A true [[JBool]] flag indicates an add message, a false flag indicates a retract message.
+    *
+    * The fields of the [[Table]] are mapped to the requested type as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table The [[Table]] to convert.
+    * @param clazz The class of the requested record type.
+    * @tparam T The type of the requested record type.
+    * @return The converted [[DataStream]].
+    */
+  def toRetractStream[T](
+      table: Table,
+      clazz: Class[T]): DataStream[JTuple2[JBool, T]] = {
+    if (isStream) {
+      streamEnv.toRetractStream(table, clazz)
+    } else {
+      throw new TableException("this method only used in stream mode!")
+    }
+  }
+
+  /**
+    * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
+    * The message will be encoded as [[JTuple2]]. The first field is a [[JBool]] flag,
+    * the second field holds the record of the specified type [[T]].
+    *
+    * A true [[JBool]] flag indicates an add message, a false flag indicates a retract message.
+    *
+    * The fields of the [[Table]] are mapped to the requested type as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table The [[Table]] to convert.
+    * @param typeInfo The [[TypeInformation]] of the requested record type.
+    * @tparam T The type of the requested record type.
+    * @return The converted [[DataStream]].
+    */
+  def toRetractStream[T](
+      table: Table,
+      typeInfo: TypeInformation[T]): DataStream[JTuple2[JBool, T]] = {
+    if (isStream) {
+      streamEnv.toRetractStream(table, typeInfo)
+    } else {
+      throw new TableException("this method only used in stream mode!")
+    }
+  }
+
+  /**
+    * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
+    * The message will be encoded as [[JTuple2]]. The first field is a [[JBool]] flag,
+    * the second field holds the record of the specified type [[T]].
+    *
+    * A true [[JBool]] flag indicates an add message, a false flag indicates a retract message.
+    *
+    * The fields of the [[Table]] are mapped to the requested type as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table The [[Table]] to convert.
+    * @param clazz The class of the requested record type.
+    * @param queryConfig The configuration of the query to generate.
+    * @tparam T The type of the requested record type.
+    * @return The converted [[DataStream]].
+    */
+  def toRetractStream[T](
+      table: Table,
+      clazz: Class[T],
+      queryConfig: StreamQueryConfig): DataStream[JTuple2[JBool, T]] = {
+    if (isStream) {
+      streamEnv.toRetractStream(table, clazz, queryConfig)
+    } else {
+      throw new TableException("this method only used in stream mode!")
+    }
+  }
+
+  /**
+    * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
+    * The message will be encoded as [[JTuple2]]. The first field is a [[JBool]] flag,
+    * the second field holds the record of the specified type [[T]].
+    *
+    * A true [[JBool]] flag indicates an add message, a false flag indicates a retract message.
+    *
+    * The fields of the [[Table]] are mapped to the requested type as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table The [[Table]] to convert.
+    * @param typeInfo The [[TypeInformation]] of the requested record type.
+    * @param queryConfig The configuration of the query to generate.
+    * @tparam T The type of the requested record type.
+    * @return The converted [[DataStream]].
+    */
+  def toRetractStream[T](
+      table: Table,
+      typeInfo: TypeInformation[T],
+      queryConfig: StreamQueryConfig): DataStream[JTuple2[JBool, T]] = {
+    if (isStream) {
+      streamEnv.toRetractStream(table, typeInfo, queryConfig)
+    } else {
+      throw new TableException("this method only used in stream mode!")
+    }
   }
 }
 
@@ -1257,7 +1284,7 @@ object TableEnvironment {
     * @param executionEnvironment The Java batch ExecutionEnvironment.
     */
   def getTableEnvironment(executionEnvironment: JavaBatchExecEnv): BatchTableEnvironment = {
-    getGeneralTableEnvironment(executionEnvironment, new TableConfig())
+    new BatchTableEnvironment(executionEnvironment, new TableConfig())
   }
 
   /**
@@ -1268,10 +1295,9 @@ object TableEnvironment {
     * @param tableConfig The TableConfig for the new TableEnvironment.
     */
   def getTableEnvironment(
-    executionEnvironment: JavaBatchExecEnv,
-    tableConfig: TableConfig): BatchTableEnvironment = {
-
-    getGeneralTableEnvironment(executionEnvironment, tableConfig)
+      executionEnvironment: JavaBatchExecEnv,
+      tableConfig: TableConfig): BatchTableEnvironment = {
+    new BatchTableEnvironment(executionEnvironment, tableConfig)
   }
 
   /**
@@ -1281,7 +1307,7 @@ object TableEnvironment {
     */
   def getTableEnvironment(executionEnvironment: ScalaBatchExecEnv)
   : BatchTableEnvironment = {
-    getGeneralTableEnvironment(executionEnvironment, new TableConfig())
+    new BatchTableEnvironment(executionEnvironment, new TableConfig())
   }
 
   /**
@@ -1292,10 +1318,9 @@ object TableEnvironment {
     * @param tableConfig The TableConfig for the new TableEnvironment.
     */
   def getTableEnvironment(
-    executionEnvironment: ScalaBatchExecEnv,
-    tableConfig: TableConfig): BatchTableEnvironment = {
-
-    getGeneralTableEnvironment(executionEnvironment, tableConfig)
+      executionEnvironment: ScalaBatchExecEnv,
+      tableConfig: TableConfig): BatchTableEnvironment = {
+    new BatchTableEnvironment(executionEnvironment, tableConfig)
   }
 
   /**
@@ -1305,7 +1330,7 @@ object TableEnvironment {
     */
   def getTableEnvironment(executionEnvironment: JavaStreamExecEnv)
   : StreamTableEnvironment = {
-    getGeneralTableEnvironment(executionEnvironment, new TableConfig())
+    new StreamTableEnvironment(executionEnvironment, new TableConfig())
   }
 
   /**
@@ -1316,10 +1341,9 @@ object TableEnvironment {
     * @param tableConfig The TableConfig for the new TableEnvironment.
     */
   def getTableEnvironment(
-    executionEnvironment: JavaStreamExecEnv,
-    tableConfig: TableConfig): StreamTableEnvironment = {
-
-    getGeneralTableEnvironment(executionEnvironment, tableConfig)
+      executionEnvironment: JavaStreamExecEnv,
+      tableConfig: TableConfig): StreamTableEnvironment = {
+    new StreamTableEnvironment(executionEnvironment, tableConfig)
   }
 
   /**
@@ -1329,7 +1353,7 @@ object TableEnvironment {
     */
   def getTableEnvironment(executionEnvironment: ScalaStreamExecEnv)
   : StreamTableEnvironment = {
-    getGeneralTableEnvironment(executionEnvironment, new TableConfig())
+    new StreamTableEnvironment(executionEnvironment, new TableConfig())
   }
 
   /**
@@ -1339,10 +1363,9 @@ object TableEnvironment {
     * @param tableConfig The TableConfig for the new TableEnvironment.
     */
   def getTableEnvironment(
-    executionEnvironment: ScalaStreamExecEnv,
-    tableConfig: TableConfig): StreamTableEnvironment = {
-
-    getGeneralTableEnvironment(executionEnvironment, tableConfig)
+      executionEnvironment: ScalaStreamExecEnv,
+      tableConfig: TableConfig): StreamTableEnvironment = {
+    new StreamTableEnvironment(executionEnvironment, tableConfig)
   }
 
   /**
@@ -1379,7 +1402,7 @@ object TableEnvironment {
       clazz.getCanonicalName == null) {
       throw new TableException(
         s"Class '$clazz' described in type information '$typeInfo' must be " +
-        s"static and globally accessible.")
+          s"static and globally accessible.")
     }
   }
 
@@ -1408,61 +1431,11 @@ object TableEnvironment {
     }
   }
 
-  def getGeneralTableEnvironment(executionEnvironment: JavaBatchExecEnv)
-  : BatchTableEnvironment = {
-    new BatchTableEnvironment(executionEnvironment, new TableConfig)
+  def getStreamTableEnvironment: StreamTableEnvironment = {
+    getTableEnvironment(ScalaStreamExecEnv.getExecutionEnvironment, new TableConfig)
   }
 
-  def getGeneralTableEnvironment(executionEnvironment: ScalaBatchExecEnv)
-  : BatchTableEnvironment = {
-    new BatchTableEnvironment(executionEnvironment, new TableConfig)
-  }
-
-  def getGeneralTableEnvironment(executionEnvironment: JavaStreamExecEnv)
-  : StreamTableEnvironment = {
-    new StreamTableEnvironment(executionEnvironment, new TableConfig)
-  }
-
-  def getGeneralTableEnvironment(executionEnvironment: ScalaStreamExecEnv)
-  : StreamTableEnvironment = {
-    new StreamTableEnvironment(executionEnvironment, new TableConfig)
-  }
-
-  def getGeneralTableEnvironment(executionEnvironment: JavaBatchExecEnv, config: TableConfig)
-  : BatchTableEnvironment = {
-    new BatchTableEnvironment(executionEnvironment, config)
-  }
-
-  def getGeneralTableEnvironment(executionEnvironment: ScalaBatchExecEnv, config: TableConfig)
-  : BatchTableEnvironment = {
-    new BatchTableEnvironment(executionEnvironment, config)
-  }
-
-  def getGeneralTableEnvironment(executionEnvironment: JavaStreamExecEnv, config: TableConfig)
-  : StreamTableEnvironment = {
-    new StreamTableEnvironment(executionEnvironment, config)
-  }
-
-  def getGeneralTableEnvironment(executionEnvironment: ScalaStreamExecEnv, config: TableConfig)
-  : StreamTableEnvironment = {
-    new StreamTableEnvironment(executionEnvironment, config)
-  }
-
-  def getStreamGeneralTableEnvironment(config: TableConfig)
-  : StreamTableEnvironment = {
-    getGeneralTableEnvironment(ScalaStreamExecEnv.getExecutionEnvironment, config)
-  }
-
-  def getBatchGeneralTableEnvironment(config: TableConfig)
-  : BatchTableEnvironment = {
-    getGeneralTableEnvironment(ScalaBatchExecEnv.getExecutionEnvironment, config)
-  }
-
-  def getStreamGeneralTableEnvironment: StreamTableEnvironment = {
-    getGeneralTableEnvironment(ScalaStreamExecEnv.getExecutionEnvironment, new TableConfig)
-  }
-
-  def getBatchGeneralTableEnvironment: BatchTableEnvironment = {
-    getGeneralTableEnvironment(ScalaBatchExecEnv.getExecutionEnvironment, new TableConfig)
+  def getBatchTableEnvironment: BatchTableEnvironment = {
+    getTableEnvironment(ScalaBatchExecEnv.getExecutionEnvironment, new TableConfig)
   }
 }

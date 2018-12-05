@@ -19,7 +19,7 @@ package org.apache.flink.table.api.scala
 
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.scala._
-import org.apache.flink.table.api.{GeneralTableEnvironment, BatchTableEnvironment, Table, TableException}
+import org.apache.flink.table.api.{TableEnvironment, BatchTableEnvironment, Table, TableException}
 import org.apache.flink.table.expressions.Expression
 
 /**
@@ -60,7 +60,7 @@ class DataSetConversions[T](dataSet: DataSet[T], inputType: TypeInformation[T]) 
   }
 
 
-  def toTable(tableEnv: GeneralTableEnvironment, fields: Expression*): Table = {
+  def toTable(tableEnv: TableEnvironment, fields: Expression*): Table = {
     if (tableEnv.isStream) {
       throw new TableException("this method only used in batch mode!")
     } else {

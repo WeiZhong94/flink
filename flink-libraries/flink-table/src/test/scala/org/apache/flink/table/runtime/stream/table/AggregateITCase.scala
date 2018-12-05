@@ -45,7 +45,7 @@ class AggregateITCase extends StreamingWithStateTestBase {
   def testDistinctUDAGG(): Unit = {
     val env = StreamExecutionEnvironment.getExecutionEnvironment
     env.setStateBackend(getStateBackend)
-    val tEnv = new GeneralTableEnvironment(env, new TableConfig)
+    val tEnv = new TableEnvironment(env, new TableConfig)
     StreamITCase.clear
 
     val testAgg = new DataViewTestAgg

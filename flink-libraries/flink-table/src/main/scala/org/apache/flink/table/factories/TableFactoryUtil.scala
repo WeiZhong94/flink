@@ -18,7 +18,7 @@
 
 package org.apache.flink.table.factories
 
-import org.apache.flink.table.api.{BatchTableEnvironment, StreamTableEnvironment, TableEnvironment, TableException}
+import org.apache.flink.table.api.{BatchTableEnvironment, StreamTableEnvironment, AbstractTableEnvironment, TableException}
 import org.apache.flink.table.descriptors.Descriptor
 import org.apache.flink.table.sinks.TableSink
 import org.apache.flink.table.sources.TableSource
@@ -32,7 +32,7 @@ object TableFactoryUtil {
     * Returns a table source for a table environment.
     */
   def findAndCreateTableSource[T](
-      tableEnvironment: TableEnvironment,
+      tableEnvironment: AbstractTableEnvironment,
       descriptor: Descriptor)
     : TableSource[T] = {
 
@@ -58,7 +58,7 @@ object TableFactoryUtil {
     * Returns a table sink for a table environment.
     */
   def findAndCreateTableSink[T](
-      tableEnvironment: TableEnvironment,
+      tableEnvironment: AbstractTableEnvironment,
       descriptor: Descriptor)
     : TableSink[T] = {
 

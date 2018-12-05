@@ -62,7 +62,7 @@ import _root_.scala.collection.JavaConverters._
   * @param logicalPlan logical representation
   */
 class Table(
-    private[flink] val tableEnv: TableEnvironment,
+    private[flink] val tableEnv: AbstractTableEnvironment,
     private[flink] val logicalPlan: LogicalNode) {
 
   // Check if the plan has an unbounded TableFunctionCall as child node.
@@ -78,17 +78,17 @@ class Table(
     * @param tableEnv The TableEnvironment in which the call is created.
     * @param udtfCall A String expression of the TableFunction call.
     */
-  def this(tableEnv: TableEnvironment, udtfCall: String) {
+  def this(tableEnv: AbstractTableEnvironment, udtfCall: String) {
     this(tableEnv, UserDefinedFunctionUtils.createLogicalFunctionCall(tableEnv, udtfCall))
   }
 
-  def this(tableEnv: GeneralTableEnvironment, udtfCall: String) {
+  def this(tableEnv: TableEnvironment, udtfCall: String) {
     this(tableEnv.getActualTableEnviroment,
       UserDefinedFunctionUtils.createLogicalFunctionCall(
         tableEnv.getActualTableEnviroment, udtfCall))
   }
 
-  def this(tableEnv: GeneralTableEnvironment, logicalPlan: LogicalNode) {
+  def this(tableEnv: TableEnvironment, logicalPlan: LogicalNode) {
     this(tableEnv.getActualTableEnviroment,
       logicalPlan)
   }

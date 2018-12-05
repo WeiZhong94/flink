@@ -92,6 +92,6 @@ package object scala extends ImplicitExpressionConversions {
     new TableFunctionConversions[T](tf)
   }
 
-  implicit def generalTableEnvironment2TableEnvironment(tEnv: GeneralTableEnvironment)
-  : TableEnvironment = tEnv.getActualTableEnviroment
+  implicit def tableEnvironment2ActualTableEnvironment(tEnv: TableEnvironment)
+  : AbstractTableEnvironment = tEnv.getActualTableEnviroment
 }

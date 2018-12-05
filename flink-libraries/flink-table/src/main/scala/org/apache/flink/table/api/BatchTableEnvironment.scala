@@ -52,8 +52,8 @@ import _root_.scala.reflect.ClassTag
   *
   * A TableEnvironment can be used to:
   * - convert a [[DataSet]] to a [[Table]]
-  * - register a [[DataSet]] in the [[TableEnvironment]]'s catalog
-  * - register a [[Table]] in the [[TableEnvironment]]'s catalog
+  * - register a [[DataSet]] in the [[AbstractTableEnvironment]]'s catalog
+  * - register a [[Table]] in the [[AbstractTableEnvironment]]'s catalog
   * - scan a registered table to obtain a [[Table]]
   * - specify a SQL query on registered tables to obtain a [[Table]]
   * - convert a [[Table]] into a [[DataSet]]
@@ -65,7 +65,7 @@ import _root_.scala.reflect.ClassTag
 class BatchTableEnvironment(
     private[flink] val execEnv: ExecutionEnvironment,
     config: TableConfig)
-  extends TableEnvironment(config) {
+  extends AbstractTableEnvironment(config) {
 
   def this(env: ScalaBatchExecEnv, config: TableConfig) {
     this(env.getJavaEnv, config)
@@ -99,8 +99,8 @@ class BatchTableEnvironment(
     "_DataSetTable_" + nameCntr.getAndIncrement()
 
   /**
-    * Registers an internal [[BatchTableSource]] in this [[TableEnvironment]]'s catalog without
-    * name checking. Registered tables can be referenced in SQL queries.
+    * Registers an internal [[BatchTableSource]] in this [[AbstractTableEnvironment]]'s
+    * catalog without name checking. Registered tables can be referenced in SQL queries.
     *
     * @param name        The name under which the [[TableSource]] is registered.
     * @param tableSource The [[TableSource]] to register.
@@ -183,7 +183,7 @@ class BatchTableEnvironment(
 
   /**
     * Registers an external [[TableSink]] with given field names and types in this
-    * [[TableEnvironment]]'s catalog.
+    * [[AbstractTableEnvironment]]'s catalog.
     * Registered sink tables can be referenced in SQL DML statements.
     *
     * Example:
@@ -227,7 +227,7 @@ class BatchTableEnvironment(
 
   /**
     * Registers an external [[TableSink]] with already configured field names and field types in
-    * this [[TableEnvironment]]'s catalog.
+    * this [[AbstractTableEnvironment]]'s catalog.
     * Registered sink tables can be referenced in SQL DML statements.
     *
     * @param name The name under which the [[TableSink]] is registered.
@@ -395,7 +395,8 @@ class BatchTableEnvironment(
   def explain(table: Table): String = explain(table: Table, extended = false)
 
   /**
-    * Registers a [[DataSet]] as a table under a given name in the [[TableEnvironment]]'s catalog.
+    * Registers a [[DataSet]] as a table under a given name in the [[AbstractTableEnvironment]]'s
+    * catalog.
     *
     * @param name The name under which the table is registered in the catalog.
     * @param dataSet The [[DataSet]] to register as table in the catalog.
@@ -414,7 +415,7 @@ class BatchTableEnvironment(
 
   /**
     * Registers a [[DataSet]] as a table under a given name with field names as specified by
-    * field expressions in the [[TableEnvironment]]'s catalog.
+    * field expressions in the [[AbstractTableEnvironment]]'s catalog.
     *
     * @param name The name under which the table is registered in the catalog.
     * @param dataSet The [[DataSet]] to register as table in the catalog.
@@ -569,7 +570,7 @@ class BatchTableEnvironment(
 
   /**
     * Registers the given [[DataSet]] as table in the
-    * [[TableEnvironment]]'s catalog.
+    * [[AbstractTableEnvironment]]'s catalog.
     * Registered tables can be referenced in SQL queries.
     *
     * The field names of the [[Table]] are automatically derived from the type of the [[DataSet]].
@@ -586,7 +587,7 @@ class BatchTableEnvironment(
 
   /**
     * Registers the given [[DataSet]] as table with specified field names in the
-    * [[TableEnvironment]]'s catalog.
+    * [[AbstractTableEnvironment]]'s catalog.
     * Registered tables can be referenced in SQL queries.
     *
     * Example:
@@ -661,9 +662,9 @@ class BatchTableEnvironment(
     * @return The converted [[DataSet]].
     */
   def toDataSet[T](
-                    table: Table,
-                    clazz: Class[T],
-                    queryConfig: BatchQueryConfig): DataSet[T] = {
+      table: Table,
+      clazz: Class[T],
+      queryConfig: BatchQueryConfig): DataSet[T] = {
     translate[T](table, queryConfig)(TypeExtractor.createTypeInfo(clazz))
   }
 
@@ -682,9 +683,9 @@ class BatchTableEnvironment(
     * @return The converted [[DataSet]].
     */
   def toDataSet[T](
-                    table: Table,
-                    typeInfo: TypeInformation[T],
-                    queryConfig: BatchQueryConfig): DataSet[T] = {
+      table: Table,
+      typeInfo: TypeInformation[T],
+      queryConfig: BatchQueryConfig): DataSet[T] = {
     translate[T](table, queryConfig)(typeInfo)
   }
 
@@ -714,8 +715,8 @@ class BatchTableEnvironment(
     * @tparam ACC The type of aggregate accumulator.
     */
   def registerFunction[T, ACC](
-                                name: String,
-                                f: AggregateFunction[T, ACC])
+      name: String,
+      f: AggregateFunction[T, ACC])
   : Unit = {
     implicit val typeInfo: TypeInformation[T] = TypeExtractor
       .createTypeInfo(f, classOf[AggregateFunction[T, ACC]], f.getClass, 0)
@@ -769,7 +770,7 @@ class BatchTableEnvironment(
 
   /**
     * Registers the given [[DataSet]] as table in the
-    * [[TableEnvironment]]'s catalog.
+    * [[AbstractTableEnvironment]]'s catalog.
     * Registered tables can be referenced in SQL queries.
     *
     * The field names of the [[Table]] are automatically derived from the type of the [[DataSet]].
@@ -786,7 +787,7 @@ class BatchTableEnvironment(
 
   /**
     * Registers the given [[DataSet]] as table with specified field names in the
-    * [[TableEnvironment]]'s catalog.
+    * [[AbstractTableEnvironment]]'s catalog.
     * Registered tables can be referenced in SQL queries.
     *
     * Example:

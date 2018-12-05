@@ -18,7 +18,7 @@
 package org.apache.flink.table.examples.scala
 
 import org.apache.flink.api.scala._
-import org.apache.flink.table.api.TableEnvironment
+import org.apache.flink.table.api.{TableEnvironment}
 import org.apache.flink.table.api.scala._
 
 /**
