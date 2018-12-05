@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *	 http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,7 +21,6 @@ package org.apache.flink.table.examples.java;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.table.api.Table;
-import org.apache.flink.table.api.TableConfig;
 import org.apache.flink.table.api.TableEnvironment;
 
 /**
@@ -33,53 +32,53 @@ import org.apache.flink.table.api.TableEnvironment;
  */
 public class GeneralWordCountTable {
 
-    // *************************************************************************
-    //     PROGRAM
-    // *************************************************************************
+	// *************************************************************************
+	//	 PROGRAM
+	// *************************************************************************
 
-    public static void main(String[] args) throws Exception {
-        ExecutionEnvironment env = ExecutionEnvironment.createCollectionsEnvironment();
-        TableEnvironment tEnv = TableEnvironment.getTableEnvironment(env);
+	public static void main(String[] args) throws Exception {
+		ExecutionEnvironment env = ExecutionEnvironment.createCollectionsEnvironment();
+		TableEnvironment tEnv = TableEnvironment.getTableEnvironment(env);
 
-        DataSet<WC> input = env.fromElements(
-            new WC("Hello", 1),
-            new WC("Ciao", 1),
-            new WC("Hello", 1));
+		DataSet<WC> input = env.fromElements(
+			new WC("Hello", 1),
+			new WC("Ciao", 1),
+			new WC("Hello", 1));
 
-        Table table = tEnv.fromDataSet(input);
+		Table table = tEnv.fromDataSet(input);
 
-        Table filtered = table
-            .groupBy("word")
-            .select("word, frequency.sum as frequency")
-            .filter("frequency = 2");
+		Table filtered = table
+			.groupBy("word")
+			.select("word, frequency.sum as frequency")
+			.filter("frequency = 2");
 
-        DataSet<WC> result = tEnv.toDataSet(filtered, WC.class);
+		DataSet<WC> result = tEnv.toDataSet(filtered, WC.class);
 
-        result.print();
-    }
+		result.print();
+	}
 
-    // *************************************************************************
-    //     USER DATA TYPES
-    // *************************************************************************
+	// *************************************************************************
+	//	 USER DATA TYPES
+	// *************************************************************************
 
-    /**
-     * Simple POJO containing a word and its respective count.
-     */
-    public static class WC {
-        public String word;
-        public long frequency;
+	/**
+	 * Simple POJO containing a word and its respective count.
+	 */
+	public static class WC {
+		public String word;
+		public long frequency;
 
-        // public constructor to make it a Flink POJO
-        public WC() {}
+		// public constructor to make it a Flink POJO
+		public WC() {}
 
-        public WC(String word, long frequency) {
-            this.word = word;
-            this.frequency = frequency;
-        }
+		public WC(String word, long frequency) {
+			this.word = word;
+			this.frequency = frequency;
+		}
 
-        @Override
-        public String toString() {
-            return "WC " + word + " " + frequency;
-        }
-    }
+		@Override
+		public String toString() {
+			return "WC " + word + " " + frequency;
+		}
+	}
 }
