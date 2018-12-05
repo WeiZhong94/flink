@@ -355,8 +355,8 @@ abstract class TableEnvironment {
     * @return The converted [[DataSet]].
     */
   def toDataSetScala[T: TypeInformation](
-                                          table: Table,
-                                          queryConfig: BatchQueryConfig): ScalaDataSet[T]
+      table: Table,
+      queryConfig: BatchQueryConfig): ScalaDataSet[T]
 
   /**
     * Registers a [[TableFunction]] under a unique name in the TableEnvironment's catalog.
@@ -378,9 +378,8 @@ abstract class TableEnvironment {
     * @tparam ACC The type of aggregate accumulator.
     */
   def registerFunctionScala[T: TypeInformation, ACC: TypeInformation](
-                                                                       name: String,
-                                                                       f: AggregateFunction[T, ACC])
-  : Unit
+      name: String,
+      f: AggregateFunction[T, ACC]): Unit
 
   /**
     * Converts the given [[DataSet]] into a [[Table]].
@@ -487,9 +486,9 @@ abstract class TableEnvironment {
     * @return The converted [[DataSet]].
     */
   def toDataSet[T](
-                    table: Table,
-                    clazz: Class[T],
-                    queryConfig: BatchQueryConfig): DataSet[T]
+      table: Table,
+      clazz: Class[T],
+      queryConfig: BatchQueryConfig): DataSet[T]
 
   /**
     * Converts the given [[Table]] into a [[DataSet]] of a specified type.
@@ -500,15 +499,16 @@ abstract class TableEnvironment {
     * - POJO [[DataSet]] types: Fields are mapped by field name, field types must match.
     *
     * @param table       The [[Table]] to convert.
-    * @param typeInfo    The [[TypeInformation]] that specifies the type of the resulting [[DataSet]].
+    * @param typeInfo    The [[TypeInformation]] that specifies the type of the resulting
+    *                    [[DataSet]].
     * @param queryConfig The configuration for the query to generate.
     * @tparam T The type of the resulting [[DataSet]].
     * @return The converted [[DataSet]].
     */
   def toDataSet[T](
-                    table: Table,
-                    typeInfo: TypeInformation[T],
-                    queryConfig: BatchQueryConfig): DataSet[T]
+      table: Table,
+      typeInfo: TypeInformation[T],
+      queryConfig: BatchQueryConfig): DataSet[T]
 
   /**
     * Registers a [[TableFunction]] under a unique name in the TableEnvironment's catalog.
@@ -530,8 +530,8 @@ abstract class TableEnvironment {
     * @tparam ACC The type of aggregate accumulator.
     */
   def registerFunction[T, ACC](
-                                name: String,
-                                f: AggregateFunction[T, ACC]): Unit
+      name: String,
+      f: AggregateFunction[T, ACC]): Unit
 
   /**
     * Converts the given [[DataStream]] into a [[Table]].
@@ -594,9 +594,9 @@ abstract class TableEnvironment {
     * @tparam T The type of the [[DataStream]] to register.
     */
   def registerDataStream[T](
-                             name: String,
-                             dataStream: ScalaDataStream[T],
-                             fields: Expression*): Unit
+      name: String,
+      dataStream: ScalaDataStream[T],
+      fields: Expression*): Unit
 
   /**
     * Converts the given [[Table]] into an append [[DataStream]] of a specified type.
@@ -632,8 +632,8 @@ abstract class TableEnvironment {
     * @return The converted [[DataStream]].
     */
   def toAppendStreamScala[T: TypeInformation](
-                                               table: Table,
-                                               queryConfig: StreamQueryConfig): ScalaDataStream[T]
+      table: Table,
+      queryConfig: StreamQueryConfig): ScalaDataStream[T]
 
   /**
     * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
@@ -661,8 +661,8 @@ abstract class TableEnvironment {
     * @return The converted [[DataStream]].
     */
   def toRetractStreamScala[T: TypeInformation](
-                                                table: Table,
-                                                queryConfig: StreamQueryConfig): ScalaDataStream[(Boolean, T)]
+      table: Table,
+      queryConfig: StreamQueryConfig): ScalaDataStream[(Boolean, T)]
 
   /**
     * Converts the given [[DataStream]] into a [[Table]].
@@ -780,9 +780,9 @@ abstract class TableEnvironment {
     * @return The converted [[DataStream]].
     */
   def toAppendStream[T](
-                         table: Table,
-                         clazz: Class[T],
-                         queryConfig: StreamQueryConfig): DataStream[T]
+      table: Table,
+      clazz: Class[T],
+      queryConfig: StreamQueryConfig): DataStream[T]
 
   /**
     * Converts the given [[Table]] into an append [[DataStream]] of a specified type.
@@ -802,9 +802,9 @@ abstract class TableEnvironment {
     * @return The converted [[DataStream]].
     */
   def toAppendStream[T](
-                         table: Table,
-                         typeInfo: TypeInformation[T],
-                         queryConfig: StreamQueryConfig): DataStream[T]
+      table: Table,
+      typeInfo: TypeInformation[T],
+      queryConfig: StreamQueryConfig): DataStream[T]
 
   /**
     * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
@@ -824,8 +824,8 @@ abstract class TableEnvironment {
     * @return The converted [[DataStream]].
     */
   def toRetractStream[T](
-                          table: Table,
-                          clazz: Class[T]): DataStream[JTuple2[JBool, T]]
+      table: Table,
+      clazz: Class[T]): DataStream[JTuple2[JBool, T]]
 
   /**
     * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
@@ -845,8 +845,8 @@ abstract class TableEnvironment {
     * @return The converted [[DataStream]].
     */
   def toRetractStream[T](
-                          table: Table,
-                          typeInfo: TypeInformation[T]): DataStream[JTuple2[JBool, T]]
+      table: Table,
+      typeInfo: TypeInformation[T]): DataStream[JTuple2[JBool, T]]
 
   /**
     * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
@@ -867,9 +867,9 @@ abstract class TableEnvironment {
     * @return The converted [[DataStream]].
     */
   def toRetractStream[T](
-                          table: Table,
-                          clazz: Class[T],
-                          queryConfig: StreamQueryConfig): DataStream[JTuple2[JBool, T]]
+      table: Table,
+      clazz: Class[T],
+      queryConfig: StreamQueryConfig): DataStream[JTuple2[JBool, T]]
 
   /**
     * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.

@@ -1791,12 +1791,16 @@ class StreamTableEnvironment(
     * - POJO [[DataSet]] types: Fields are mapped by field name, field types must match.
     *
     * @param table       The [[Table]] to convert.
-    * @param typeInfo    The [[TypeInformation]] that specifies the type of the resulting [[DataSet]].
+    * @param typeInfo    The [[TypeInformation]] that specifies the type of the resulting
+    *                    [[DataSet]].
     * @param queryConfig The configuration for the query to generate.
     * @tparam T The type of the resulting [[DataSet]].
     * @return The converted [[DataSet]].
     */
-  def toDataSet[T](table: Table, typeInfo: TypeInformation[T], queryConfig: BatchQueryConfig): DataSet[T] = {
+  def toDataSet[T](
+      table: Table,
+      typeInfo: TypeInformation[T],
+      queryConfig: BatchQueryConfig): DataSet[T] = {
     throw new UnsupportedOperationException("This method is not supported in stream mode!")
   }
 }
