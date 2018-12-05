@@ -69,8 +69,7 @@ import _root_.scala.reflect.ClassTag
 class BatchTableEnvironment(
     private[flink] val execEnv: ExecutionEnvironment,
     config: TableConfig)
-  extends AbstractTableEnvironment(config)
-  with TableEnvironment {
+  extends AbstractTableEnvironment(config) {
 
   def this(env: ScalaBatchExecEnv, config: TableConfig) {
     this(env.getJavaEnv, config)

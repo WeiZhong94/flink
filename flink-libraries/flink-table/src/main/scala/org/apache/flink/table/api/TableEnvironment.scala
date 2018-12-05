@@ -38,7 +38,7 @@ import org.apache.flink.table.sources.TableSource
 
 import _root_.scala.annotation.varargs
 
-trait TableEnvironment {
+abstract class TableEnvironment {
 
   /**
     * Creates a table from a table source.

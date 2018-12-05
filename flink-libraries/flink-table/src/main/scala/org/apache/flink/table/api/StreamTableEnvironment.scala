@@ -77,8 +77,7 @@ import _root_.scala.collection.JavaConverters._
 class StreamTableEnvironment(
     private[flink] val execEnv: StreamExecutionEnvironment,
     config: TableConfig)
-  extends AbstractTableEnvironment(config)
-  with TableEnvironment {
+  extends AbstractTableEnvironment(config) {
 
   def this(env: ScalaStreamExecEnv, config: TableConfig) {
     this(env.getWrappedStreamExecutionEnvironment, config)
