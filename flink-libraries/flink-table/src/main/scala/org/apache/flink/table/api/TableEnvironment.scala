@@ -65,6 +65,13 @@ class TableEnvironment private{
     isStream = false
   }
 
+  def this(env: JavaStreamExecEnv, config: TableConfig) = {
+    this()
+    this.config = config
+    streamEnv = new StreamTableEnvironment(env, config)
+    isStream = true
+  }
+
   def getActualTableEnviroment: AbstractTableEnvironment = {
     if (isStream) {
       streamEnv
@@ -1431,11 +1438,11 @@ object TableEnvironment {
     }
   }
 
-  def getStreamTableEnvironment: StreamTableEnvironment = {
-    getTableEnvironment(ScalaStreamExecEnv.getExecutionEnvironment, new TableConfig)
+  def getStreamTableEnvironment: TableEnvironment = {
+    new TableEnvironment(ScalaStreamExecEnv.getExecutionEnvironment, new TableConfig)
   }
 
-  def getBatchTableEnvironment: BatchTableEnvironment = {
-    getTableEnvironment(ScalaBatchExecEnv.getExecutionEnvironment, new TableConfig)
+  def getBatchTableEnvironment: TableEnvironment = {
+    new TableEnvironment(ScalaBatchExecEnv.getExecutionEnvironment, new TableConfig)
   }
 }
