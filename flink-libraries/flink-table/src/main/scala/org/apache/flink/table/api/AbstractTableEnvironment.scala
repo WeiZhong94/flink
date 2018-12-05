@@ -71,7 +71,8 @@ import _root_.scala.collection.mutable
   *
   * @param config The configuration of the TableEnvironment
   */
-abstract class AbstractTableEnvironment(val config: TableConfig) {
+abstract class AbstractTableEnvironment(val config: TableConfig)
+  extends TableEnvironment {
 
   // the catalog to hold all registered and translated tables
   // we disable caching here to prevent side effects
