@@ -40,6 +40,9 @@ import _root_.scala.annotation.varargs
 
 abstract class TableEnvironment {
 
+  /** Returns the table config to define the runtime behavior of the Table API. */
+  def getConfig: TableConfig
+
   /**
     * Creates a table from a table source.
     *
