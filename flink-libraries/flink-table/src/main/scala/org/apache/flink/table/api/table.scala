@@ -83,13 +83,13 @@ class Table(
   }
 
   def this(tableEnv: TableEnvironment, udtfCall: String) {
-    this(tableEnv.getActualTableEnviroment,
+    this(tableEnv.asInstanceOf[AbstractTableEnvironment],
       UserDefinedFunctionUtils.createLogicalFunctionCall(
-        tableEnv.getActualTableEnviroment, udtfCall))
+        tableEnv.asInstanceOf[AbstractTableEnvironment], udtfCall))
   }
 
   def this(tableEnv: TableEnvironment, logicalPlan: LogicalNode) {
-    this(tableEnv.getActualTableEnviroment,
+    this(tableEnv.asInstanceOf[AbstractTableEnvironment],
       logicalPlan)
   }
 

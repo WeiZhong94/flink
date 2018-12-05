@@ -38,60 +38,14 @@ import org.apache.flink.table.sources.TableSource
 
 import _root_.scala.annotation.varargs
 
-class TableEnvironment private{
-  private var config: TableConfig = _
-  private[flink] var isStream: Boolean = false
-  private[flink] var streamEnv: StreamTableEnvironment = _
-  private[flink] var batchEnv: BatchTableEnvironment = _
-
-  def this(env: ScalaBatchExecEnv, config: TableConfig) = {
-    this()
-    this.config = config
-    batchEnv = new BatchTableEnvironment(env, config)
-    isStream = false
-  }
-
-  def this(env: ScalaStreamExecEnv, config: TableConfig) = {
-    this()
-    this.config = config
-    streamEnv = new StreamTableEnvironment(env, config)
-    isStream = true
-  }
-
-  def this(env: JavaBatchExecEnv, config: TableConfig) = {
-    this()
-    this.config = config
-    batchEnv = new BatchTableEnvironment(env, config)
-    isStream = false
-  }
-
-  def this(env: JavaStreamExecEnv, config: TableConfig) = {
-    this()
-    this.config = config
-    streamEnv = new StreamTableEnvironment(env, config)
-    isStream = true
-  }
-
-  def getActualTableEnviroment: AbstractTableEnvironment = {
-    if (isStream) {
-      streamEnv
-    } else {
-      batchEnv
-    }
-  }
+trait TableEnvironment {
 
   /**
     * Creates a table from a table source.
     *
     * @param source table source used as table
     */
-  def fromTableSource(source: TableSource[_]): Table = {
-    if (isStream) {
-      streamEnv.fromTableSource(source)
-    } else {
-      batchEnv.fromTableSource(source)
-    }
-  }
+  def fromTableSource(source: TableSource[_]): Table
 
   /**
     * Registers an [[ExternalCatalog]] under a unique name in the TableEnvironment's schema.
@@ -100,14 +54,7 @@ class TableEnvironment private{
     * @param name            The name under which the externalCatalog will be registered
     * @param externalCatalog The externalCatalog to register
     */
-  def registerExternalCatalog(name: String, externalCatalog: ExternalCatalog): Unit = {
-    if (isStream) {
-      streamEnv.registerExternalCatalog(name, externalCatalog)
-    } else {
-      batchEnv.registerExternalCatalog(name, externalCatalog)
-    }
-  }
-
+  def registerExternalCatalog(name: String, externalCatalog: ExternalCatalog): Unit
 
   /**
     * Gets a registered [[ExternalCatalog]] by name.
@@ -115,40 +62,22 @@ class TableEnvironment private{
     * @param name The name to look up the [[ExternalCatalog]]
     * @return The [[ExternalCatalog]]
     */
-  def getRegisteredExternalCatalog(name: String): ExternalCatalog = {
-    if (isStream) {
-      streamEnv.getRegisteredExternalCatalog(name)
-    } else {
-      batchEnv.getRegisteredExternalCatalog(name)
-    }
-  }
+  def getRegisteredExternalCatalog(name: String): ExternalCatalog
 
   /**
     * Registers a [[ScalarFunction]] under a unique name. Replaces already existing
     * user-defined functions under this name.
     */
-  def registerFunction(name: String, function: ScalarFunction): Unit = {
-    if (isStream) {
-      streamEnv.registerFunction(name, function)
-    } else {
-      batchEnv.registerFunction(name, function)
-    }
-  }
+  def registerFunction(name: String, function: ScalarFunction): Unit
 
   /**
     * Registers a [[Table]] under a unique name in the TableEnvironment's catalog.
     * Registered tables can be referenced in SQL queries.
     *
-    * @param name The name under which the table will be registered.
+    * @param name  The name under which the table will be registered.
     * @param table The table to register.
     */
-  def registerTable(name: String, table: Table): Unit = {
-    if (isStream) {
-      streamEnv.registerTable(name, table)
-    } else {
-      batchEnv.registerTable(name, table)
-    }
-  }
+  def registerTable(name: String, table: Table): Unit
 
   /**
     * Registers an external [[TableSource]] in this [[AbstractTableEnvironment]]'s catalog.
@@ -157,51 +86,33 @@ class TableEnvironment private{
     * @param name        The name under which the [[TableSource]] is registered.
     * @param tableSource The [[TableSource]] to register.
     */
-  def registerTableSource(name: String, tableSource: TableSource[_]): Unit = {
-    if (isStream) {
-      streamEnv.registerTableSource(name, tableSource)
-    } else {
-      batchEnv.registerTableSource(name, tableSource)
-    }
-  }
+  def registerTableSource(name: String, tableSource: TableSource[_]): Unit
 
   /**
     * Registers an external [[TableSink]] with given field names and types in this
     * [[AbstractTableEnvironment]]'s catalog.
     * Registered sink tables can be referenced in SQL DML statements.
     *
-    * @param name The name under which the [[TableSink]] is registered.
+    * @param name       The name under which the [[TableSink]] is registered.
     * @param fieldNames The field names to register with the [[TableSink]].
     * @param fieldTypes The field types to register with the [[TableSink]].
-    * @param tableSink The [[TableSink]] to register.
+    * @param tableSink  The [[TableSink]] to register.
     */
   def registerTableSink(
       name: String,
       fieldNames: Array[String],
       fieldTypes: Array[TypeInformation[_]],
-      tableSink: TableSink[_]): Unit = {
-    if (isStream) {
-      streamEnv.registerTableSink(name, fieldNames, fieldTypes, tableSink)
-    } else {
-      batchEnv.registerTableSink(name, fieldNames, fieldTypes, tableSink)
-    }
-  }
+      tableSink: TableSink[_]): Unit
 
   /**
     * Registers an external [[TableSink]] with already configured field names and field types in
     * this [[AbstractTableEnvironment]]'s catalog.
     * Registered sink tables can be referenced in SQL DML statements.
     *
-    * @param name The name under which the [[TableSink]] is registered.
+    * @param name           The name under which the [[TableSink]] is registered.
     * @param configuredSink The configured [[TableSink]] to register.
     */
-  def registerTableSink(name: String, configuredSink: TableSink[_]): Unit = {
-    if (isStream) {
-      streamEnv.registerTableSink(name, configuredSink)
-    } else {
-      batchEnv.registerTableSink(name, configuredSink)
-    }
-  }
+  def registerTableSink(name: String, configuredSink: TableSink[_]): Unit
 
   /**
     * Scans a registered table and returns the resulting [[Table]].
@@ -227,13 +138,7 @@ class TableEnvironment private{
     */
   @throws[TableException]
   @varargs
-  def scan(tablePath: String*): Table = {
-    if (isStream) {
-      streamEnv.scan(tablePath: _*)
-    } else {
-      batchEnv.scan(tablePath: _*)
-    }
-  }
+  def scan(tablePath: String*): Table
 
   /**
     * Creates a table source and/or table sink from a descriptor.
@@ -264,53 +169,23 @@ class TableEnvironment private{
     *
     * @param connectorDescriptor connector descriptor describing the external system
     */
-  def connect(connectorDescriptor: ConnectorDescriptor): TableDescriptor = {
-    if (isStream) {
-      streamEnv.connect(connectorDescriptor)
-    } else {
-      batchEnv.connect(connectorDescriptor)
-    }
-  }
+  def connect(connectorDescriptor: ConnectorDescriptor): TableDescriptor
 
-  def connectForStream(connectorDescriptor: ConnectorDescriptor): StreamTableDescriptor = {
-    if (isStream) {
-      streamEnv.connect(connectorDescriptor)
-    } else {
-      throw new TableException("this method only used in stream mode!")
-    }
-  }
+  def connectForStream(connectorDescriptor: ConnectorDescriptor): StreamTableDescriptor
 
-  def connectForBatch(connectorDescriptor: ConnectorDescriptor): BatchTableDescriptor = {
-    if (isStream) {
-      throw new TableException("this method only used in batch mode!")
-    } else {
-      batchEnv.connect(connectorDescriptor)
-    }
-  }
+  def connectForBatch(connectorDescriptor: ConnectorDescriptor): BatchTableDescriptor
 
   /**
     * Gets the names of all tables registered in this environment.
     *
     * @return A list of the names of all registered tables.
     */
-  def listTables(): Array[String] = {
-    if (isStream) {
-      streamEnv.listTables()
-    } else {
-      batchEnv.listTables()
-    }
-  }
+  def listTables(): Array[String]
 
   /**
     * Gets the names of all functions registered in this environment.
     */
-  def listUserDefinedFunctions(): Array[String] = {
-    if (isStream) {
-      streamEnv.listUserDefinedFunctions()
-    } else {
-      batchEnv.listUserDefinedFunctions()
-    }
-  }
+  def listUserDefinedFunctions(): Array[String]
 
   /**
     * Returns the AST of the specified Table API and SQL queries and the execution plan to compute
@@ -318,29 +193,17 @@ class TableEnvironment private{
     *
     * @param table The table for which the AST and execution plan will be returned.
     */
-  def explain(table: Table): String = {
-    if (isStream) {
-      streamEnv.explain(table)
-    } else {
-      batchEnv.explain(table)
-    }
-  }
+  def explain(table: Table): String
 
   /**
     * Returns completion hints for the given statement at the given cursor position.
     * The completion happens case insensitively.
     *
     * @param statement Partial or slightly incorrect SQL statement
-    * @param position cursor position
+    * @param position  cursor position
     * @return completion hints that fit at the current cursor position
     */
-  def getCompletionHints(statement: String, position: Int): Array[String] = {
-    if (isStream) {
-      streamEnv.getCompletionHints(statement, position)
-    } else {
-      batchEnv.getCompletionHints(statement, position)
-    }
-  }
+  def getCompletionHints(statement: String, position: Int): Array[String]
 
   /**
     * Evaluates a SQL query on registered tables and retrieves the result as a [[Table]].
@@ -359,13 +222,7 @@ class TableEnvironment private{
     * @param query The SQL query to evaluate.
     * @return The result of the query as Table
     */
-  def sqlQuery(query: String): Table = {
-    if (isStream) {
-      streamEnv.sqlQuery(query)
-    } else {
-      batchEnv.sqlQuery(query)
-    }
-  }
+  def sqlQuery(query: String): Table
 
   /**
     * Evaluates a SQL statement such as INSERT, UPDATE or DELETE; or a DDL statement;
@@ -386,13 +243,7 @@ class TableEnvironment private{
     *
     * @param stmt The SQL statement to evaluate.
     */
-  def sqlUpdate(stmt: String): Unit = {
-    if (isStream) {
-      streamEnv.sqlUpdate(stmt)
-    } else {
-      batchEnv.sqlUpdate(stmt)
-    }
-  }
+  def sqlUpdate(stmt: String): Unit
 
   /**
     * Evaluates a SQL statement such as INSERT, UPDATE or DELETE; or a DDL statement;
@@ -411,16 +262,10 @@ class TableEnvironment private{
     *   tEnv.sqlUpdate(s"INSERT INTO sinkTable SELECT * FROM $sourceTable")
     * }}}
     *
-    * @param stmt The SQL statement to evaluate.
+    * @param stmt   The SQL statement to evaluate.
     * @param config The [[QueryConfig]] to use.
     */
-  def sqlUpdate(stmt: String, config: QueryConfig): Unit = {
-    if (isStream) {
-      streamEnv.sqlUpdate(stmt, config)
-    } else {
-      batchEnv.sqlUpdate(stmt, config)
-    }
-  }
+  def sqlUpdate(stmt: String, config: QueryConfig): Unit
 
   /**
     * Converts the given [[DataSet]] into a [[Table]].
@@ -431,13 +276,7 @@ class TableEnvironment private{
     * @tparam T The type of the [[DataSet]].
     * @return The converted [[Table]].
     */
-  def fromDataSet[T](dataSet: ScalaDataSet[T]): Table = {
-    if (isStream) {
-      throw new TableException("this method only used in batch mode!")
-    } else {
-      batchEnv.fromDataSet(dataSet)
-    }
-  }
+  def fromDataSet[T](dataSet: ScalaDataSet[T]): Table
 
   /**
     * Converts the given [[DataSet]] into a [[Table]] with specified field names.
@@ -450,17 +289,11 @@ class TableEnvironment private{
     * }}}
     *
     * @param dataSet The [[DataSet]] to be converted.
-    * @param fields The field names of the resulting [[Table]].
+    * @param fields  The field names of the resulting [[Table]].
     * @tparam T The type of the [[DataSet]].
     * @return The converted [[Table]].
     */
-  def fromDataSet[T](dataSet: ScalaDataSet[T], fields: Expression*): Table = {
-    if (isStream) {
-      throw new TableException("this method only used in batch mode!")
-    } else {
-      batchEnv.fromDataSet(dataSet, fields: _*)
-    }
-  }
+  def fromDataSet[T](dataSet: ScalaDataSet[T], fields: Expression*): Table
 
   /**
     * Registers the given [[DataSet]] as table in the
@@ -469,17 +302,11 @@ class TableEnvironment private{
     *
     * The field names of the [[Table]] are automatically derived from the type of the [[DataSet]].
     *
-    * @param name The name under which the [[DataSet]] is registered in the catalog.
+    * @param name    The name under which the [[DataSet]] is registered in the catalog.
     * @param dataSet The [[DataSet]] to register.
     * @tparam T The type of the [[DataSet]] to register.
     */
-  def registerDataSet[T](name: String, dataSet: ScalaDataSet[T]): Unit = {
-    if (isStream) {
-      throw new TableException("this method only used in batch mode!")
-    } else {
-      batchEnv.registerDataSet(name, dataSet)
-    }
-  }
+  def registerDataSet[T](name: String, dataSet: ScalaDataSet[T]): Unit
 
   /**
     * Registers the given [[DataSet]] as table with specified field names in the
@@ -493,18 +320,12 @@ class TableEnvironment private{
     *   tableEnv.registerDataSet("myTable", set, 'a, 'b)
     * }}}
     *
-    * @param name The name under which the [[DataSet]] is registered in the catalog.
+    * @param name    The name under which the [[DataSet]] is registered in the catalog.
     * @param dataSet The [[DataSet]] to register.
-    * @param fields The field names of the registered table.
+    * @param fields  The field names of the registered table.
     * @tparam T The type of the [[DataSet]] to register.
     */
-  def registerDataSet[T](name: String, dataSet: ScalaDataSet[T], fields: Expression*): Unit = {
-    if (isStream) {
-      throw new TableException("this method only used in batch mode!")
-    } else {
-      batchEnv.registerDataSet(name, dataSet, fields: _*)
-    }
-  }
+  def registerDataSet[T](name: String, dataSet: ScalaDataSet[T], fields: Expression*): Unit
 
   /**
     * Converts the given [[Table]] into a [[DataSet]] of a specified type.
@@ -518,13 +339,7 @@ class TableEnvironment private{
     * @tparam T The type of the resulting [[DataSet]].
     * @return The converted [[DataSet]].
     */
-  def toDataSetScala[T: TypeInformation](table: Table): ScalaDataSet[T] = {
-    if (isStream) {
-      throw new TableException("this method only used in batch mode!")
-    } else {
-      batchEnv.toDataSetScala(table)
-    }
-  }
+  def toDataSetScala[T: TypeInformation](table: Table): ScalaDataSet[T]
 
   /**
     * Converts the given [[Table]] into a [[DataSet]] of a specified type.
@@ -534,56 +349,38 @@ class TableEnvironment private{
     * types: Fields are mapped by position, field types must match.
     * - POJO [[DataSet]] types: Fields are mapped by field name, field types must match.
     *
-    * @param table The [[Table]] to convert.
+    * @param table       The [[Table]] to convert.
     * @param queryConfig The configuration of the query to generate.
     * @tparam T The type of the resulting [[DataSet]].
     * @return The converted [[DataSet]].
     */
   def toDataSetScala[T: TypeInformation](
-      table: Table,
-      queryConfig: BatchQueryConfig): ScalaDataSet[T] = {
-    if (isStream) {
-      throw new TableException("this method only used in batch mode!")
-    } else {
-      batchEnv.toDataSetScala(table, queryConfig)
-    }
-  }
+                                          table: Table,
+                                          queryConfig: BatchQueryConfig): ScalaDataSet[T]
 
   /**
     * Registers a [[TableFunction]] under a unique name in the TableEnvironment's catalog.
     * Registered functions can be referenced in Table API and SQL queries.
     *
     * @param name The name under which the function is registered.
-    * @param tf The TableFunction to register.
+    * @param tf   The TableFunction to register.
     * @tparam T The type of the output row.
     */
-  def registerFunctionScala[T: TypeInformation](name: String, tf: TableFunction[T]): Unit = {
-    if (isStream) {
-      streamEnv.registerFunctionScala(name, tf)
-    } else {
-      batchEnv.registerFunctionScala(name, tf)
-    }
-  }
+  def registerFunctionScala[T: TypeInformation](name: String, tf: TableFunction[T]): Unit
 
   /**
     * Registers an [[AggregateFunction]] under a unique name in the TableEnvironment's catalog.
     * Registered functions can be referenced in Table API and SQL queries.
     *
     * @param name The name under which the function is registered.
-    * @param f The AggregateFunction to register.
-    * @tparam T The type of the output value.
+    * @param f    The AggregateFunction to register.
+    * @tparam T   The type of the output value.
     * @tparam ACC The type of aggregate accumulator.
     */
   def registerFunctionScala[T: TypeInformation, ACC: TypeInformation](
-      name: String,
-      f: AggregateFunction[T, ACC])
-  : Unit = {
-    if (isStream) {
-      streamEnv.registerFunctionScala(name, f)
-    } else {
-      batchEnv.registerFunctionScala(name, f)
-    }
-  }
+                                                                       name: String,
+                                                                       f: AggregateFunction[T, ACC])
+  : Unit
 
   /**
     * Converts the given [[DataSet]] into a [[Table]].
@@ -594,13 +391,7 @@ class TableEnvironment private{
     * @tparam T The type of the [[DataSet]].
     * @return The converted [[Table]].
     */
-  def fromDataSet[T](dataSet: DataSet[T]): Table = {
-    if (isStream) {
-      throw new TableException("this method only used in batch mode!")
-    } else {
-      batchEnv.fromDataSet(dataSet)
-    }
-  }
+  def fromDataSet[T](dataSet: DataSet[T]): Table
 
   /**
     * Converts the given [[DataSet]] into a [[Table]] with specified field names.
@@ -613,17 +404,11 @@ class TableEnvironment private{
     * }}}
     *
     * @param dataSet The [[DataSet]] to be converted.
-    * @param fields The field names of the resulting [[Table]].
+    * @param fields  The field names of the resulting [[Table]].
     * @tparam T The type of the [[DataSet]].
     * @return The converted [[Table]].
     */
-  def fromDataSet[T](dataSet: DataSet[T], fields: String): Table = {
-    if (isStream) {
-      throw new TableException("this method only used in batch mode!")
-    } else {
-      batchEnv.fromDataSet(dataSet, fields)
-    }
-  }
+  def fromDataSet[T](dataSet: DataSet[T], fields: String): Table
 
   /**
     * Registers the given [[DataSet]] as table in the
@@ -632,17 +417,11 @@ class TableEnvironment private{
     *
     * The field names of the [[Table]] are automatically derived from the type of the [[DataSet]].
     *
-    * @param name The name under which the [[DataSet]] is registered in the catalog.
+    * @param name    The name under which the [[DataSet]] is registered in the catalog.
     * @param dataSet The [[DataSet]] to register.
     * @tparam T The type of the [[DataSet]] to register.
     */
-  def registerDataSet[T](name: String, dataSet: DataSet[T]): Unit = {
-    if (isStream) {
-      throw new TableException("this method only used in batch mode!")
-    } else {
-      batchEnv.registerDataSet(name, dataSet)
-    }
-  }
+  def registerDataSet[T](name: String, dataSet: DataSet[T]): Unit
 
   /**
     * Registers the given [[DataSet]] as table with specified field names in the
@@ -656,18 +435,12 @@ class TableEnvironment private{
     *   tableEnv.registerDataSet("myTable", set, "a, b")
     * }}}
     *
-    * @param name The name under which the [[DataSet]] is registered in the catalog.
+    * @param name    The name under which the [[DataSet]] is registered in the catalog.
     * @param dataSet The [[DataSet]] to register.
-    * @param fields The field names of the registered table.
+    * @param fields  The field names of the registered table.
     * @tparam T The type of the [[DataSet]] to register.
     */
-  def registerDataSet[T](name: String, dataSet: DataSet[T], fields: String): Unit = {
-    if (isStream) {
-      throw new TableException("this method only used in batch mode!")
-    } else {
-      batchEnv.registerDataSet(name, dataSet, fields)
-    }
-  }
+  def registerDataSet[T](name: String, dataSet: DataSet[T], fields: String): Unit
 
   /**
     * Converts the given [[Table]] into a [[DataSet]] of a specified type.
@@ -682,13 +455,7 @@ class TableEnvironment private{
     * @tparam T The type of the resulting [[DataSet]].
     * @return The converted [[DataSet]].
     */
-  def toDataSet[T](table: Table, clazz: Class[T]): DataSet[T] = {
-    if (isStream) {
-      throw new TableException("this method only used in batch mode!")
-    } else {
-      batchEnv.toDataSet(table, clazz)
-    }
-  }
+  def toDataSet[T](table: Table, clazz: Class[T]): DataSet[T]
 
   /**
     * Converts the given [[Table]] into a [[DataSet]] of a specified type.
@@ -698,18 +465,12 @@ class TableEnvironment private{
     * types: Fields are mapped by position, field types must match.
     * - POJO [[DataSet]] types: Fields are mapped by field name, field types must match.
     *
-    * @param table The [[Table]] to convert.
+    * @param table    The [[Table]] to convert.
     * @param typeInfo The [[TypeInformation]] that specifies the type of the resulting [[DataSet]].
     * @tparam T The type of the resulting [[DataSet]].
     * @return The converted [[DataSet]].
     */
-  def toDataSet[T](table: Table, typeInfo: TypeInformation[T]): DataSet[T] = {
-    if (isStream) {
-      throw new TableException("this method only used in batch mode!")
-    } else {
-      batchEnv.toDataSet(table, typeInfo)
-    }
-  }
+  def toDataSet[T](table: Table, typeInfo: TypeInformation[T]): DataSet[T]
 
   /**
     * Converts the given [[Table]] into a [[DataSet]] of a specified type.
@@ -719,22 +480,16 @@ class TableEnvironment private{
     * types: Fields are mapped by position, field types must match.
     * - POJO [[DataSet]] types: Fields are mapped by field name, field types must match.
     *
-    * @param table The [[Table]] to convert.
-    * @param clazz The class of the type of the resulting [[DataSet]].
+    * @param table       The [[Table]] to convert.
+    * @param clazz       The class of the type of the resulting [[DataSet]].
     * @param queryConfig The configuration for the query to generate.
     * @tparam T The type of the resulting [[DataSet]].
     * @return The converted [[DataSet]].
     */
   def toDataSet[T](
-      table: Table,
-      clazz: Class[T],
-      queryConfig: BatchQueryConfig): DataSet[T] = {
-    if (isStream) {
-      throw new TableException("this method only used in batch mode!")
-    } else {
-      batchEnv.toDataSet(table, clazz, queryConfig)
-    }
-  }
+                    table: Table,
+                    clazz: Class[T],
+                    queryConfig: BatchQueryConfig): DataSet[T]
 
   /**
     * Converts the given [[Table]] into a [[DataSet]] of a specified type.
@@ -744,58 +499,39 @@ class TableEnvironment private{
     * types: Fields are mapped by position, field types must match.
     * - POJO [[DataSet]] types: Fields are mapped by field name, field types must match.
     *
-    * @param table The [[Table]] to convert.
-    * @param typeInfo The [[TypeInformation]] that specifies the type of the resulting [[DataSet]].
+    * @param table       The [[Table]] to convert.
+    * @param typeInfo    The [[TypeInformation]] that specifies the type of the resulting [[DataSet]].
     * @param queryConfig The configuration for the query to generate.
     * @tparam T The type of the resulting [[DataSet]].
     * @return The converted [[DataSet]].
     */
   def toDataSet[T](
-      table: Table,
-      typeInfo: TypeInformation[T],
-      queryConfig: BatchQueryConfig): DataSet[T] = {
-    if (isStream) {
-      throw new TableException("this method only used in batch mode!")
-    } else {
-      batchEnv.toDataSet(table, typeInfo, queryConfig)
-    }
-  }
+                    table: Table,
+                    typeInfo: TypeInformation[T],
+                    queryConfig: BatchQueryConfig): DataSet[T]
 
   /**
     * Registers a [[TableFunction]] under a unique name in the TableEnvironment's catalog.
     * Registered functions can be referenced in Table API and SQL queries.
     *
     * @param name The name under which the function is registered.
-    * @param tf The TableFunction to register.
+    * @param tf   The TableFunction to register.
     * @tparam T The type of the output row.
     */
-  def registerFunction[T](name: String, tf: TableFunction[T]): Unit = {
-    if (isStream) {
-      streamEnv.registerFunction(name, tf)
-    } else {
-      batchEnv.registerFunction(name, tf)
-    }
-  }
+  def registerFunction[T](name: String, tf: TableFunction[T]): Unit
 
   /**
     * Registers an [[AggregateFunction]] under a unique name in the TableEnvironment's catalog.
     * Registered functions can be referenced in Table API and SQL queries.
     *
     * @param name The name under which the function is registered.
-    * @param f The AggregateFunction to register.
-    * @tparam T The type of the output value.
+    * @param f    The AggregateFunction to register.
+    * @tparam T   The type of the output value.
     * @tparam ACC The type of aggregate accumulator.
     */
   def registerFunction[T, ACC](
-      name: String,
-      f: AggregateFunction[T, ACC])
-  : Unit = {
-    if (isStream) {
-      streamEnv.registerFunction(name, f)
-    } else {
-      batchEnv.registerFunction(name, f)
-    }
-  }
+                                name: String,
+                                f: AggregateFunction[T, ACC]): Unit
 
   /**
     * Converts the given [[DataStream]] into a [[Table]].
@@ -807,13 +543,7 @@ class TableEnvironment private{
     * @tparam T The type of the [[DataStream]].
     * @return The converted [[Table]].
     */
-  def fromDataStream[T](dataStream: ScalaDataStream[T]): Table = {
-    if (isStream) {
-      streamEnv.fromDataStream(dataStream)
-    } else {
-      throw new TableException("this method only used in stream mode!")
-    }
-  }
+  def fromDataStream[T](dataStream: ScalaDataStream[T]): Table
 
   /**
     * Converts the given [[DataStream]] into a [[Table]] with specified field names.
@@ -826,17 +556,11 @@ class TableEnvironment private{
     * }}}
     *
     * @param dataStream The [[DataStream]] to be converted.
-    * @param fields The field names of the resulting [[Table]].
+    * @param fields     The field names of the resulting [[Table]].
     * @tparam T The type of the [[DataStream]].
     * @return The converted [[Table]].
     */
-  def fromDataStream[T](dataStream: ScalaDataStream[T], fields: Expression*): Table = {
-    if (isStream) {
-      streamEnv.fromDataStream(dataStream, fields: _*)
-    } else {
-      throw new TableException("this method only used in stream mode!")
-    }
-  }
+  def fromDataStream[T](dataStream: ScalaDataStream[T], fields: Expression*): Table
 
   /**
     * Registers the given [[DataStream]] as table in the
@@ -846,17 +570,11 @@ class TableEnvironment private{
     * The field names of the [[Table]] are automatically derived
     * from the type of the [[DataStream]].
     *
-    * @param name The name under which the [[DataStream]] is registered in the catalog.
+    * @param name       The name under which the [[DataStream]] is registered in the catalog.
     * @param dataStream The [[DataStream]] to register.
     * @tparam T The type of the [[DataStream]] to register.
     */
-  def registerDataStream[T](name: String, dataStream: ScalaDataStream[T]): Unit = {
-    if (isStream) {
-      streamEnv.registerDataStream(name, dataStream)
-    } else {
-      throw new TableException("this method only used in stream mode!")
-    }
-  }
+  def registerDataStream[T](name: String, dataStream: ScalaDataStream[T]): Unit
 
   /**
     * Registers the given [[DataStream]] as table with specified field names in the
@@ -870,21 +588,15 @@ class TableEnvironment private{
     *   tableEnv.registerDataStream("myTable", set, 'a, 'b)
     * }}}
     *
-    * @param name The name under which the [[DataStream]] is registered in the catalog.
+    * @param name       The name under which the [[DataStream]] is registered in the catalog.
     * @param dataStream The [[DataStream]] to register.
-    * @param fields The field names of the registered table.
+    * @param fields     The field names of the registered table.
     * @tparam T The type of the [[DataStream]] to register.
     */
   def registerDataStream[T](
-      name: String,
-      dataStream: ScalaDataStream[T],
-      fields: Expression*): Unit = {
-    if (isStream) {
-      streamEnv.registerDataStream(name, dataStream, fields: _*)
-    } else {
-      throw new TableException("this method only used in stream mode!")
-    }
-  }
+                             name: String,
+                             dataStream: ScalaDataStream[T],
+                             fields: Expression*): Unit
 
   /**
     * Converts the given [[Table]] into an append [[DataStream]] of a specified type.
@@ -901,13 +613,7 @@ class TableEnvironment private{
     * @tparam T The type of the resulting [[DataStream]].
     * @return The converted [[DataStream]].
     */
-  def toAppendStreamScala[T: TypeInformation](table: Table): ScalaDataStream[T] = {
-    if (isStream) {
-      streamEnv.toAppendStreamScala(table)
-    } else {
-      throw new TableException("this method only used in stream mode!")
-    }
-  }
+  def toAppendStreamScala[T: TypeInformation](table: Table): ScalaDataStream[T]
 
   /**
     * Converts the given [[Table]] into an append [[DataStream]] of a specified type.
@@ -920,20 +626,14 @@ class TableEnvironment private{
     * types must match.
     * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
     *
-    * @param table The [[Table]] to convert.
+    * @param table       The [[Table]] to convert.
     * @param queryConfig The configuration of the query to generate.
     * @tparam T The type of the resulting [[DataStream]].
     * @return The converted [[DataStream]].
     */
   def toAppendStreamScala[T: TypeInformation](
-      table: Table,
-      queryConfig: StreamQueryConfig): ScalaDataStream[T] = {
-    if (isStream) {
-      streamEnv.toAppendStreamScala(table, queryConfig)
-    } else {
-      throw new TableException("this method only used in stream mode!")
-    }
-  }
+                                               table: Table,
+                                               queryConfig: StreamQueryConfig): ScalaDataStream[T]
 
   /**
     * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
@@ -946,13 +646,7 @@ class TableEnvironment private{
     * @tparam T The type of the requested data type.
     * @return The converted [[DataStream]].
     */
-  def toRetractStreamScala[T: TypeInformation](table: Table): ScalaDataStream[(Boolean, T)] = {
-    if (isStream) {
-      streamEnv.toRetractStreamScala(table)
-    } else {
-      throw new TableException("this method only used in stream mode!")
-    }
-  }
+  def toRetractStreamScala[T: TypeInformation](table: Table): ScalaDataStream[(Boolean, T)]
 
   /**
     * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
@@ -961,20 +655,14 @@ class TableEnvironment private{
     *
     * A true [[Boolean]] flag indicates an add message, a false flag indicates a retract message.
     *
-    * @param table The [[Table]] to convert.
+    * @param table       The [[Table]] to convert.
     * @param queryConfig The configuration of the query to generate.
     * @tparam T The type of the requested data type.
     * @return The converted [[DataStream]].
     */
   def toRetractStreamScala[T: TypeInformation](
-      table: Table,
-      queryConfig: StreamQueryConfig): ScalaDataStream[(Boolean, T)] = {
-    if (isStream) {
-      streamEnv.toRetractStreamScala(table, queryConfig)
-    } else {
-      throw new TableException("this method only used in stream mode!")
-    }
-  }
+                                                table: Table,
+                                                queryConfig: StreamQueryConfig): ScalaDataStream[(Boolean, T)]
 
   /**
     * Converts the given [[DataStream]] into a [[Table]].
@@ -986,13 +674,7 @@ class TableEnvironment private{
     * @tparam T The type of the [[DataStream]].
     * @return The converted [[Table]].
     */
-  def fromDataStream[T](dataStream: DataStream[T]): Table = {
-    if (isStream) {
-      streamEnv.fromDataStream(dataStream)
-    } else {
-      throw new TableException("this method only used in stream mode!")
-    }
-  }
+  def fromDataStream[T](dataStream: DataStream[T]): Table
 
   /**
     * Converts the given [[DataStream]] into a [[Table]] with specified field names.
@@ -1005,17 +687,11 @@ class TableEnvironment private{
     * }}}
     *
     * @param dataStream The [[DataStream]] to be converted.
-    * @param fields The field names of the resulting [[Table]].
+    * @param fields     The field names of the resulting [[Table]].
     * @tparam T The type of the [[DataStream]].
     * @return The converted [[Table]].
     */
-  def fromDataStream[T](dataStream: DataStream[T], fields: String): Table = {
-    if (isStream) {
-      streamEnv.fromDataStream(dataStream, fields)
-    } else {
-      throw new TableException("this method only used in stream mode!")
-    }
-  }
+  def fromDataStream[T](dataStream: DataStream[T], fields: String): Table
 
   /**
     * Registers the given [[DataStream]] as table in the
@@ -1025,17 +701,11 @@ class TableEnvironment private{
     * The field names of the [[Table]] are automatically derived
     * from the type of the [[DataStream]].
     *
-    * @param name The name under which the [[DataStream]] is registered in the catalog.
+    * @param name       The name under which the [[DataStream]] is registered in the catalog.
     * @param dataStream The [[DataStream]] to register.
     * @tparam T The type of the [[DataStream]] to register.
     */
-  def registerDataStream[T](name: String, dataStream: DataStream[T]): Unit = {
-    if (isStream) {
-      streamEnv.registerDataStream(name, dataStream)
-    } else {
-      throw new TableException("this method only used in stream mode!")
-    }
-  }
+  def registerDataStream[T](name: String, dataStream: DataStream[T]): Unit
 
   /**
     * Registers the given [[DataStream]] as table with specified field names in the
@@ -1049,18 +719,12 @@ class TableEnvironment private{
     *   tableEnv.registerDataStream("myTable", set, "a, b")
     * }}}
     *
-    * @param name The name under which the [[DataStream]] is registered in the catalog.
+    * @param name       The name under which the [[DataStream]] is registered in the catalog.
     * @param dataStream The [[DataStream]] to register.
-    * @param fields The field names of the registered table.
+    * @param fields     The field names of the registered table.
     * @tparam T The type of the [[DataStream]] to register.
     */
-  def registerDataStream[T](name: String, dataStream: DataStream[T], fields: String): Unit = {
-    if (isStream) {
-      streamEnv.registerDataStream(name, dataStream, fields)
-    } else {
-      throw new TableException("this method only used in stream mode!")
-    }
-  }
+  def registerDataStream[T](name: String, dataStream: DataStream[T], fields: String): Unit
 
   /**
     * Converts the given [[Table]] into an append [[DataStream]] of a specified type.
@@ -1078,13 +742,7 @@ class TableEnvironment private{
     * @tparam T The type of the resulting [[DataStream]].
     * @return The converted [[DataStream]].
     */
-  def toAppendStream[T](table: Table, clazz: Class[T]): DataStream[T] = {
-    if (isStream) {
-      streamEnv.toAppendStream(table, clazz)
-    } else {
-      throw new TableException("this method only used in stream mode!")
-    }
-  }
+  def toAppendStream[T](table: Table, clazz: Class[T]): DataStream[T]
 
   /**
     * Converts the given [[Table]] into an append [[DataStream]] of a specified type.
@@ -1097,18 +755,12 @@ class TableEnvironment private{
     * types: Fields are mapped by position, field types must match.
     * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
     *
-    * @param table The [[Table]] to convert.
+    * @param table    The [[Table]] to convert.
     * @param typeInfo The [[TypeInformation]] that specifies the type of the [[DataStream]].
     * @tparam T The type of the resulting [[DataStream]].
     * @return The converted [[DataStream]].
     */
-  def toAppendStream[T](table: Table, typeInfo: TypeInformation[T]): DataStream[T] = {
-    if (isStream) {
-      streamEnv.toAppendStream(table, typeInfo)
-    } else {
-      throw new TableException("this method only used in stream mode!")
-    }
-  }
+  def toAppendStream[T](table: Table, typeInfo: TypeInformation[T]): DataStream[T]
 
   /**
     * Converts the given [[Table]] into an append [[DataStream]] of a specified type.
@@ -1121,22 +773,16 @@ class TableEnvironment private{
     * types: Fields are mapped by position, field types must match.
     * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
     *
-    * @param table The [[Table]] to convert.
-    * @param clazz The class of the type of the resulting [[DataStream]].
+    * @param table       The [[Table]] to convert.
+    * @param clazz       The class of the type of the resulting [[DataStream]].
     * @param queryConfig The configuration of the query to generate.
     * @tparam T The type of the resulting [[DataStream]].
     * @return The converted [[DataStream]].
     */
   def toAppendStream[T](
-      table: Table,
-      clazz: Class[T],
-      queryConfig: StreamQueryConfig): DataStream[T] = {
-    if (isStream) {
-      streamEnv.toAppendStream(table, clazz, queryConfig)
-    } else {
-      throw new TableException("this method only used in stream mode!")
-    }
-  }
+                         table: Table,
+                         clazz: Class[T],
+                         queryConfig: StreamQueryConfig): DataStream[T]
 
   /**
     * Converts the given [[Table]] into an append [[DataStream]] of a specified type.
@@ -1149,22 +795,16 @@ class TableEnvironment private{
     * types: Fields are mapped by position, field types must match.
     * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
     *
-    * @param table The [[Table]] to convert.
-    * @param typeInfo The [[TypeInformation]] that specifies the type of the [[DataStream]].
+    * @param table       The [[Table]] to convert.
+    * @param typeInfo    The [[TypeInformation]] that specifies the type of the [[DataStream]].
     * @param queryConfig The configuration of the query to generate.
     * @tparam T The type of the resulting [[DataStream]].
     * @return The converted [[DataStream]].
     */
   def toAppendStream[T](
-      table: Table,
-      typeInfo: TypeInformation[T],
-      queryConfig: StreamQueryConfig): DataStream[T] = {
-    if (isStream) {
-      streamEnv.toAppendStream(table, typeInfo, queryConfig)
-    } else {
-      throw new TableException("this method only used in stream mode!")
-    }
-  }
+                         table: Table,
+                         typeInfo: TypeInformation[T],
+                         queryConfig: StreamQueryConfig): DataStream[T]
 
   /**
     * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
@@ -1184,14 +824,8 @@ class TableEnvironment private{
     * @return The converted [[DataStream]].
     */
   def toRetractStream[T](
-      table: Table,
-      clazz: Class[T]): DataStream[JTuple2[JBool, T]] = {
-    if (isStream) {
-      streamEnv.toRetractStream(table, clazz)
-    } else {
-      throw new TableException("this method only used in stream mode!")
-    }
-  }
+                          table: Table,
+                          clazz: Class[T]): DataStream[JTuple2[JBool, T]]
 
   /**
     * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
@@ -1205,20 +839,14 @@ class TableEnvironment private{
     * types: Fields are mapped by position, field types must match.
     * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
     *
-    * @param table The [[Table]] to convert.
+    * @param table    The [[Table]] to convert.
     * @param typeInfo The [[TypeInformation]] of the requested record type.
     * @tparam T The type of the requested record type.
     * @return The converted [[DataStream]].
     */
   def toRetractStream[T](
-      table: Table,
-      typeInfo: TypeInformation[T]): DataStream[JTuple2[JBool, T]] = {
-    if (isStream) {
-      streamEnv.toRetractStream(table, typeInfo)
-    } else {
-      throw new TableException("this method only used in stream mode!")
-    }
-  }
+                          table: Table,
+                          typeInfo: TypeInformation[T]): DataStream[JTuple2[JBool, T]]
 
   /**
     * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
@@ -1232,22 +860,16 @@ class TableEnvironment private{
     * types: Fields are mapped by position, field types must match.
     * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
     *
-    * @param table The [[Table]] to convert.
-    * @param clazz The class of the requested record type.
+    * @param table       The [[Table]] to convert.
+    * @param clazz       The class of the requested record type.
     * @param queryConfig The configuration of the query to generate.
     * @tparam T The type of the requested record type.
     * @return The converted [[DataStream]].
     */
   def toRetractStream[T](
-      table: Table,
-      clazz: Class[T],
-      queryConfig: StreamQueryConfig): DataStream[JTuple2[JBool, T]] = {
-    if (isStream) {
-      streamEnv.toRetractStream(table, clazz, queryConfig)
-    } else {
-      throw new TableException("this method only used in stream mode!")
-    }
-  }
+                          table: Table,
+                          clazz: Class[T],
+                          queryConfig: StreamQueryConfig): DataStream[JTuple2[JBool, T]]
 
   /**
     * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
@@ -1261,8 +883,8 @@ class TableEnvironment private{
     * types: Fields are mapped by position, field types must match.
     * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
     *
-    * @param table The [[Table]] to convert.
-    * @param typeInfo The [[TypeInformation]] of the requested record type.
+    * @param table       The [[Table]] to convert.
+    * @param typeInfo    The [[TypeInformation]] of the requested record type.
     * @param queryConfig The configuration of the query to generate.
     * @tparam T The type of the requested record type.
     * @return The converted [[DataStream]].
@@ -1270,13 +892,8 @@ class TableEnvironment private{
   def toRetractStream[T](
       table: Table,
       typeInfo: TypeInformation[T],
-      queryConfig: StreamQueryConfig): DataStream[JTuple2[JBool, T]] = {
-    if (isStream) {
-      streamEnv.toRetractStream(table, typeInfo, queryConfig)
-    } else {
-      throw new TableException("this method only used in stream mode!")
-    }
-  }
+      queryConfig: StreamQueryConfig): DataStream[JTuple2[JBool, T]]
+
 }
 
 /**
@@ -1436,13 +1053,5 @@ object TableEnvironment {
       case ct: CompositeType[_] => 0.until(ct.getArity).map(i => ct.getTypeAt(i)).toArray
       case t: TypeInformation[_] => Array(t.asInstanceOf[TypeInformation[_]])
     }
-  }
-
-  def getStreamTableEnvironment: TableEnvironment = {
-    new TableEnvironment(ScalaStreamExecEnv.getExecutionEnvironment, new TableConfig)
-  }
-
-  def getBatchTableEnvironment: TableEnvironment = {
-    new TableEnvironment(ScalaBatchExecEnv.getExecutionEnvironment, new TableConfig)
   }
 }
