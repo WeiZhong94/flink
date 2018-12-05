@@ -30,16 +30,18 @@ import org.apache.calcite.tools.{RuleSet, RuleSets}
 import org.apache.flink.api.common.functions.MapFunction
 import org.apache.flink.api.common.typeinfo.{SqlTimeTypeInfo, TypeInformation}
 import org.apache.flink.api.common.typeutils.CompositeType
+import org.apache.flink.api.java.DataSet
 import org.apache.flink.api.java.tuple.{Tuple2 => JTuple2}
 import org.apache.flink.api.java.typeutils.{RowTypeInfo, TupleTypeInfo, TypeExtractor}
 import org.apache.flink.api.scala.createTypeInformation
 import org.apache.flink.api.scala.typeutils.CaseClassTypeInfo
+import org.apache.flink.api.scala.{DataSet => ScalaDataSet}
 import org.apache.flink.streaming.api.TimeCharacteristic
 import org.apache.flink.streaming.api.datastream.DataStream
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
-import org.apache.flink.streaming.api.scala.{DataStream => ScalaDataStream, asScalaStream, StreamExecutionEnvironment => ScalaStreamExecEnv}
+import org.apache.flink.streaming.api.scala.{asScalaStream, DataStream => ScalaDataStream, StreamExecutionEnvironment => ScalaStreamExecEnv}
 import org.apache.flink.table.calcite.{FlinkTypeFactory, RelTimeIndicatorConverter}
-import org.apache.flink.table.descriptors.{ConnectorDescriptor, StreamTableDescriptor}
+import org.apache.flink.table.descriptors.{BatchTableDescriptor, ConnectorDescriptor, StreamTableDescriptor}
 import org.apache.flink.table.explain.PlanJsonParser
 import org.apache.flink.table.expressions._
 import org.apache.flink.table.functions.{AggregateFunction, TableFunction}
@@ -75,7 +77,8 @@ import _root_.scala.collection.JavaConverters._
 class StreamTableEnvironment(
     private[flink] val execEnv: StreamExecutionEnvironment,
     config: TableConfig)
-  extends AbstractTableEnvironment(config) {
+  extends AbstractTableEnvironment(config)
+  with TableEnvironment {
 
   def this(env: ScalaStreamExecEnv, config: TableConfig) {
     this(env.getWrappedStreamExecutionEnvironment, config)
@@ -202,6 +205,11 @@ class StreamTableEnvironment(
     * @param connectorDescriptor connector descriptor describing the external system
     */
   def connect(connectorDescriptor: ConnectorDescriptor): StreamTableDescriptor = {
+    connectForStream(connectorDescriptor)
+  }
+
+  def connectForStream(
+      connectorDescriptor: ConnectorDescriptor): StreamTableDescriptor = {
     new StreamTableDescriptor(this, connectorDescriptor)
   }
 
@@ -1547,5 +1555,249 @@ class StreamTableEnvironment(
   : Unit = {
     registerAggregateFunctionInternal[T, ACC](name, f)
   }
-}
 
+  def connectForBatch(connectorDescriptor: ConnectorDescriptor): BatchTableDescriptor = {
+    throw new UnsupportedOperationException("This method is not supported in stream mode!")
+  }
+
+  /**
+    * Converts the given [[DataSet]] into a [[Table]].
+    *
+    * The field names of the [[Table]] are automatically derived from the type of the [[DataSet]].
+    *
+    * @param dataSet The [[DataSet]] to be converted.
+    * @tparam T The type of the [[DataSet]].
+    * @return The converted [[Table]].
+    */
+  def fromDataSet[T](dataSet: ScalaDataSet[T]): Table = {
+    throw new UnsupportedOperationException("This method is not supported in stream mode!")
+  }
+
+  /**
+    * Converts the given [[DataSet]] into a [[Table]] with specified field names.
+    *
+    * Example:
+    *
+    * {{{
+    *   val set: DataSet[(String, Long)] = ...
+    *   val tab: Table = tableEnv.fromDataSet(set, 'a, 'b)
+    * }}}
+    *
+    * @param dataSet The [[DataSet]] to be converted.
+    * @param fields  The field names of the resulting [[Table]].
+    * @tparam T The type of the [[DataSet]].
+    * @return The converted [[Table]].
+    */
+  def fromDataSet[T](dataSet: ScalaDataSet[T], fields: Expression*): Table = {
+    throw new UnsupportedOperationException("This method is not supported in stream mode!")
+  }
+
+  /**
+    * Registers the given [[DataSet]] as table in the
+    * [[AbstractTableEnvironment]]'s catalog.
+    * Registered tables can be referenced in SQL queries.
+    *
+    * The field names of the [[Table]] are automatically derived from the type of the [[DataSet]].
+    *
+    * @param name    The name under which the [[DataSet]] is registered in the catalog.
+    * @param dataSet The [[DataSet]] to register.
+    * @tparam T The type of the [[DataSet]] to register.
+    */
+  def registerDataSet[T](name: String, dataSet: ScalaDataSet[T]): Unit = {
+    throw new UnsupportedOperationException("This method is not supported in stream mode!")
+  }
+
+  /**
+    * Registers the given [[DataSet]] as table with specified field names in the
+    * [[AbstractTableEnvironment]]'s catalog.
+    * Registered tables can be referenced in SQL queries.
+    *
+    * Example:
+    *
+    * {{{
+    *   val set: DataSet[(String, Long)] = ...
+    *   tableEnv.registerDataSet("myTable", set, 'a, 'b)
+    * }}}
+    *
+    * @param name    The name under which the [[DataSet]] is registered in the catalog.
+    * @param dataSet The [[DataSet]] to register.
+    * @param fields  The field names of the registered table.
+    * @tparam T The type of the [[DataSet]] to register.
+    */
+  def registerDataSet[T](name: String, dataSet: ScalaDataSet[T], fields: Expression*): Unit = {
+    throw new UnsupportedOperationException("This method is not supported in stream mode!")
+  }
+
+  /**
+    * Converts the given [[Table]] into a [[DataSet]] of a specified type.
+    *
+    * The fields of the [[Table]] are mapped to [[DataSet]] fields as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataSet]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table The [[Table]] to convert.
+    * @tparam T The type of the resulting [[DataSet]].
+    * @return The converted [[DataSet]].
+    */
+  def toDataSetScala[T: TypeInformation](table: Table): ScalaDataSet[T] = {
+    throw new UnsupportedOperationException("This method is not supported in stream mode!")
+  }
+
+  /**
+    * Converts the given [[Table]] into a [[DataSet]] of a specified type.
+    *
+    * The fields of the [[Table]] are mapped to [[DataSet]] fields as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataSet]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table       The [[Table]] to convert.
+    * @param queryConfig The configuration of the query to generate.
+    * @tparam T The type of the resulting [[DataSet]].
+    * @return The converted [[DataSet]].
+    */
+  def toDataSetScala[T: TypeInformation](
+      table: Table,
+      queryConfig: BatchQueryConfig): ScalaDataSet[T] = {
+    throw new UnsupportedOperationException("This method is not supported in stream mode!")
+  }
+
+  /**
+    * Converts the given [[DataSet]] into a [[Table]].
+    *
+    * The field names of the [[Table]] are automatically derived from the type of the [[DataSet]].
+    *
+    * @param dataSet The [[DataSet]] to be converted.
+    * @tparam T The type of the [[DataSet]].
+    * @return The converted [[Table]].
+    */
+  def fromDataSet[T](dataSet: DataSet[T]): Table = {
+    throw new UnsupportedOperationException("This method is not supported in stream mode!")
+  }
+
+  /**
+    * Converts the given [[DataSet]] into a [[Table]] with specified field names.
+    *
+    * Example:
+    *
+    * {{{
+    *   DataSet<Tuple2<String, Long>> set = ...
+    *   Table tab = tableEnv.fromDataSet(set, "a, b")
+    * }}}
+    *
+    * @param dataSet The [[DataSet]] to be converted.
+    * @param fields  The field names of the resulting [[Table]].
+    * @tparam T The type of the [[DataSet]].
+    * @return The converted [[Table]].
+    */
+  def fromDataSet[T](dataSet: DataSet[T], fields: String): Table = {
+    throw new UnsupportedOperationException("This method is not supported in stream mode!")
+  }
+
+  /**
+    * Registers the given [[DataSet]] as table in the
+    * [[AbstractTableEnvironment]]'s catalog.
+    * Registered tables can be referenced in SQL queries.
+    *
+    * The field names of the [[Table]] are automatically derived from the type of the [[DataSet]].
+    *
+    * @param name    The name under which the [[DataSet]] is registered in the catalog.
+    * @param dataSet The [[DataSet]] to register.
+    * @tparam T The type of the [[DataSet]] to register.
+    */
+  def registerDataSet[T](name: String, dataSet: DataSet[T]): Unit = {
+    throw new UnsupportedOperationException("This method is not supported in stream mode!")
+  }
+
+  /**
+    * Registers the given [[DataSet]] as table with specified field names in the
+    * [[AbstractTableEnvironment]]'s catalog.
+    * Registered tables can be referenced in SQL queries.
+    *
+    * Example:
+    *
+    * {{{
+    *   DataSet<Tuple2<String, Long>> set = ...
+    *   tableEnv.registerDataSet("myTable", set, "a, b")
+    * }}}
+    *
+    * @param name    The name under which the [[DataSet]] is registered in the catalog.
+    * @param dataSet The [[DataSet]] to register.
+    * @param fields  The field names of the registered table.
+    * @tparam T The type of the [[DataSet]] to register.
+    */
+  def registerDataSet[T](name: String, dataSet: DataSet[T], fields: String): Unit = {
+    throw new UnsupportedOperationException("This method is not supported in stream mode!")
+  }
+
+  /**
+    * Converts the given [[Table]] into a [[DataSet]] of a specified type.
+    *
+    * The fields of the [[Table]] are mapped to [[DataSet]] fields as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataSet]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table The [[Table]] to convert.
+    * @param clazz The class of the type of the resulting [[DataSet]].
+    * @tparam T The type of the resulting [[DataSet]].
+    * @return The converted [[DataSet]].
+    */
+  def toDataSet[T](table: Table, clazz: Class[T]): DataSet[T] = {
+    throw new UnsupportedOperationException("This method is not supported in stream mode!")
+  }
+
+  /**
+    * Converts the given [[Table]] into a [[DataSet]] of a specified type.
+    *
+    * The fields of the [[Table]] are mapped to [[DataSet]] fields as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataSet]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table    The [[Table]] to convert.
+    * @param typeInfo The [[TypeInformation]] that specifies the type of the resulting [[DataSet]].
+    * @tparam T The type of the resulting [[DataSet]].
+    * @return The converted [[DataSet]].
+    */
+  def toDataSet[T](table: Table, typeInfo: TypeInformation[T]): DataSet[T] = {
+    throw new UnsupportedOperationException("This method is not supported in stream mode!")
+  }
+
+  /**
+    * Converts the given [[Table]] into a [[DataSet]] of a specified type.
+    *
+    * The fields of the [[Table]] are mapped to [[DataSet]] fields as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataSet]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table       The [[Table]] to convert.
+    * @param clazz       The class of the type of the resulting [[DataSet]].
+    * @param queryConfig The configuration for the query to generate.
+    * @tparam T The type of the resulting [[DataSet]].
+    * @return The converted [[DataSet]].
+    */
+  def toDataSet[T](table: Table, clazz: Class[T], queryConfig: BatchQueryConfig): DataSet[T] = {
+    throw new UnsupportedOperationException("This method is not supported in stream mode!")
+  }
+
+  /**
+    * Converts the given [[Table]] into a [[DataSet]] of a specified type.
+    *
+    * The fields of the [[Table]] are mapped to [[DataSet]] fields as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataSet]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table       The [[Table]] to convert.
+    * @param typeInfo    The [[TypeInformation]] that specifies the type of the resulting [[DataSet]].
+    * @param queryConfig The configuration for the query to generate.
+    * @tparam T The type of the resulting [[DataSet]].
+    * @return The converted [[DataSet]].
+    */
+  def toDataSet[T](table: Table, typeInfo: TypeInformation[T], queryConfig: BatchQueryConfig): DataSet[T] = {
+    throw new UnsupportedOperationException("This method is not supported in stream mode!")
+  }
+}

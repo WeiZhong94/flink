@@ -19,6 +19,7 @@
 package org.apache.flink.table.api
 
 import _root_.java.util.concurrent.atomic.AtomicInteger
+import _root_.java.lang.{Boolean => JBool}
 
 import org.apache.calcite.plan.RelOptUtil
 import org.apache.calcite.plan.hep.HepMatchOrder
@@ -31,8 +32,11 @@ import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.io.DiscardingOutputFormat
 import org.apache.flink.api.java.typeutils.{GenericTypeInfo, TypeExtractor}
 import org.apache.flink.api.java.{DataSet, ExecutionEnvironment}
-import org.apache.flink.api.scala.{DataSet => ScalaDataSet, wrap, ExecutionEnvironment => ScalaBatchExecEnv}
-import org.apache.flink.table.descriptors.{BatchTableDescriptor, ConnectorDescriptor}
+import org.apache.flink.api.java.tuple.{Tuple2 => JTuple2}
+import org.apache.flink.api.scala.{wrap, DataSet => ScalaDataSet, ExecutionEnvironment => ScalaBatchExecEnv}
+import org.apache.flink.streaming.api.datastream.DataStream
+import org.apache.flink.streaming.api.scala.{DataStream => ScalaDataStream}
+import org.apache.flink.table.descriptors.{BatchTableDescriptor, ConnectorDescriptor, StreamTableDescriptor}
 import org.apache.flink.table.explain.PlanJsonParser
 import org.apache.flink.table.expressions.{Expression, ExpressionParser, TimeAttribute}
 import org.apache.flink.table.functions.{AggregateFunction, TableFunction}
@@ -65,7 +69,8 @@ import _root_.scala.reflect.ClassTag
 class BatchTableEnvironment(
     private[flink] val execEnv: ExecutionEnvironment,
     config: TableConfig)
-  extends AbstractTableEnvironment(config) {
+  extends AbstractTableEnvironment(config)
+  with TableEnvironment {
 
   def this(env: ScalaBatchExecEnv, config: TableConfig) {
     this(env.getJavaEnv, config)
@@ -178,6 +183,10 @@ class BatchTableEnvironment(
     * @param connectorDescriptor connector descriptor describing the external system
     */
   def connect(connectorDescriptor: ConnectorDescriptor): BatchTableDescriptor = {
+    connectForBatch(connectorDescriptor)
+  }
+
+  def connectForBatch(connectorDescriptor: ConnectorDescriptor): BatchTableDescriptor = {
     new BatchTableDescriptor(this, connectorDescriptor)
   }
 
@@ -870,5 +879,409 @@ class BatchTableEnvironment(
       f: AggregateFunction[T, ACC])
   : Unit = {
     registerAggregateFunctionInternal[T, ACC](name, f)
+  }
+
+  def connectForStream(connectorDescriptor: ConnectorDescriptor): StreamTableDescriptor = {
+    throw new UnsupportedOperationException("This method is not supported in batch mode!")
+  }
+
+  /**
+    * Converts the given [[DataStream]] into a [[Table]].
+    *
+    * The field names of the [[Table]] are automatically derived from the type of the
+    * [[DataStream]].
+    *
+    * @param dataStream The [[DataStream]] to be converted.
+    * @tparam T The type of the [[DataStream]].
+    * @return The converted [[Table]].
+    */
+  def fromDataStream[T](dataStream: ScalaDataStream[T]): Table = {
+    throw new UnsupportedOperationException("This method is not supported in batch mode!")
+  }
+
+  /**
+    * Converts the given [[DataStream]] into a [[Table]] with specified field names.
+    *
+    * Example:
+    *
+    * {{{
+    *   val stream: DataStream[(String, Long)] = ...
+    *   val tab: Table = tableEnv.fromDataStream(stream, 'a, 'b)
+    * }}}
+    *
+    * @param dataStream The [[DataStream]] to be converted.
+    * @param fields     The field names of the resulting [[Table]].
+    * @tparam T The type of the [[DataStream]].
+    * @return The converted [[Table]].
+    */
+  def fromDataStream[T](dataStream: ScalaDataStream[T], fields: Expression*): Table = {
+    throw new UnsupportedOperationException("This method is not supported in batch mode!")
+  }
+
+  /**
+    * Registers the given [[DataStream]] as table in the
+    * [[AbstractTableEnvironment]]'s catalog.
+    * Registered tables can be referenced in SQL queries.
+    *
+    * The field names of the [[Table]] are automatically derived
+    * from the type of the [[DataStream]].
+    *
+    * @param name       The name under which the [[DataStream]] is registered in the catalog.
+    * @param dataStream The [[DataStream]] to register.
+    * @tparam T The type of the [[DataStream]] to register.
+    */
+  def registerDataStream[T](name: String, dataStream: ScalaDataStream[T]): Unit = {
+    throw new UnsupportedOperationException("This method is not supported in batch mode!")
+  }
+
+  /**
+    * Registers the given [[DataStream]] as table with specified field names in the
+    * [[AbstractTableEnvironment]]'s catalog.
+    * Registered tables can be referenced in SQL queries.
+    *
+    * Example:
+    *
+    * {{{
+    *   val set: DataStream[(String, Long)] = ...
+    *   tableEnv.registerDataStream("myTable", set, 'a, 'b)
+    * }}}
+    *
+    * @param name       The name under which the [[DataStream]] is registered in the catalog.
+    * @param dataStream The [[DataStream]] to register.
+    * @param fields     The field names of the registered table.
+    * @tparam T The type of the [[DataStream]] to register.
+    */
+  def registerDataStream[T](
+      name: String,
+      dataStream: ScalaDataStream[T],
+      fields: Expression*): Unit = {
+    throw new UnsupportedOperationException("This method is not supported in batch mode!")
+  }
+
+  /**
+    * Converts the given [[Table]] into an append [[DataStream]] of a specified type.
+    *
+    * The [[Table]] must only have insert (append) changes. If the [[Table]] is also modified
+    * by update or delete changes, the conversion will fail.
+    *
+    * The fields of the [[Table]] are mapped to [[DataStream]] fields as follows:
+    * - [[org.apache.flink.types.Row]] and Scala Tuple types: Fields are mapped by position, field
+    * types must match.
+    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table The [[Table]] to convert.
+    * @tparam T The type of the resulting [[DataStream]].
+    * @return The converted [[DataStream]].
+    */
+  def toAppendStreamScala[T: TypeInformation](table: Table): ScalaDataStream[T] = {
+    throw new UnsupportedOperationException("This method is not supported in batch mode!")
+  }
+
+  /**
+    * Converts the given [[Table]] into an append [[DataStream]] of a specified type.
+    *
+    * The [[Table]] must only have insert (append) changes. If the [[Table]] is also modified
+    * by update or delete changes, the conversion will fail.
+    *
+    * The fields of the [[Table]] are mapped to [[DataStream]] fields as follows:
+    * - [[org.apache.flink.types.Row]] and Scala Tuple types: Fields are mapped by position, field
+    * types must match.
+    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table       The [[Table]] to convert.
+    * @param queryConfig The configuration of the query to generate.
+    * @tparam T The type of the resulting [[DataStream]].
+    * @return The converted [[DataStream]].
+    */
+  def toAppendStreamScala[T: TypeInformation](
+      table: Table,
+      queryConfig: StreamQueryConfig): ScalaDataStream[T] = {
+    throw new UnsupportedOperationException("This method is not supported in batch mode!")
+  }
+
+  /**
+    * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
+    * The message will be encoded as [[Tuple2]]. The first field is a [[Boolean]] flag,
+    * the second field holds the record of the specified type [[T]].
+    *
+    * A true [[Boolean]] flag indicates an add message, a false flag indicates a retract message.
+    *
+    * @param table The [[Table]] to convert.
+    * @tparam T The type of the requested data type.
+    * @return The converted [[DataStream]].
+    */
+  def toRetractStreamScala[T: TypeInformation](
+      table: Table): ScalaDataStream[(Boolean, T)] = {
+    throw new UnsupportedOperationException("This method is not supported in batch mode!")
+  }
+
+  /**
+    * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
+    * The message will be encoded as [[Tuple2]]. The first field is a [[Boolean]] flag,
+    * the second field holds the record of the specified type [[T]].
+    *
+    * A true [[Boolean]] flag indicates an add message, a false flag indicates a retract message.
+    *
+    * @param table       The [[Table]] to convert.
+    * @param queryConfig The configuration of the query to generate.
+    * @tparam T The type of the requested data type.
+    * @return The converted [[DataStream]].
+    */
+  def toRetractStreamScala[T: TypeInformation](
+      table: Table,
+      queryConfig: StreamQueryConfig): ScalaDataStream[(Boolean, T)] = {
+    throw new UnsupportedOperationException("This method is not supported in batch mode!")
+  }
+
+  /**
+    * Converts the given [[DataStream]] into a [[Table]].
+    *
+    * The field names of the [[Table]] are automatically derived from the type of the
+    * [[DataStream]].
+    *
+    * @param dataStream The [[DataStream]] to be converted.
+    * @tparam T The type of the [[DataStream]].
+    * @return The converted [[Table]].
+    */
+  def fromDataStream[T](dataStream: DataStream[T]): Table = {
+    throw new UnsupportedOperationException("This method is not supported in batch mode!")
+  }
+
+  /**
+    * Converts the given [[DataStream]] into a [[Table]] with specified field names.
+    *
+    * Example:
+    *
+    * {{{
+    *   DataStream<Tuple2<String, Long>> stream = ...
+    *   Table tab = tableEnv.fromDataStream(stream, "a, b")
+    * }}}
+    *
+    * @param dataStream The [[DataStream]] to be converted.
+    * @param fields     The field names of the resulting [[Table]].
+    * @tparam T The type of the [[DataStream]].
+    * @return The converted [[Table]].
+    */
+  def fromDataStream[T](dataStream: DataStream[T], fields: String): Table = {
+    throw new UnsupportedOperationException("This method is not supported in batch mode!")
+  }
+
+  /**
+    * Registers the given [[DataStream]] as table in the
+    * [[AbstractTableEnvironment]]'s catalog.
+    * Registered tables can be referenced in SQL queries.
+    *
+    * The field names of the [[Table]] are automatically derived
+    * from the type of the [[DataStream]].
+    *
+    * @param name       The name under which the [[DataStream]] is registered in the catalog.
+    * @param dataStream The [[DataStream]] to register.
+    * @tparam T The type of the [[DataStream]] to register.
+    */
+  def registerDataStream[T](name: String, dataStream: DataStream[T]): Unit = {
+    throw new UnsupportedOperationException("This method is not supported in batch mode!")
+  }
+
+  /**
+    * Registers the given [[DataStream]] as table with specified field names in the
+    * [[AbstractTableEnvironment]]'s catalog.
+    * Registered tables can be referenced in SQL queries.
+    *
+    * Example:
+    *
+    * {{{
+    *   DataStream<Tuple2<String, Long>> set = ...
+    *   tableEnv.registerDataStream("myTable", set, "a, b")
+    * }}}
+    *
+    * @param name       The name under which the [[DataStream]] is registered in the catalog.
+    * @param dataStream The [[DataStream]] to register.
+    * @param fields     The field names of the registered table.
+    * @tparam T The type of the [[DataStream]] to register.
+    */
+  def registerDataStream[T](name: String, dataStream: DataStream[T], fields: String): Unit = {
+    throw new UnsupportedOperationException("This method is not supported in batch mode!")
+  }
+
+  /**
+    * Converts the given [[Table]] into an append [[DataStream]] of a specified type.
+    *
+    * The [[Table]] must only have insert (append) changes. If the [[Table]] is also modified
+    * by update or delete changes, the conversion will fail.
+    *
+    * The fields of the [[Table]] are mapped to [[DataStream]] fields as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table The [[Table]] to convert.
+    * @param clazz The class of the type of the resulting [[DataStream]].
+    * @tparam T The type of the resulting [[DataStream]].
+    * @return The converted [[DataStream]].
+    */
+  def toAppendStream[T](table: Table, clazz: Class[T]): DataStream[T] = {
+    throw new UnsupportedOperationException("This method is not supported in batch mode!")
+  }
+
+  /**
+    * Converts the given [[Table]] into an append [[DataStream]] of a specified type.
+    *
+    * The [[Table]] must only have insert (append) changes. If the [[Table]] is also modified
+    * by update or delete changes, the conversion will fail.
+    *
+    * The fields of the [[Table]] are mapped to [[DataStream]] fields as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table    The [[Table]] to convert.
+    * @param typeInfo The [[TypeInformation]] that specifies the type of the [[DataStream]].
+    * @tparam T The type of the resulting [[DataStream]].
+    * @return The converted [[DataStream]].
+    */
+  def toAppendStream[T](table: Table, typeInfo: TypeInformation[T]): DataStream[T] = {
+    throw new UnsupportedOperationException("This method is not supported in batch mode!")
+  }
+
+  /**
+    * Converts the given [[Table]] into an append [[DataStream]] of a specified type.
+    *
+    * The [[Table]] must only have insert (append) changes. If the [[Table]] is also modified
+    * by update or delete changes, the conversion will fail.
+    *
+    * The fields of the [[Table]] are mapped to [[DataStream]] fields as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table       The [[Table]] to convert.
+    * @param clazz       The class of the type of the resulting [[DataStream]].
+    * @param queryConfig The configuration of the query to generate.
+    * @tparam T The type of the resulting [[DataStream]].
+    * @return The converted [[DataStream]].
+    */
+  def toAppendStream[T](
+      table: Table,
+      clazz: Class[T],
+      queryConfig: StreamQueryConfig): DataStream[T] = {
+    throw new UnsupportedOperationException("This method is not supported in batch mode!")
+  }
+
+  /**
+    * Converts the given [[Table]] into an append [[DataStream]] of a specified type.
+    *
+    * The [[Table]] must only have insert (append) changes. If the [[Table]] is also modified
+    * by update or delete changes, the conversion will fail.
+    *
+    * The fields of the [[Table]] are mapped to [[DataStream]] fields as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table       The [[Table]] to convert.
+    * @param typeInfo    The [[TypeInformation]] that specifies the type of the [[DataStream]].
+    * @param queryConfig The configuration of the query to generate.
+    * @tparam T The type of the resulting [[DataStream]].
+    * @return The converted [[DataStream]].
+    */
+  def toAppendStream[T](
+      table: Table,
+      typeInfo: TypeInformation[T],
+      queryConfig: StreamQueryConfig): DataStream[T] = {
+    throw new UnsupportedOperationException("This method is not supported in batch mode!")
+  }
+
+  /**
+    * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
+    * The message will be encoded as [[JTuple2]]. The first field is a [[JBool]] flag,
+    * the second field holds the record of the specified type [[T]].
+    *
+    * A true [[JBool]] flag indicates an add message, a false flag indicates a retract message.
+    *
+    * The fields of the [[Table]] are mapped to the requested type as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table The [[Table]] to convert.
+    * @param clazz The class of the requested record type.
+    * @tparam T The type of the requested record type.
+    * @return The converted [[DataStream]].
+    */
+  def toRetractStream[T](table: Table, clazz: Class[T]): DataStream[JTuple2[JBool, T]] = {
+    throw new UnsupportedOperationException("This method is not supported in batch mode!")
+  }
+
+  /**
+    * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
+    * The message will be encoded as [[JTuple2]]. The first field is a [[JBool]] flag,
+    * the second field holds the record of the specified type [[T]].
+    *
+    * A true [[JBool]] flag indicates an add message, a false flag indicates a retract message.
+    *
+    * The fields of the [[Table]] are mapped to the requested type as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table    The [[Table]] to convert.
+    * @param typeInfo The [[TypeInformation]] of the requested record type.
+    * @tparam T The type of the requested record type.
+    * @return The converted [[DataStream]].
+    */
+  def toRetractStream[T](
+      table: Table,
+      typeInfo: TypeInformation[T]): DataStream[JTuple2[JBool, T]] = {
+    throw new UnsupportedOperationException("This method is not supported in batch mode!")
+  }
+
+  /**
+    * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
+    * The message will be encoded as [[JTuple2]]. The first field is a [[JBool]] flag,
+    * the second field holds the record of the specified type [[T]].
+    *
+    * A true [[JBool]] flag indicates an add message, a false flag indicates a retract message.
+    *
+    * The fields of the [[Table]] are mapped to the requested type as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table       The [[Table]] to convert.
+    * @param clazz       The class of the requested record type.
+    * @param queryConfig The configuration of the query to generate.
+    * @tparam T The type of the requested record type.
+    * @return The converted [[DataStream]].
+    */
+  def toRetractStream[T](
+      table: Table,
+      clazz: Class[T],
+      queryConfig: StreamQueryConfig): DataStream[JTuple2[JBool, T]] = {
+    throw new UnsupportedOperationException("This method is not supported in batch mode!")
+  }
+
+  /**
+    * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
+    * The message will be encoded as [[JTuple2]]. The first field is a [[JBool]] flag,
+    * the second field holds the record of the specified type [[T]].
+    *
+    * A true [[JBool]] flag indicates an add message, a false flag indicates a retract message.
+    *
+    * The fields of the [[Table]] are mapped to the requested type as follows:
+    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
+    * types: Fields are mapped by position, field types must match.
+    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
+    *
+    * @param table       The [[Table]] to convert.
+    * @param typeInfo    The [[TypeInformation]] of the requested record type.
+    * @param queryConfig The configuration of the query to generate.
+    * @tparam T The type of the requested record type.
+    * @return The converted [[DataStream]].
+    */
+  def toRetractStream[T](
+      table: Table,
+      typeInfo: TypeInformation[T],
+      queryConfig: StreamQueryConfig): DataStream[JTuple2[JBool, T]] = {
+    throw new UnsupportedOperationException("This method is not supported in batch mode!")
   }
 }
