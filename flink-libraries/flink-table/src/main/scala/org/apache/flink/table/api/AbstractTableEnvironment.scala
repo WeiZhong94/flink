@@ -455,6 +455,13 @@ abstract class AbstractTableEnvironment(val config: TableConfig)
     */
   private[flink] def registerTableFunctionInternal[T: TypeInformation](
     name: String, function: TableFunction[T]): Unit = {
+    registerTableFunctionInternal(implicitly[TypeInformation[T]], name, function)
+  }
+
+  private[flink] def registerTableFunctionInternal(
+      typeinfo: TypeInformation[_],
+      name: String,
+      function: TableFunction[_]): Unit = {
     // check if class not Scala object
     checkNotSingleton(function.getClass)
     // check if class could be instantiated
@@ -463,7 +470,7 @@ abstract class AbstractTableEnvironment(val config: TableConfig)
     val typeInfo: TypeInformation[_] = if (function.getResultType != null) {
       function.getResultType
     } else {
-      implicitly[TypeInformation[T]]
+      typeinfo
     }
 
     // register in Table API
@@ -480,6 +487,15 @@ abstract class AbstractTableEnvironment(val config: TableConfig)
     */
   private[flink] def registerAggregateFunctionInternal[T: TypeInformation, ACC: TypeInformation](
       name: String, function: AggregateFunction[T, ACC]): Unit = {
+    registerAggregateFunctionInternal(
+      implicitly[TypeInformation[T]], implicitly[TypeInformation[ACC]], name, function)
+  }
+
+  private[flink] def registerAggregateFunctionInternal(
+      tType: TypeInformation[_],
+      accType:  TypeInformation[_],
+      name: String,
+      function: AggregateFunction[_, _]): Unit = {
     // check if class not Scala object
     checkNotSingleton(function.getClass)
     // check if class could be instantiated
@@ -487,11 +503,11 @@ abstract class AbstractTableEnvironment(val config: TableConfig)
 
     val resultTypeInfo: TypeInformation[_] = getResultTypeOfAggregateFunction(
       function,
-      implicitly[TypeInformation[T]])
+      tType)
 
     val accTypeInfo: TypeInformation[_] = getAccumulatorTypeOfAggregateFunction(
       function,
-      implicitly[TypeInformation[ACC]])
+      accType)
 
     // register in Table API
     functionCatalog.registerFunction(name, function.getClass)

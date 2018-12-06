@@ -521,7 +521,7 @@ abstract class TableEnvironment {
     * @param tf   The TableFunction to register.
     * @tparam T The type of the output row.
     */
-  def registerFunction[T](name: String, tf: TableFunction[T]): Unit
+  def registerFunction(name: String, tf: TableFunction[_]): Unit
 
   /**
     * Registers an [[AggregateFunction]] under a unique name in the TableEnvironment's catalog.
@@ -532,9 +532,9 @@ abstract class TableEnvironment {
     * @tparam T   The type of the output value.
     * @tparam ACC The type of aggregate accumulator.
     */
-  def registerFunction[T, ACC](
+  def registerFunction(
       name: String,
-      f: AggregateFunction[T, ACC]): Unit
+      f: AggregateFunction[_, _]): Unit
 
   /**
     * Converts the given [[DataStream]] into a [[Table]].

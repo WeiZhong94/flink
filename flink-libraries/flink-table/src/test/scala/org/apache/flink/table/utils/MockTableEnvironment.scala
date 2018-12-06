@@ -118,10 +118,6 @@ class MockTableEnvironment extends AbstractTableEnvironment(new TableConfig) {
       typeInfo: TypeInformation[T],
       queryConfig: BatchQueryConfig): DataSet[T] = ???
 
-  override def registerFunction[T](name: String, tf: TableFunction[T]): Unit = ???
-
-  override def registerFunction[T, ACC](name: String, f: AggregateFunction[T, ACC]): Unit = ???
-
   override def fromDataStream[T](dataStream: ScalaDataStream[T]): Table = ???
 
   override def fromDataStream[T](dataStream: ScalaDataStream[T], fields: Expression*): Table = ???
@@ -188,4 +184,8 @@ class MockTableEnvironment extends AbstractTableEnvironment(new TableConfig) {
       table: Table,
       typeInfo: TypeInformation[T],
       queryConfig: StreamQueryConfig): DataStream[JTuple2[JBool, T]] = ???
+
+  override def registerFunction(name: String, tf: TableFunction[_]): Unit = ???
+
+  override def registerFunction(name: String, f: AggregateFunction[_, _]): Unit = ???
 }
