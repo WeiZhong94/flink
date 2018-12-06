@@ -705,12 +705,12 @@ class BatchTableEnvironment(
     * @param tf The TableFunction to register.
     * @tparam T The type of the output row.
     */
-  def registerFunction[T](name: String, tf: TableFunction[T]): Unit = {
-    implicit val typeInfo: TypeInformation[T] = TypeExtractor
+  def registerFunction(name: String, tf: TableFunction[_]): Unit = {
+    val typeInfo: TypeInformation[_] = TypeExtractor
       .createTypeInfo(tf, classOf[TableFunction[_]], tf.getClass, 0)
-      .asInstanceOf[TypeInformation[T]]
+      .asInstanceOf[TypeInformation[Any]]
 
-    registerTableFunctionInternal[T](name, tf)
+    registerTableFunctionInternal(typeInfo, name, tf)
   }
 
   /**
@@ -722,19 +722,19 @@ class BatchTableEnvironment(
     * @tparam T The type of the output value.
     * @tparam ACC The type of aggregate accumulator.
     */
-  def registerFunction[T, ACC](
+  def registerFunction(
       name: String,
-      f: AggregateFunction[T, ACC])
+      f: AggregateFunction[_, _])
   : Unit = {
-    implicit val typeInfo: TypeInformation[T] = TypeExtractor
-      .createTypeInfo(f, classOf[AggregateFunction[T, ACC]], f.getClass, 0)
-      .asInstanceOf[TypeInformation[T]]
+    val typeInfo: TypeInformation[_] = TypeExtractor
+      .createTypeInfo(f, classOf[AggregateFunction[_, _]], f.getClass, 0)
+      .asInstanceOf[TypeInformation[_]]
 
-    implicit val accTypeInfo: TypeInformation[ACC] = TypeExtractor
-      .createTypeInfo(f, classOf[AggregateFunction[T, ACC]], f.getClass, 1)
-      .asInstanceOf[TypeInformation[ACC]]
+    val accTypeInfo: TypeInformation[_] = TypeExtractor
+      .createTypeInfo(f, classOf[AggregateFunction[_, _]], f.getClass, 1)
+      .asInstanceOf[TypeInformation[_]]
 
-    registerAggregateFunctionInternal[T, ACC](name, f)
+    registerAggregateFunctionInternal(typeInfo, accTypeInfo, name, f)
   }
 
 
