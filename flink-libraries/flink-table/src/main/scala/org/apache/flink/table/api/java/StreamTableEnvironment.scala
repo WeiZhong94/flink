@@ -377,16 +377,36 @@ class StreamTableEnvironment(
     registerAggregateFunctionInternal(typeInfo, accTypeInfo, name, f)
   }
 
+  /**
+    * Registers a [[TableFunction]] under a unique name in the TableEnvironment's catalog.
+    * Registered functions can be referenced in Table API and SQL queries.
+    *
+    * @param name The name under which the function is registered.
+    * @param tf The TableFunction to register.
+    * @tparam T The type of the output row.
+    */
+  def registerFunction[T: TypeInformation](name: String, tf: TableFunction[T]): Unit = {
+    registerTableFunctionInternal(name, tf)
+  }
+
+  /**
+    * Registers an [[AggregateFunction]] under a unique name in the TableEnvironment's catalog.
+    * Registered functions can be referenced in Table API and SQL queries.
+    *
+    * @param name The name under which the function is registered.
+    * @param f The AggregateFunction to register.
+    * @tparam T The type of the output value.
+    * @tparam ACC The type of aggregate accumulator.
+    */
+  def registerFunction[T: TypeInformation, ACC: TypeInformation](
+      name: String,
+      f: AggregateFunction[T, ACC])
+  : Unit = {
+    registerAggregateFunctionInternal[T, ACC](name, f)
+  }
+
   protected def unsupportedScalaMethod =
     new UnsupportedOperationException("This method is not supported in Java environment!")
-
-  override def registerFunctionScala[T: TypeInformation](
-      name: String, tf: TableFunction[T]): Unit =
-    throw unsupportedScalaMethod
-
-  override def registerFunctionScala[T: TypeInformation, ACC: TypeInformation](
-      name: String, f: AggregateFunction[T, ACC]): Unit =
-    throw unsupportedScalaMethod
 
   override def fromDataStream[T](dataStream: ScalaDataStream[T]): Table =
     throw unsupportedScalaMethod

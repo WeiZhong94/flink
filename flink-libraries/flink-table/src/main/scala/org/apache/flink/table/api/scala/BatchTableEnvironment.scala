@@ -168,7 +168,7 @@ class BatchTableEnvironment(
     * @param tf The TableFunction to register.
     * @tparam T The type of the output row.
     */
-  def registerFunctionScala[T: TypeInformation](name: String, tf: TableFunction[T]): Unit = {
+  def registerFunction[T: TypeInformation](name: String, tf: TableFunction[T]): Unit = {
     registerTableFunctionInternal(name, tf)
   }
 
@@ -181,7 +181,7 @@ class BatchTableEnvironment(
     * @tparam T The type of the output value.
     * @tparam ACC The type of aggregate accumulator.
     */
-  def registerFunctionScala[T: TypeInformation, ACC: TypeInformation](
+  def registerFunction[T: TypeInformation, ACC: TypeInformation](
       name: String,
       f: AggregateFunction[T, ACC])
   : Unit = {

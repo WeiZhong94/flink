@@ -297,7 +297,7 @@ case class StreamTableTestUtil() extends TableTestUtil {
       name: String,
       function: TableFunction[T])
     : TableFunction[T] = {
-    tableEnv.registerFunctionScala(name, function)
+    tableEnv.registerFunction(name, function)
     function
   }
 
@@ -308,7 +308,7 @@ case class StreamTableTestUtil() extends TableTestUtil {
   def addFunction[T: TypeInformation, ACC: TypeInformation](
       name: String,
       function: AggregateFunction[T, ACC]): Unit = {
-    tableEnv.registerFunctionScala(name, function)
+    tableEnv.registerFunction(name, function)
   }
 
   def verifySql(query: String, expected: String): Unit = {

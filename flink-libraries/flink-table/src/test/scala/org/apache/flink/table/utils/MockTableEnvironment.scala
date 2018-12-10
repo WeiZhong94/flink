@@ -88,11 +88,11 @@ class MockTableEnvironment extends AbstractTableEnvironment(new TableConfig) {
       table: Table,
       queryConfig: BatchQueryConfig): ScalaDataSet[T] = ???
 
-  override def registerFunctionScala[T: TypeInformation](
+  override def registerFunction[T: TypeInformation](
       name: String,
       tf: TableFunction[T]): Unit = ???
 
-  override def registerFunctionScala[T: TypeInformation, ACC: TypeInformation](
+  override def registerFunction[T: TypeInformation, ACC: TypeInformation](
       name: String,
       f: AggregateFunction[T, ACC]): Unit = ???
 
