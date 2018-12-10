@@ -167,24 +167,24 @@ class StreamTableEnvironment(
     * @return The converted [[DataStream]].
     */
   def toAppendStreamScala[T: TypeInformation](
-      table: Table,
-      queryConfig: StreamQueryConfig): DataStream[T] = {
+    table: Table,
+    queryConfig: StreamQueryConfig): DataStream[T] = {
     val returnType = createTypeInformation[T]
     asScalaStream(translate(
       table, queryConfig, updatesAsRetraction = false, withChangeFlag = false)(returnType))
   }
 
-  /**
-    * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
-    * The message will be encoded as [[Tuple2]]. The first field is a [[Boolean]] flag,
-    * the second field holds the record of the specified type [[T]].
-    *
-    * A true [[Boolean]] flag indicates an add message, a false flag indicates a retract message.
-    *
-    * @param table The [[Table]] to convert.
-    * @tparam T The type of the requested data type.
-    * @return The converted [[DataStream]].
-    */
+/**
+  * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
+  * The message will be encoded as [[Tuple2]]. The first field is a [[Boolean]] flag,
+  * the second field holds the record of the specified type [[T]].
+  *
+  * A true [[Boolean]] flag indicates an add message, a false flag indicates a retract message.
+  *
+  * @param table The [[Table]] to convert.
+  * @tparam T The type of the requested data type.
+  * @return The converted [[DataStream]].
+  */
   def toRetractStreamScala[T: TypeInformation](table: Table): DataStream[(Boolean, T)] = {
     toRetractStreamScala(table, queryConfig)
   }

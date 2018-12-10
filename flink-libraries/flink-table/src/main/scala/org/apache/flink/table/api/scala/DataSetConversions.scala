@@ -48,7 +48,7 @@ class DataSetConversions[T](dataSet: DataSet[T], inputType: TypeInformation[T]) 
     * the [[DataSet]].
     *
     * @param tableEnv The [[BatchTableEnvironment]] in which the new [[Table]] is created.
-    * @param fields   The field names of the new [[Table]] (optional).
+    * @param fields The field names of the new [[Table]] (optional).
     * @return The resulting [[Table]].
     */
   def toTable(tableEnv: BatchTableEnvironment, fields: Expression*): Table = {

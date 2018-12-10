@@ -113,7 +113,7 @@ abstract class StreamTableEnvironment(
   override protected def registerTableSourceInternal(
       name: String,
       tableSource: TableSource[_])
-  : Unit = {
+    : Unit = {
 
     tableSource match {
 
@@ -122,9 +122,9 @@ abstract class StreamTableEnvironment(
         // check that event-time is enabled if table source includes rowtime attributes
         if (TableSourceUtil.hasRowtimeAttribute(streamTableSource) &&
           execEnv.getStreamTimeCharacteristic != TimeCharacteristic.EventTime) {
-          throw new TableException(
-            s"A rowtime attribute requires an EventTime time characteristic in stream " +
-              s"environment. But is: ${execEnv.getStreamTimeCharacteristic}")
+            throw new TableException(
+              s"A rowtime attribute requires an EventTime time characteristic in stream " +
+                s"environment. But is: ${execEnv.getStreamTimeCharacteristic}")
         }
 
         // register
@@ -419,7 +419,7 @@ abstract class StreamTableEnvironment(
       schema: RowSchema,
       requestedTypeInfo: TypeInformation[OUT],
       functionName: String)
-  : MapFunction[CRow, OUT] = {
+    : MapFunction[CRow, OUT] = {
 
     val converterFunction = generateRowConverterFunction[OUT](
       inputTypeInfo.asInstanceOf[CRowTypeInfo].rowType,
@@ -452,7 +452,7 @@ abstract class StreamTableEnvironment(
       schema: RowSchema,
       requestedTypeInfo: TypeInformation[OUT],
       functionName: String)
-  : MapFunction[CRow, OUT] = requestedTypeInfo match {
+    : MapFunction[CRow, OUT] = requestedTypeInfo match {
 
     // Scala tuple
     case t: CaseClassTypeInfo[_]
@@ -518,8 +518,8 @@ abstract class StreamTableEnvironment(
     * @tparam T the type of the [[DataStream]].
     */
   protected def registerDataStreamInternal[T](
-      name: String,
-      dataStream: DataStream[T]): Unit = {
+    name: String,
+    dataStream: DataStream[T]): Unit = {
 
     val (fieldNames, fieldIndexes) = getFieldInfo[T](dataStream.getType)
     val dataStreamTable = new DataStreamTable[T](
@@ -542,7 +542,8 @@ abstract class StreamTableEnvironment(
   protected def registerDataStreamInternal[T](
       name: String,
       dataStream: DataStream[T],
-      fields: Array[Expression]): Unit = {
+      fields: Array[Expression])
+    : Unit = {
 
     val streamType = dataStream.getType
 
@@ -578,8 +579,8 @@ abstract class StreamTableEnvironment(
     * @return rowtime attribute and proctime attribute
     */
   private def validateAndExtractTimeAttributes(
-      streamType: TypeInformation[_],
-      exprs: Array[Expression])
+    streamType: TypeInformation[_],
+    exprs: Array[Expression])
   : (Option[(Int, String)], Option[(Int, String)]) = {
 
     val (isRefByPos, fieldTypes) = streamType match {
@@ -598,7 +599,7 @@ abstract class StreamTableEnvironment(
       if (!(TypeCheckUtils.isLong(t) || TypeCheckUtils.isTimePoint(t))) {
         throw new TableException(
           s"The rowtime attribute can only replace a field with a valid time type, " +
-            s"such as Timestamp or Long. But was: $t")
+          s"such as Timestamp or Long. But was: $t")
       }
     }
 
@@ -641,8 +642,8 @@ abstract class StreamTableEnvironment(
 
     def extractProctime(idx: Int, name: String): Unit = {
       if (proctime.isDefined) {
-        throw new TableException(
-          "The proctime attribute can only be defined once in a table schema.")
+          throw new TableException(
+            "The proctime attribute can only be defined once in a table schema.")
       } else {
         // if the fields are referenced by position,
         // it is only possible to append the time attribute at the end
@@ -712,9 +713,9 @@ abstract class StreamTableEnvironment(
     * @return An adjusted array of field indexes.
     */
   private def adjustFieldIndexes(
-      fieldIndexes: Array[Int],
-      rowtime: Option[(Int, String)],
-      proctime: Option[(Int, String)]): Array[Int] = {
+    fieldIndexes: Array[Int],
+    rowtime: Option[(Int, String)],
+    proctime: Option[(Int, String)]): Array[Int] = {
 
     // inject rowtime field
     val withRowtime = rowtime match {
@@ -745,9 +746,9 @@ abstract class StreamTableEnvironment(
     * @return An adjusted array of field names.
     */
   private def adjustFieldNames(
-      fieldNames: Array[String],
-      rowtime: Option[(Int, String)],
-      proctime: Option[(Int, String)]): Array[String] = {
+    fieldNames: Array[String],
+    rowtime: Option[(Int, String)],
+    proctime: Option[(Int, String)]): Array[String] = {
 
     // inject rowtime field
     val withRowtime = rowtime match {
@@ -891,7 +892,7 @@ abstract class StreamTableEnvironment(
     if (!withChangeFlag && !UpdatingPlanChecker.isAppendOnly(logicalPlan)) {
       throw new TableException(
         "Table is not an append-only table. " +
-          "Use the toRetractStream() in order to handle add and retract messages.")
+        "Use the toRetractStream() in order to handle add and retract messages.")
     }
 
     // get CRow plan
@@ -963,8 +964,8 @@ abstract class StreamTableEnvironment(
     * @return The [[DataStream]] of type [[CRow]].
     */
   protected def translateToCRow(
-      logicalPlan: RelNode,
-      queryConfig: StreamQueryConfig): DataStream[CRow] = {
+    logicalPlan: RelNode,
+    queryConfig: StreamQueryConfig): DataStream[CRow] = {
 
     logicalPlan match {
       case node: DataStreamRel =>
@@ -1011,16 +1012,16 @@ abstract class StreamTableEnvironment(
     val sqlPlan = PlanJsonParser.getSqlExecutionPlan(jsonSqlPlan, false)
 
     s"== Abstract Syntax Tree ==" +
-      System.lineSeparator +
-      s"${RelOptUtil.toString(ast)}" +
-      System.lineSeparator +
-      s"== Optimized Logical Plan ==" +
-      System.lineSeparator +
-      s"${RelOptUtil.toString(optimizedPlan)}" +
-      System.lineSeparator +
-      s"== Physical Execution Plan ==" +
-      System.lineSeparator +
-      s"$sqlPlan"
+        System.lineSeparator +
+        s"${RelOptUtil.toString(ast)}" +
+        System.lineSeparator +
+        s"== Optimized Logical Plan ==" +
+        System.lineSeparator +
+        s"${RelOptUtil.toString(optimizedPlan)}" +
+        System.lineSeparator +
+        s"== Physical Execution Plan ==" +
+        System.lineSeparator +
+        s"$sqlPlan"
   }
 
   protected def unsupportedBatchMethod: UnsupportedOperationException = {

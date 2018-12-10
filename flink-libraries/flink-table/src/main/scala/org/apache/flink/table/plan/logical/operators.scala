@@ -569,8 +569,8 @@ case class WindowAggregate(
 
   // resolve references of this operator's parameters
   override def resolveReference(
-                                 tableEnv: AbstractTableEnvironment,
-                                 name: String)
+      tableEnv: AbstractTableEnvironment,
+      name: String)
     : Option[NamedExpression] = {
 
     def resolveAlias(alias: String) = {

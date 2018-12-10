@@ -43,8 +43,8 @@ import _root_.scala.reflect.ClassTag
   * @param config The configuration of the TableEnvironment.
   */
 class BatchTableEnvironment(
-                             execEnv: ExecutionEnvironment,
-                             config: TableConfig)
+    execEnv: ExecutionEnvironment,
+    config: TableConfig)
   extends org.apache.flink.table.api.BatchTableEnvironment(execEnv.getJavaEnv, config) {
 
   /**

@@ -63,8 +63,8 @@ import org.apache.flink.types.Row
   * @param config The [[TableConfig]] of this [[BatchTableEnvironment]].
   */
 abstract class BatchTableEnvironment(
-                                      private[flink] val execEnv: ExecutionEnvironment,
-                                      config: TableConfig)
+    private[flink] val execEnv: ExecutionEnvironment,
+    config: TableConfig)
   extends AbstractTableEnvironment(config) {
 
   // a counter for unique table names.
@@ -102,9 +102,9 @@ abstract class BatchTableEnvironment(
     * @param tableSource The [[TableSource]] to register.
     */
   override protected def registerTableSourceInternal(
-                                                      name: String,
-                                                      tableSource: TableSource[_])
-  : Unit = {
+      name: String,
+      tableSource: TableSource[_])
+    : Unit = {
 
     tableSource match {
 
@@ -140,7 +140,7 @@ abstract class BatchTableEnvironment(
       // not a batch table source
       case _ =>
         throw new TableException("Only BatchTableSource can be registered in " +
-          "BatchTableEnvironment.")
+            "BatchTableEnvironment.")
     }
   }
 
@@ -337,7 +337,7 @@ abstract class BatchTableEnvironment(
       schema: RowSchema,
       requestedTypeInfo: TypeInformation[OUT],
       functionName: String)
-  : Option[MapFunction[IN, OUT]] = {
+    : Option[MapFunction[IN, OUT]] = {
 
     val converterFunction = generateRowConverterFunction[OUT](
       physicalTypeInfo.asInstanceOf[TypeInformation[Row]],
@@ -349,9 +349,9 @@ abstract class BatchTableEnvironment(
     // add a runner if we need conversion
     converterFunction.map { func =>
       new MapRunner[IN, OUT](
-        func.name,
-        func.code,
-        func.returnType)
+          func.name,
+          func.code,
+          func.returnType)
     }
   }
 
@@ -373,16 +373,16 @@ abstract class BatchTableEnvironment(
     val sqlPlan = PlanJsonParser.getSqlExecutionPlan(jasonSqlPlan, extended)
 
     s"== Abstract Syntax Tree ==" +
-      System.lineSeparator +
-      s"${RelOptUtil.toString(ast)}" +
-      System.lineSeparator +
-      s"== Optimized Logical Plan ==" +
-      System.lineSeparator +
-      s"${RelOptUtil.toString(optimizedPlan)}" +
-      System.lineSeparator +
-      s"== Physical Execution Plan ==" +
-      System.lineSeparator +
-      s"$sqlPlan"
+        System.lineSeparator +
+        s"${RelOptUtil.toString(ast)}" +
+        System.lineSeparator +
+        s"== Optimized Logical Plan ==" +
+        System.lineSeparator +
+        s"${RelOptUtil.toString(optimizedPlan)}" +
+        System.lineSeparator +
+        s"== Physical Execution Plan ==" +
+        System.lineSeparator +
+        s"$sqlPlan"
   }
 
   /**

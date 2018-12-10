@@ -48,7 +48,7 @@ class DataStreamConversions[T](dataStream: DataStream[T], inputType: TypeInforma
     * the [[DataStream]].
     *
     * @param tableEnv The [[StreamTableEnvironment]] in which the new [[Table]] is created.
-    * @param fields   The field names of the new [[Table]] (optional).
+    * @param fields The field names of the new [[Table]] (optional).
     * @return The resulting [[Table]].
     */
   def toTable(tableEnv: StreamTableEnvironment, fields: Expression*): Table = {
