@@ -32,19 +32,16 @@ import org.apache.flink.api.common.typeinfo.{SqlTimeTypeInfo, TypeInformation}
 import org.apache.flink.api.common.typeutils.CompositeType
 import org.apache.flink.api.java.DataSet
 import org.apache.flink.api.java.tuple.{Tuple2 => JTuple2}
-import org.apache.flink.api.java.typeutils.{RowTypeInfo, TupleTypeInfo, TypeExtractor}
-import org.apache.flink.api.scala.createTypeInformation
-import org.apache.flink.api.scala.typeutils.CaseClassTypeInfo
+import org.apache.flink.api.java.typeutils.{RowTypeInfo, TupleTypeInfo}
 import org.apache.flink.api.scala.{DataSet => ScalaDataSet}
+import org.apache.flink.api.scala.typeutils.CaseClassTypeInfo
 import org.apache.flink.streaming.api.TimeCharacteristic
 import org.apache.flink.streaming.api.datastream.DataStream
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
-import org.apache.flink.streaming.api.scala.{asScalaStream, DataStream => ScalaDataStream, StreamExecutionEnvironment => ScalaStreamExecEnv}
 import org.apache.flink.table.calcite.{FlinkTypeFactory, RelTimeIndicatorConverter}
 import org.apache.flink.table.descriptors.{BatchTableDescriptor, ConnectorDescriptor, StreamTableDescriptor}
 import org.apache.flink.table.explain.PlanJsonParser
 import org.apache.flink.table.expressions._
-import org.apache.flink.table.functions.{AggregateFunction, TableFunction}
 import org.apache.flink.table.plan.nodes.FlinkConventions
 import org.apache.flink.table.plan.nodes.datastream.{DataStreamRel, UpdateAsRetractionTrait}
 import org.apache.flink.table.plan.rules.FlinkRuleSets
@@ -74,14 +71,10 @@ import _root_.scala.collection.JavaConverters._
   *                [[StreamTableEnvironment]].
   * @param config The [[TableConfig]] of this [[StreamTableEnvironment]].
   */
-class StreamTableEnvironment(
+abstract class StreamTableEnvironment(
     private[flink] val execEnv: StreamExecutionEnvironment,
     config: TableConfig)
   extends AbstractTableEnvironment(config) {
-
-  def this(env: ScalaStreamExecEnv, config: TableConfig) {
-    this(env.getWrappedStreamExecutionEnvironment, config)
-  }
 
   // a counter for unique table names
   private val nameCntr: AtomicInteger = new AtomicInteger(0)
@@ -111,8 +104,8 @@ class StreamTableEnvironment(
     "_DataStreamTable_" + nameCntr.getAndIncrement()
 
   /**
-    * Registers an internal [[StreamTableSource]] in this [[AbstractTableEnvironment]]'s
-    * catalog without name checking. Registered tables can be referenced in SQL queries.
+    * Registers an internal [[StreamTableSource]] in this [[TableEnvironment]]'s catalog without
+    * name checking. Registered tables can be referenced in SQL queries.
     *
     * @param name        The name under which the [[TableSource]] is registered.
     * @param tableSource The [[TableSource]] to register.
@@ -120,7 +113,7 @@ class StreamTableEnvironment(
   override protected def registerTableSourceInternal(
       name: String,
       tableSource: TableSource[_])
-    : Unit = {
+  : Unit = {
 
     tableSource match {
 
@@ -129,9 +122,9 @@ class StreamTableEnvironment(
         // check that event-time is enabled if table source includes rowtime attributes
         if (TableSourceUtil.hasRowtimeAttribute(streamTableSource) &&
           execEnv.getStreamTimeCharacteristic != TimeCharacteristic.EventTime) {
-            throw new TableException(
-              s"A rowtime attribute requires an EventTime time characteristic in stream " +
-                s"environment. But is: ${execEnv.getStreamTimeCharacteristic}")
+          throw new TableException(
+            s"A rowtime attribute requires an EventTime time characteristic in stream " +
+              s"environment. But is: ${execEnv.getStreamTimeCharacteristic}")
         }
 
         // register
@@ -204,17 +197,15 @@ class StreamTableEnvironment(
     * @param connectorDescriptor connector descriptor describing the external system
     */
   def connect(connectorDescriptor: ConnectorDescriptor): StreamTableDescriptor = {
-    connectForStream(connectorDescriptor)
-  }
-
-  def connectForStream(
-      connectorDescriptor: ConnectorDescriptor): StreamTableDescriptor = {
     new StreamTableDescriptor(this, connectorDescriptor)
   }
 
+  override def connectForStream(connectorDescriptor: ConnectorDescriptor): StreamTableDescriptor =
+    connect(connectorDescriptor)
+
   /**
     * Registers an external [[TableSink]] with given field names and types in this
-    * [[AbstractTableEnvironment]]'s catalog.
+    * [[TableEnvironment]]'s catalog.
     * Registered sink tables can be referenced in SQL DML statements.
     *
     * Example:
@@ -257,7 +248,7 @@ class StreamTableEnvironment(
 
   /**
     * Registers an external [[TableSink]] with already configured field names and field types in
-    * this [[AbstractTableEnvironment]]'s catalog.
+    * this [[TableEnvironment]]'s catalog.
     * Registered sink tables can be referenced in SQL DML statements.
     *
     * @param name The name under which the [[TableSink]] is registered.
@@ -428,7 +419,7 @@ class StreamTableEnvironment(
       schema: RowSchema,
       requestedTypeInfo: TypeInformation[OUT],
       functionName: String)
-    : MapFunction[CRow, OUT] = {
+  : MapFunction[CRow, OUT] = {
 
     val converterFunction = generateRowConverterFunction[OUT](
       inputTypeInfo.asInstanceOf[CRowTypeInfo].rowType,
@@ -461,7 +452,7 @@ class StreamTableEnvironment(
       schema: RowSchema,
       requestedTypeInfo: TypeInformation[OUT],
       functionName: String)
-    : MapFunction[CRow, OUT] = requestedTypeInfo match {
+  : MapFunction[CRow, OUT] = requestedTypeInfo match {
 
     // Scala tuple
     case t: CaseClassTypeInfo[_]
@@ -519,7 +510,7 @@ class StreamTableEnvironment(
   }
 
   /**
-    * Registers a [[DataStream]] as a table under a given name in the [[AbstractTableEnvironment]]'s
+    * Registers a [[DataStream]] as a table under a given name in the [[TableEnvironment]]'s
     * catalog.
     *
     * @param name The name under which the table is registered in the catalog.
@@ -527,8 +518,8 @@ class StreamTableEnvironment(
     * @tparam T the type of the [[DataStream]].
     */
   protected def registerDataStreamInternal[T](
-    name: String,
-    dataStream: DataStream[T]): Unit = {
+      name: String,
+      dataStream: DataStream[T]): Unit = {
 
     val (fieldNames, fieldIndexes) = getFieldInfo[T](dataStream.getType)
     val dataStreamTable = new DataStreamTable[T](
@@ -541,7 +532,7 @@ class StreamTableEnvironment(
 
   /**
     * Registers a [[DataStream]] as a table under a given name with field names as specified by
-    * field expressions in the [[AbstractTableEnvironment]]'s catalog.
+    * field expressions in the [[TableEnvironment]]'s catalog.
     *
     * @param name The name under which the table is registered in the catalog.
     * @param dataStream The [[DataStream]] to register as table in the catalog.
@@ -551,8 +542,7 @@ class StreamTableEnvironment(
   protected def registerDataStreamInternal[T](
       name: String,
       dataStream: DataStream[T],
-      fields: Array[Expression])
-    : Unit = {
+      fields: Array[Expression]): Unit = {
 
     val streamType = dataStream.getType
 
@@ -588,8 +578,8 @@ class StreamTableEnvironment(
     * @return rowtime attribute and proctime attribute
     */
   private def validateAndExtractTimeAttributes(
-    streamType: TypeInformation[_],
-    exprs: Array[Expression])
+      streamType: TypeInformation[_],
+      exprs: Array[Expression])
   : (Option[(Int, String)], Option[(Int, String)]) = {
 
     val (isRefByPos, fieldTypes) = streamType match {
@@ -608,7 +598,7 @@ class StreamTableEnvironment(
       if (!(TypeCheckUtils.isLong(t) || TypeCheckUtils.isTimePoint(t))) {
         throw new TableException(
           s"The rowtime attribute can only replace a field with a valid time type, " +
-          s"such as Timestamp or Long. But was: $t")
+            s"such as Timestamp or Long. But was: $t")
       }
     }
 
@@ -651,8 +641,8 @@ class StreamTableEnvironment(
 
     def extractProctime(idx: Int, name: String): Unit = {
       if (proctime.isDefined) {
-          throw new TableException(
-            "The proctime attribute can only be defined once in a table schema.")
+        throw new TableException(
+          "The proctime attribute can only be defined once in a table schema.")
       } else {
         // if the fields are referenced by position,
         // it is only possible to append the time attribute at the end
@@ -722,9 +712,9 @@ class StreamTableEnvironment(
     * @return An adjusted array of field indexes.
     */
   private def adjustFieldIndexes(
-    fieldIndexes: Array[Int],
-    rowtime: Option[(Int, String)],
-    proctime: Option[(Int, String)]): Array[Int] = {
+      fieldIndexes: Array[Int],
+      rowtime: Option[(Int, String)],
+      proctime: Option[(Int, String)]): Array[Int] = {
 
     // inject rowtime field
     val withRowtime = rowtime match {
@@ -755,9 +745,9 @@ class StreamTableEnvironment(
     * @return An adjusted array of field names.
     */
   private def adjustFieldNames(
-    fieldNames: Array[String],
-    rowtime: Option[(Int, String)],
-    proctime: Option[(Int, String)]): Array[String] = {
+      fieldNames: Array[String],
+      rowtime: Option[(Int, String)],
+      proctime: Option[(Int, String)]): Array[String] = {
 
     // inject rowtime field
     val withRowtime = rowtime match {
@@ -901,7 +891,7 @@ class StreamTableEnvironment(
     if (!withChangeFlag && !UpdatingPlanChecker.isAppendOnly(logicalPlan)) {
       throw new TableException(
         "Table is not an append-only table. " +
-        "Use the toRetractStream() in order to handle add and retract messages.")
+          "Use the toRetractStream() in order to handle add and retract messages.")
     }
 
     // get CRow plan
@@ -973,8 +963,8 @@ class StreamTableEnvironment(
     * @return The [[DataStream]] of type [[CRow]].
     */
   protected def translateToCRow(
-    logicalPlan: RelNode,
-    queryConfig: StreamQueryConfig): DataStream[CRow] = {
+      logicalPlan: RelNode,
+      queryConfig: StreamQueryConfig): DataStream[CRow] = {
 
     logicalPlan match {
       case node: DataStreamRel =>
@@ -1021,786 +1011,69 @@ class StreamTableEnvironment(
     val sqlPlan = PlanJsonParser.getSqlExecutionPlan(jsonSqlPlan, false)
 
     s"== Abstract Syntax Tree ==" +
-        System.lineSeparator +
-        s"${RelOptUtil.toString(ast)}" +
-        System.lineSeparator +
-        s"== Optimized Logical Plan ==" +
-        System.lineSeparator +
-        s"${RelOptUtil.toString(optimizedPlan)}" +
-        System.lineSeparator +
-        s"== Physical Execution Plan ==" +
-        System.lineSeparator +
-        s"$sqlPlan"
+      System.lineSeparator +
+      s"${RelOptUtil.toString(ast)}" +
+      System.lineSeparator +
+      s"== Optimized Logical Plan ==" +
+      System.lineSeparator +
+      s"${RelOptUtil.toString(optimizedPlan)}" +
+      System.lineSeparator +
+      s"== Physical Execution Plan ==" +
+      System.lineSeparator +
+      s"$sqlPlan"
   }
 
-  /**
-    * Converts the given [[DataStream]] into a [[Table]].
-    *
-    * The field names of the [[Table]] are automatically derived from the type of the
-    * [[DataStream]].
-    *
-    * @param dataStream The [[DataStream]] to be converted.
-    * @tparam T The type of the [[DataStream]].
-    * @return The converted [[Table]].
-    */
-  def fromDataStream[T](dataStream: DataStream[T]): Table = {
-
-    val name = createUniqueTableName()
-    registerDataStreamInternal(name, dataStream)
-    scan(name)
+  protected def unsupportedBatchMethod: UnsupportedOperationException = {
+    new UnsupportedOperationException("This method is not supported in stream mode!")
   }
 
-  /**
-    * Converts the given [[DataStream]] into a [[Table]] with specified field names.
-    *
-    * Example:
-    *
-    * {{{
-    *   DataStream<Tuple2<String, Long>> stream = ...
-    *   Table tab = tableEnv.fromDataStream(stream, "a, b")
-    * }}}
-    *
-    * @param dataStream The [[DataStream]] to be converted.
-    * @param fields The field names of the resulting [[Table]].
-    * @tparam T The type of the [[DataStream]].
-    * @return The converted [[Table]].
-    */
-  def fromDataStream[T](dataStream: DataStream[T], fields: String): Table = {
-    val exprs = ExpressionParser
-      .parseExpressionList(fields)
-      .toArray
+  override def connectForBatch(connectorDescriptor: ConnectorDescriptor): BatchTableDescriptor =
+    throw unsupportedBatchMethod
 
-    val name = createUniqueTableName()
-    registerDataStreamInternal(name, dataStream, exprs)
-    scan(name)
-  }
+  override def fromDataSet[T](dataSet: ScalaDataSet[T]): Table =
+    throw unsupportedBatchMethod
 
-  /**
-    * Registers the given [[DataStream]] as table in the
-    * [[AbstractTableEnvironment]]'s catalog.
-    * Registered tables can be referenced in SQL queries.
-    *
-    * The field names of the [[Table]] are automatically derived
-    * from the type of the [[DataStream]].
-    *
-    * @param name The name under which the [[DataStream]] is registered in the catalog.
-    * @param dataStream The [[DataStream]] to register.
-    * @tparam T The type of the [[DataStream]] to register.
-    */
-  def registerDataStream[T](name: String, dataStream: DataStream[T]): Unit = {
+  override def fromDataSet[T](dataSet: ScalaDataSet[T], fields: Expression*): Table =
+    throw unsupportedBatchMethod
 
-    checkValidTableName(name)
-    registerDataStreamInternal(name, dataStream)
-  }
+  override def registerDataSet[T](name: String, dataSet: ScalaDataSet[T]): Unit =
+    throw unsupportedBatchMethod
 
-  /**
-    * Registers the given [[DataStream]] as table with specified field names in the
-    * [[AbstractTableEnvironment]]'s catalog.
-    * Registered tables can be referenced in SQL queries.
-    *
-    * Example:
-    *
-    * {{{
-    *   DataStream<Tuple2<String, Long>> set = ...
-    *   tableEnv.registerDataStream("myTable", set, "a, b")
-    * }}}
-    *
-    * @param name The name under which the [[DataStream]] is registered in the catalog.
-    * @param dataStream The [[DataStream]] to register.
-    * @param fields The field names of the registered table.
-    * @tparam T The type of the [[DataStream]] to register.
-    */
-  def registerDataStream[T](name: String, dataStream: DataStream[T], fields: String): Unit = {
-    val exprs = ExpressionParser
-      .parseExpressionList(fields)
-      .toArray
+  override def registerDataSet[T](
+      name: String, dataSet: ScalaDataSet[T], fields: Expression*): Unit =
+    throw unsupportedBatchMethod
 
-    checkValidTableName(name)
-    registerDataStreamInternal(name, dataStream, exprs)
-  }
+  override def toDataSetScala[T: TypeInformation](table: Table): ScalaDataSet[T] =
+    throw unsupportedBatchMethod
 
-  /**
-    * Converts the given [[Table]] into an append [[DataStream]] of a specified type.
-    *
-    * The [[Table]] must only have insert (append) changes. If the [[Table]] is also modified
-    * by update or delete changes, the conversion will fail.
-    *
-    * The fields of the [[Table]] are mapped to [[DataStream]] fields as follows:
-    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
-    * types: Fields are mapped by position, field types must match.
-    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
-    *
-    * @param table The [[Table]] to convert.
-    * @param clazz The class of the type of the resulting [[DataStream]].
-    * @tparam T The type of the resulting [[DataStream]].
-    * @return The converted [[DataStream]].
-    */
-  def toAppendStream[T](table: Table, clazz: Class[T]): DataStream[T] = {
-    toAppendStream(table, clazz, queryConfig)
-  }
+  override def toDataSetScala[T: TypeInformation](
+      table: Table, queryConfig: BatchQueryConfig): ScalaDataSet[T] =
+    throw unsupportedBatchMethod
 
-  /**
-    * Converts the given [[Table]] into an append [[DataStream]] of a specified type.
-    *
-    * The [[Table]] must only have insert (append) changes. If the [[Table]] is also modified
-    * by update or delete changes, the conversion will fail.
-    *
-    * The fields of the [[Table]] are mapped to [[DataStream]] fields as follows:
-    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
-    * types: Fields are mapped by position, field types must match.
-    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
-    *
-    * @param table The [[Table]] to convert.
-    * @param typeInfo The [[TypeInformation]] that specifies the type of the [[DataStream]].
-    * @tparam T The type of the resulting [[DataStream]].
-    * @return The converted [[DataStream]].
-    */
-  def toAppendStream[T](table: Table, typeInfo: TypeInformation[T]): DataStream[T] = {
-    toAppendStream(table, typeInfo, queryConfig)
-  }
+  override def fromDataSet[T](dataSet: DataSet[T]): Table =
+    throw unsupportedBatchMethod
 
-  /**
-    * Converts the given [[Table]] into an append [[DataStream]] of a specified type.
-    *
-    * The [[Table]] must only have insert (append) changes. If the [[Table]] is also modified
-    * by update or delete changes, the conversion will fail.
-    *
-    * The fields of the [[Table]] are mapped to [[DataStream]] fields as follows:
-    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
-    * types: Fields are mapped by position, field types must match.
-    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
-    *
-    * @param table The [[Table]] to convert.
-    * @param clazz The class of the type of the resulting [[DataStream]].
-    * @param queryConfig The configuration of the query to generate.
-    * @tparam T The type of the resulting [[DataStream]].
-    * @return The converted [[DataStream]].
-    */
-  def toAppendStream[T](
-      table: Table,
-      clazz: Class[T],
-      queryConfig: StreamQueryConfig): DataStream[T] = {
-    val typeInfo = TypeExtractor.createTypeInfo(clazz)
-    TableEnvironment.validateType(typeInfo)
-    translate[T](table, queryConfig, updatesAsRetraction = false, withChangeFlag = false)(typeInfo)
-  }
+  override def fromDataSet[T](dataSet: DataSet[T], fields: String): Table =
+    throw unsupportedBatchMethod
 
-  /**
-    * Converts the given [[Table]] into an append [[DataStream]] of a specified type.
-    *
-    * The [[Table]] must only have insert (append) changes. If the [[Table]] is also modified
-    * by update or delete changes, the conversion will fail.
-    *
-    * The fields of the [[Table]] are mapped to [[DataStream]] fields as follows:
-    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
-    * types: Fields are mapped by position, field types must match.
-    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
-    *
-    * @param table The [[Table]] to convert.
-    * @param typeInfo The [[TypeInformation]] that specifies the type of the [[DataStream]].
-    * @param queryConfig The configuration of the query to generate.
-    * @tparam T The type of the resulting [[DataStream]].
-    * @return The converted [[DataStream]].
-    */
-  def toAppendStream[T](
-      table: Table,
-      typeInfo: TypeInformation[T],
-      queryConfig: StreamQueryConfig): DataStream[T] = {
-    TableEnvironment.validateType(typeInfo)
-    translate[T](table, queryConfig, updatesAsRetraction = false, withChangeFlag = false)(typeInfo)
-  }
+  override def registerDataSet[T](name: String, dataSet: DataSet[T]): Unit =
+    throw unsupportedBatchMethod
 
-  /**
-    * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
-    * The message will be encoded as [[JTuple2]]. The first field is a [[JBool]] flag,
-    * the second field holds the record of the specified type [[T]].
-    *
-    * A true [[JBool]] flag indicates an add message, a false flag indicates a retract message.
-    *
-    * The fields of the [[Table]] are mapped to the requested type as follows:
-    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
-    * types: Fields are mapped by position, field types must match.
-    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
-    *
-    * @param table The [[Table]] to convert.
-    * @param clazz The class of the requested record type.
-    * @tparam T The type of the requested record type.
-    * @return The converted [[DataStream]].
-    */
-  def toRetractStream[T](
-      table: Table,
-      clazz: Class[T]): DataStream[JTuple2[JBool, T]] = {
+  override def registerDataSet[T](name: String, dataSet: DataSet[T], fields: String): Unit =
+    throw unsupportedBatchMethod
 
-    toRetractStream(table, clazz, queryConfig)
-  }
+  override def toDataSet[T](table: Table, clazz: Class[T]): DataSet[T] =
+    throw unsupportedBatchMethod
 
-  /**
-    * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
-    * The message will be encoded as [[JTuple2]]. The first field is a [[JBool]] flag,
-    * the second field holds the record of the specified type [[T]].
-    *
-    * A true [[JBool]] flag indicates an add message, a false flag indicates a retract message.
-    *
-    * The fields of the [[Table]] are mapped to the requested type as follows:
-    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
-    * types: Fields are mapped by position, field types must match.
-    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
-    *
-    * @param table The [[Table]] to convert.
-    * @param typeInfo The [[TypeInformation]] of the requested record type.
-    * @tparam T The type of the requested record type.
-    * @return The converted [[DataStream]].
-    */
-  def toRetractStream[T](
-      table: Table,
-      typeInfo: TypeInformation[T]): DataStream[JTuple2[JBool, T]] = {
+  override def toDataSet[T](table: Table, typeInfo: TypeInformation[T]): DataSet[T] =
+    throw unsupportedBatchMethod
 
-    toRetractStream(table, typeInfo, queryConfig)
-  }
+  override def toDataSet[T](
+      table: Table, clazz: Class[T], queryConfig: BatchQueryConfig): DataSet[T] =
+    throw unsupportedBatchMethod
 
-  /**
-    * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
-    * The message will be encoded as [[JTuple2]]. The first field is a [[JBool]] flag,
-    * the second field holds the record of the specified type [[T]].
-    *
-    * A true [[JBool]] flag indicates an add message, a false flag indicates a retract message.
-    *
-    * The fields of the [[Table]] are mapped to the requested type as follows:
-    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
-    * types: Fields are mapped by position, field types must match.
-    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
-    *
-    * @param table The [[Table]] to convert.
-    * @param clazz The class of the requested record type.
-    * @param queryConfig The configuration of the query to generate.
-    * @tparam T The type of the requested record type.
-    * @return The converted [[DataStream]].
-    */
-  def toRetractStream[T](
-      table: Table,
-      clazz: Class[T],
-      queryConfig: StreamQueryConfig): DataStream[JTuple2[JBool, T]] = {
+  override def toDataSet[T](
+      table: Table, typeInfo: TypeInformation[T], queryConfig: BatchQueryConfig): DataSet[T] =
+    throw unsupportedBatchMethod
 
-    val typeInfo = TypeExtractor.createTypeInfo(clazz)
-    TableEnvironment.validateType(typeInfo)
-    val resultType = new TupleTypeInfo[JTuple2[JBool, T]](Types.BOOLEAN, typeInfo)
-    translate[JTuple2[JBool, T]](
-      table,
-      queryConfig,
-      updatesAsRetraction = true,
-      withChangeFlag = true)(resultType)
-  }
-
-  /**
-    * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
-    * The message will be encoded as [[JTuple2]]. The first field is a [[JBool]] flag,
-    * the second field holds the record of the specified type [[T]].
-    *
-    * A true [[JBool]] flag indicates an add message, a false flag indicates a retract message.
-    *
-    * The fields of the [[Table]] are mapped to the requested type as follows:
-    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
-    * types: Fields are mapped by position, field types must match.
-    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
-    *
-    * @param table The [[Table]] to convert.
-    * @param typeInfo The [[TypeInformation]] of the requested record type.
-    * @param queryConfig The configuration of the query to generate.
-    * @tparam T The type of the requested record type.
-    * @return The converted [[DataStream]].
-    */
-  def toRetractStream[T](
-      table: Table,
-      typeInfo: TypeInformation[T],
-      queryConfig: StreamQueryConfig): DataStream[JTuple2[JBool, T]] = {
-
-    TableEnvironment.validateType(typeInfo)
-    val resultTypeInfo = new TupleTypeInfo[JTuple2[JBool, T]](
-      Types.BOOLEAN,
-      typeInfo
-    )
-    translate[JTuple2[JBool, T]](
-      table,
-      queryConfig,
-      updatesAsRetraction = true,
-      withChangeFlag = true)(resultTypeInfo)
-  }
-
-  /**
-    * Registers a [[TableFunction]] under a unique name in the TableEnvironment's catalog.
-    * Registered functions can be referenced in Table API and SQL queries.
-    *
-    * @param name The name under which the function is registered.
-    * @param tf The TableFunction to register.
-    * @tparam T The type of the output row.
-    */
-  def registerFunction(name: String, tf: TableFunction[_]): Unit = {
-    val typeInfo: TypeInformation[_] = TypeExtractor
-      .createTypeInfo(tf, classOf[TableFunction[_]], tf.getClass, 0)
-      .asInstanceOf[TypeInformation[_]]
-
-    registerTableFunctionInternal(typeInfo, name, tf)
-  }
-
-  /**
-    * Registers an [[AggregateFunction]] under a unique name in the TableEnvironment's catalog.
-    * Registered functions can be referenced in Table API and SQL queries.
-    *
-    * @param name The name under which the function is registered.
-    * @param f The AggregateFunction to register.
-    * @tparam T The type of the output value.
-    * @tparam ACC The type of aggregate accumulator.
-    */
-  def registerFunction(
-      name: String,
-      f: AggregateFunction[_, _])
-  : Unit = {
-    val typeInfo: TypeInformation[_] = TypeExtractor
-      .createTypeInfo(f, classOf[AggregateFunction[_, _]], f.getClass, 0)
-      .asInstanceOf[TypeInformation[_]]
-
-    val accTypeInfo: TypeInformation[_] = TypeExtractor
-      .createTypeInfo(f, classOf[AggregateFunction[_, _]], f.getClass, 1)
-      .asInstanceOf[TypeInformation[_]]
-
-    registerAggregateFunctionInternal(typeInfo, accTypeInfo, name, f)
-  }
-
-
-  /**
-    * Converts the given [[DataStream]] into a [[Table]].
-    *
-    * The field names of the [[Table]] are automatically derived from the type of the
-    * [[DataStream]].
-    *
-    * @param dataStream The [[DataStream]] to be converted.
-    * @tparam T The type of the [[DataStream]].
-    * @return The converted [[Table]].
-    */
-  def fromDataStream[T](dataStream: ScalaDataStream[T]): Table = {
-
-    val name = createUniqueTableName()
-    registerDataStreamInternal(name, dataStream.javaStream)
-    scan(name)
-  }
-
-  /**
-    * Converts the given [[DataStream]] into a [[Table]] with specified field names.
-    *
-    * Example:
-    *
-    * {{{
-    *   val stream: DataStream[(String, Long)] = ...
-    *   val tab: Table = tableEnv.fromDataStream(stream, 'a, 'b)
-    * }}}
-    *
-    * @param dataStream The [[DataStream]] to be converted.
-    * @param fields The field names of the resulting [[Table]].
-    * @tparam T The type of the [[DataStream]].
-    * @return The converted [[Table]].
-    */
-  def fromDataStream[T](dataStream: ScalaDataStream[T], fields: Expression*): Table = {
-
-    val name = createUniqueTableName()
-    registerDataStreamInternal(name, dataStream.javaStream, fields.toArray)
-    scan(name)
-  }
-
-  /**
-    * Registers the given [[DataStream]] as table in the
-    * [[AbstractTableEnvironment]]'s catalog.
-    * Registered tables can be referenced in SQL queries.
-    *
-    * The field names of the [[Table]] are automatically derived
-    * from the type of the [[DataStream]].
-    *
-    * @param name The name under which the [[DataStream]] is registered in the catalog.
-    * @param dataStream The [[DataStream]] to register.
-    * @tparam T The type of the [[DataStream]] to register.
-    */
-  def registerDataStream[T](name: String, dataStream: ScalaDataStream[T]): Unit = {
-
-    checkValidTableName(name)
-    registerDataStreamInternal(name, dataStream.javaStream)
-  }
-
-  /**
-    * Registers the given [[DataStream]] as table with specified field names in the
-    * [[AbstractTableEnvironment]]'s catalog.
-    * Registered tables can be referenced in SQL queries.
-    *
-    * Example:
-    *
-    * {{{
-    *   val set: DataStream[(String, Long)] = ...
-    *   tableEnv.registerDataStream("myTable", set, 'a, 'b)
-    * }}}
-    *
-    * @param name The name under which the [[DataStream]] is registered in the catalog.
-    * @param dataStream The [[DataStream]] to register.
-    * @param fields The field names of the registered table.
-    * @tparam T The type of the [[DataStream]] to register.
-    */
-  def registerDataStream[T](
-      name: String,
-      dataStream: ScalaDataStream[T],
-      fields: Expression*): Unit = {
-
-    checkValidTableName(name)
-    registerDataStreamInternal(name, dataStream.javaStream, fields.toArray)
-  }
-
-  /**
-    * Converts the given [[Table]] into an append [[DataStream]] of a specified type.
-    *
-    * The [[Table]] must only have insert (append) changes. If the [[Table]] is also modified
-    * by update or delete changes, the conversion will fail.
-    *
-    * The fields of the [[Table]] are mapped to [[DataStream]] fields as follows:
-    * - [[org.apache.flink.types.Row]] and Scala Tuple types: Fields are mapped by position, field
-    * types must match.
-    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
-    *
-    * @param table The [[Table]] to convert.
-    * @tparam T The type of the resulting [[DataStream]].
-    * @return The converted [[DataStream]].
-    */
-  def toAppendStreamScala[T: TypeInformation](table: Table): ScalaDataStream[T] = {
-    toAppendStreamScala(table, queryConfig)
-  }
-
-  /**
-    * Converts the given [[Table]] into an append [[DataStream]] of a specified type.
-    *
-    * The [[Table]] must only have insert (append) changes. If the [[Table]] is also modified
-    * by update or delete changes, the conversion will fail.
-    *
-    * The fields of the [[Table]] are mapped to [[DataStream]] fields as follows:
-    * - [[org.apache.flink.types.Row]] and Scala Tuple types: Fields are mapped by position, field
-    * types must match.
-    * - POJO [[DataStream]] types: Fields are mapped by field name, field types must match.
-    *
-    * @param table The [[Table]] to convert.
-    * @param queryConfig The configuration of the query to generate.
-    * @tparam T The type of the resulting [[DataStream]].
-    * @return The converted [[DataStream]].
-    */
-  def toAppendStreamScala[T: TypeInformation](
-      table: Table,
-      queryConfig: StreamQueryConfig): ScalaDataStream[T] = {
-    val returnType = createTypeInformation[T]
-    asScalaStream(translate(
-      table, queryConfig, updatesAsRetraction = false, withChangeFlag = false)(returnType))
-  }
-
-  /**
-    * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
-    * The message will be encoded as [[Tuple2]]. The first field is a [[Boolean]] flag,
-    * the second field holds the record of the specified type [[T]].
-    *
-    * A true [[Boolean]] flag indicates an add message, a false flag indicates a retract message.
-    *
-    * @param table The [[Table]] to convert.
-    * @tparam T The type of the requested data type.
-    * @return The converted [[DataStream]].
-    */
-  def toRetractStreamScala[T: TypeInformation](table: Table): ScalaDataStream[(Boolean, T)] = {
-    toRetractStreamScala(table, queryConfig)
-  }
-
-  /**
-    * Converts the given [[Table]] into a [[DataStream]] of add and retract messages.
-    * The message will be encoded as [[Tuple2]]. The first field is a [[Boolean]] flag,
-    * the second field holds the record of the specified type [[T]].
-    *
-    * A true [[Boolean]] flag indicates an add message, a false flag indicates a retract message.
-    *
-    * @param table The [[Table]] to convert.
-    * @param queryConfig The configuration of the query to generate.
-    * @tparam T The type of the requested data type.
-    * @return The converted [[DataStream]].
-    */
-  def toRetractStreamScala[T: TypeInformation](
-      table: Table,
-      queryConfig: StreamQueryConfig): ScalaDataStream[(Boolean, T)] = {
-    val returnType = createTypeInformation[(Boolean, T)]
-    asScalaStream(
-      translate(table, queryConfig, updatesAsRetraction = true, withChangeFlag = true)(returnType))
-  }
-
-  /**
-    * Registers a [[TableFunction]] under a unique name in the TableEnvironment's catalog.
-    * Registered functions can be referenced in SQL queries.
-    *
-    * @param name The name under which the function is registered.
-    * @param tf The TableFunction to register
-    */
-  def registerFunctionScala[T: TypeInformation](name: String, tf: TableFunction[T]): Unit = {
-    registerTableFunctionInternal(name, tf)
-  }
-
-  /**
-    * Registers an [[AggregateFunction]] under a unique name in the TableEnvironment's catalog.
-    * Registered functions can be referenced in Table API and SQL queries.
-    *
-    * @param name The name under which the function is registered.
-    * @param f The AggregateFunction to register.
-    * @tparam T The type of the output value.
-    * @tparam ACC The type of aggregate accumulator.
-    */
-  def registerFunctionScala[T: TypeInformation, ACC: TypeInformation](
-      name: String,
-      f: AggregateFunction[T, ACC])
-  : Unit = {
-    registerAggregateFunctionInternal[T, ACC](name, f)
-  }
-
-  def connectForBatch(connectorDescriptor: ConnectorDescriptor): BatchTableDescriptor = {
-    throw new UnsupportedOperationException("This method is not supported in stream mode!")
-  }
-
-  /**
-    * Converts the given [[DataSet]] into a [[Table]].
-    *
-    * The field names of the [[Table]] are automatically derived from the type of the [[DataSet]].
-    *
-    * @param dataSet The [[DataSet]] to be converted.
-    * @tparam T The type of the [[DataSet]].
-    * @return The converted [[Table]].
-    */
-  def fromDataSet[T](dataSet: ScalaDataSet[T]): Table = {
-    throw new UnsupportedOperationException("This method is not supported in stream mode!")
-  }
-
-  /**
-    * Converts the given [[DataSet]] into a [[Table]] with specified field names.
-    *
-    * Example:
-    *
-    * {{{
-    *   val set: DataSet[(String, Long)] = ...
-    *   val tab: Table = tableEnv.fromDataSet(set, 'a, 'b)
-    * }}}
-    *
-    * @param dataSet The [[DataSet]] to be converted.
-    * @param fields  The field names of the resulting [[Table]].
-    * @tparam T The type of the [[DataSet]].
-    * @return The converted [[Table]].
-    */
-  def fromDataSet[T](dataSet: ScalaDataSet[T], fields: Expression*): Table = {
-    throw new UnsupportedOperationException("This method is not supported in stream mode!")
-  }
-
-  /**
-    * Registers the given [[DataSet]] as table in the
-    * [[AbstractTableEnvironment]]'s catalog.
-    * Registered tables can be referenced in SQL queries.
-    *
-    * The field names of the [[Table]] are automatically derived from the type of the [[DataSet]].
-    *
-    * @param name    The name under which the [[DataSet]] is registered in the catalog.
-    * @param dataSet The [[DataSet]] to register.
-    * @tparam T The type of the [[DataSet]] to register.
-    */
-  def registerDataSet[T](name: String, dataSet: ScalaDataSet[T]): Unit = {
-    throw new UnsupportedOperationException("This method is not supported in stream mode!")
-  }
-
-  /**
-    * Registers the given [[DataSet]] as table with specified field names in the
-    * [[AbstractTableEnvironment]]'s catalog.
-    * Registered tables can be referenced in SQL queries.
-    *
-    * Example:
-    *
-    * {{{
-    *   val set: DataSet[(String, Long)] = ...
-    *   tableEnv.registerDataSet("myTable", set, 'a, 'b)
-    * }}}
-    *
-    * @param name    The name under which the [[DataSet]] is registered in the catalog.
-    * @param dataSet The [[DataSet]] to register.
-    * @param fields  The field names of the registered table.
-    * @tparam T The type of the [[DataSet]] to register.
-    */
-  def registerDataSet[T](name: String, dataSet: ScalaDataSet[T], fields: Expression*): Unit = {
-    throw new UnsupportedOperationException("This method is not supported in stream mode!")
-  }
-
-  /**
-    * Converts the given [[Table]] into a [[DataSet]] of a specified type.
-    *
-    * The fields of the [[Table]] are mapped to [[DataSet]] fields as follows:
-    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
-    * types: Fields are mapped by position, field types must match.
-    * - POJO [[DataSet]] types: Fields are mapped by field name, field types must match.
-    *
-    * @param table The [[Table]] to convert.
-    * @tparam T The type of the resulting [[DataSet]].
-    * @return The converted [[DataSet]].
-    */
-  def toDataSetScala[T: TypeInformation](table: Table): ScalaDataSet[T] = {
-    throw new UnsupportedOperationException("This method is not supported in stream mode!")
-  }
-
-  /**
-    * Converts the given [[Table]] into a [[DataSet]] of a specified type.
-    *
-    * The fields of the [[Table]] are mapped to [[DataSet]] fields as follows:
-    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
-    * types: Fields are mapped by position, field types must match.
-    * - POJO [[DataSet]] types: Fields are mapped by field name, field types must match.
-    *
-    * @param table       The [[Table]] to convert.
-    * @param queryConfig The configuration of the query to generate.
-    * @tparam T The type of the resulting [[DataSet]].
-    * @return The converted [[DataSet]].
-    */
-  def toDataSetScala[T: TypeInformation](
-      table: Table,
-      queryConfig: BatchQueryConfig): ScalaDataSet[T] = {
-    throw new UnsupportedOperationException("This method is not supported in stream mode!")
-  }
-
-  /**
-    * Converts the given [[DataSet]] into a [[Table]].
-    *
-    * The field names of the [[Table]] are automatically derived from the type of the [[DataSet]].
-    *
-    * @param dataSet The [[DataSet]] to be converted.
-    * @tparam T The type of the [[DataSet]].
-    * @return The converted [[Table]].
-    */
-  def fromDataSet[T](dataSet: DataSet[T]): Table = {
-    throw new UnsupportedOperationException("This method is not supported in stream mode!")
-  }
-
-  /**
-    * Converts the given [[DataSet]] into a [[Table]] with specified field names.
-    *
-    * Example:
-    *
-    * {{{
-    *   DataSet<Tuple2<String, Long>> set = ...
-    *   Table tab = tableEnv.fromDataSet(set, "a, b")
-    * }}}
-    *
-    * @param dataSet The [[DataSet]] to be converted.
-    * @param fields  The field names of the resulting [[Table]].
-    * @tparam T The type of the [[DataSet]].
-    * @return The converted [[Table]].
-    */
-  def fromDataSet[T](dataSet: DataSet[T], fields: String): Table = {
-    throw new UnsupportedOperationException("This method is not supported in stream mode!")
-  }
-
-  /**
-    * Registers the given [[DataSet]] as table in the
-    * [[AbstractTableEnvironment]]'s catalog.
-    * Registered tables can be referenced in SQL queries.
-    *
-    * The field names of the [[Table]] are automatically derived from the type of the [[DataSet]].
-    *
-    * @param name    The name under which the [[DataSet]] is registered in the catalog.
-    * @param dataSet The [[DataSet]] to register.
-    * @tparam T The type of the [[DataSet]] to register.
-    */
-  def registerDataSet[T](name: String, dataSet: DataSet[T]): Unit = {
-    throw new UnsupportedOperationException("This method is not supported in stream mode!")
-  }
-
-  /**
-    * Registers the given [[DataSet]] as table with specified field names in the
-    * [[AbstractTableEnvironment]]'s catalog.
-    * Registered tables can be referenced in SQL queries.
-    *
-    * Example:
-    *
-    * {{{
-    *   DataSet<Tuple2<String, Long>> set = ...
-    *   tableEnv.registerDataSet("myTable", set, "a, b")
-    * }}}
-    *
-    * @param name    The name under which the [[DataSet]] is registered in the catalog.
-    * @param dataSet The [[DataSet]] to register.
-    * @param fields  The field names of the registered table.
-    * @tparam T The type of the [[DataSet]] to register.
-    */
-  def registerDataSet[T](name: String, dataSet: DataSet[T], fields: String): Unit = {
-    throw new UnsupportedOperationException("This method is not supported in stream mode!")
-  }
-
-  /**
-    * Converts the given [[Table]] into a [[DataSet]] of a specified type.
-    *
-    * The fields of the [[Table]] are mapped to [[DataSet]] fields as follows:
-    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
-    * types: Fields are mapped by position, field types must match.
-    * - POJO [[DataSet]] types: Fields are mapped by field name, field types must match.
-    *
-    * @param table The [[Table]] to convert.
-    * @param clazz The class of the type of the resulting [[DataSet]].
-    * @tparam T The type of the resulting [[DataSet]].
-    * @return The converted [[DataSet]].
-    */
-  def toDataSet[T](table: Table, clazz: Class[T]): DataSet[T] = {
-    throw new UnsupportedOperationException("This method is not supported in stream mode!")
-  }
-
-  /**
-    * Converts the given [[Table]] into a [[DataSet]] of a specified type.
-    *
-    * The fields of the [[Table]] are mapped to [[DataSet]] fields as follows:
-    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
-    * types: Fields are mapped by position, field types must match.
-    * - POJO [[DataSet]] types: Fields are mapped by field name, field types must match.
-    *
-    * @param table    The [[Table]] to convert.
-    * @param typeInfo The [[TypeInformation]] that specifies the type of the resulting [[DataSet]].
-    * @tparam T The type of the resulting [[DataSet]].
-    * @return The converted [[DataSet]].
-    */
-  def toDataSet[T](table: Table, typeInfo: TypeInformation[T]): DataSet[T] = {
-    throw new UnsupportedOperationException("This method is not supported in stream mode!")
-  }
-
-  /**
-    * Converts the given [[Table]] into a [[DataSet]] of a specified type.
-    *
-    * The fields of the [[Table]] are mapped to [[DataSet]] fields as follows:
-    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
-    * types: Fields are mapped by position, field types must match.
-    * - POJO [[DataSet]] types: Fields are mapped by field name, field types must match.
-    *
-    * @param table       The [[Table]] to convert.
-    * @param clazz       The class of the type of the resulting [[DataSet]].
-    * @param queryConfig The configuration for the query to generate.
-    * @tparam T The type of the resulting [[DataSet]].
-    * @return The converted [[DataSet]].
-    */
-  def toDataSet[T](table: Table, clazz: Class[T], queryConfig: BatchQueryConfig): DataSet[T] = {
-    throw new UnsupportedOperationException("This method is not supported in stream mode!")
-  }
-
-  /**
-    * Converts the given [[Table]] into a [[DataSet]] of a specified type.
-    *
-    * The fields of the [[Table]] are mapped to [[DataSet]] fields as follows:
-    * - [[org.apache.flink.types.Row]] and [[org.apache.flink.api.java.tuple.Tuple]]
-    * types: Fields are mapped by position, field types must match.
-    * - POJO [[DataSet]] types: Fields are mapped by field name, field types must match.
-    *
-    * @param table       The [[Table]] to convert.
-    * @param typeInfo    The [[TypeInformation]] that specifies the type of the resulting
-    *                    [[DataSet]].
-    * @param queryConfig The configuration for the query to generate.
-    * @tparam T The type of the resulting [[DataSet]].
-    * @return The converted [[DataSet]].
-    */
-  def toDataSet[T](
-      table: Table,
-      typeInfo: TypeInformation[T],
-      queryConfig: BatchQueryConfig): DataSet[T] = {
-    throw new UnsupportedOperationException("This method is not supported in stream mode!")
-  }
 }

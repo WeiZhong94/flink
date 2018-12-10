@@ -29,6 +29,8 @@ import org.apache.flink.api.scala.{DataSet => ScalaDataSet, ExecutionEnvironment
 import org.apache.flink.streaming.api.datastream.DataStream
 import org.apache.flink.streaming.api.environment.{StreamExecutionEnvironment => JavaStreamExecEnv}
 import org.apache.flink.streaming.api.scala.{DataStream => ScalaDataStream, StreamExecutionEnvironment => ScalaStreamExecEnv}
+import org.apache.flink.table.api.java.{BatchTableEnvironment => JavaBatchTableEnv, StreamTableEnvironment => JavaStreamTableEnv}
+import org.apache.flink.table.api.scala.{BatchTableEnvironment => ScalaBatchTableEnv, StreamTableEnvironment => ScalaStreamTableEnv}
 import org.apache.flink.table.catalog.ExternalCatalog
 import org.apache.flink.table.descriptors.{BatchTableDescriptor, ConnectorDescriptor, StreamTableDescriptor, TableDescriptor}
 import org.apache.flink.table.expressions.Expression
@@ -911,7 +913,7 @@ object TableEnvironment {
     * @param executionEnvironment The Java batch ExecutionEnvironment.
     */
   def getTableEnvironment(executionEnvironment: JavaBatchExecEnv): BatchTableEnvironment = {
-    new BatchTableEnvironment(executionEnvironment, new TableConfig())
+    new JavaBatchTableEnv(executionEnvironment, new TableConfig())
   }
 
   /**
@@ -924,7 +926,7 @@ object TableEnvironment {
   def getTableEnvironment(
       executionEnvironment: JavaBatchExecEnv,
       tableConfig: TableConfig): BatchTableEnvironment = {
-    new BatchTableEnvironment(executionEnvironment, tableConfig)
+    new JavaBatchTableEnv(executionEnvironment, tableConfig)
   }
 
   /**
@@ -934,7 +936,7 @@ object TableEnvironment {
     */
   def getTableEnvironment(executionEnvironment: ScalaBatchExecEnv)
   : BatchTableEnvironment = {
-    new BatchTableEnvironment(executionEnvironment, new TableConfig())
+    new ScalaBatchTableEnv(executionEnvironment, new TableConfig())
   }
 
   /**
@@ -947,7 +949,7 @@ object TableEnvironment {
   def getTableEnvironment(
       executionEnvironment: ScalaBatchExecEnv,
       tableConfig: TableConfig): BatchTableEnvironment = {
-    new BatchTableEnvironment(executionEnvironment, tableConfig)
+    new ScalaBatchTableEnv(executionEnvironment, tableConfig)
   }
 
   /**
@@ -957,7 +959,7 @@ object TableEnvironment {
     */
   def getTableEnvironment(executionEnvironment: JavaStreamExecEnv)
   : StreamTableEnvironment = {
-    new StreamTableEnvironment(executionEnvironment, new TableConfig())
+    new JavaStreamTableEnv(executionEnvironment, new TableConfig())
   }
 
   /**
@@ -970,7 +972,7 @@ object TableEnvironment {
   def getTableEnvironment(
       executionEnvironment: JavaStreamExecEnv,
       tableConfig: TableConfig): StreamTableEnvironment = {
-    new StreamTableEnvironment(executionEnvironment, tableConfig)
+    new JavaStreamTableEnv(executionEnvironment, tableConfig)
   }
 
   /**
@@ -980,7 +982,7 @@ object TableEnvironment {
     */
   def getTableEnvironment(executionEnvironment: ScalaStreamExecEnv)
   : StreamTableEnvironment = {
-    new StreamTableEnvironment(executionEnvironment, new TableConfig())
+    new ScalaStreamTableEnv(executionEnvironment, new TableConfig())
   }
 
   /**
@@ -992,7 +994,7 @@ object TableEnvironment {
   def getTableEnvironment(
       executionEnvironment: ScalaStreamExecEnv,
       tableConfig: TableConfig): StreamTableEnvironment = {
-    new StreamTableEnvironment(executionEnvironment, tableConfig)
+    new ScalaStreamTableEnv(executionEnvironment, tableConfig)
   }
 
   /**
