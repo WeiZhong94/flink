@@ -19,8 +19,8 @@ package org.apache.flink.table.expressions
 
 import org.apache.calcite.rex.RexNode
 import org.apache.calcite.tools.RelBuilder
-
 import org.apache.flink.api.common.typeinfo.TypeInformation
+import org.apache.flink.table.api.base.visitor.ExpressionVisitor
 import org.apache.flink.table.plan.TreeNode
 import org.apache.flink.table.validate.{ValidationResult, ValidationSuccess}
 
@@ -70,6 +70,8 @@ abstract class Expression extends TreeNode[Expression] {
       checkEquality(elements1, elements2)
     }
   }
+
+  private [flink] def accept[T](visitor: ExpressionVisitor[T]): T
 }
 
 abstract class BinaryExpression extends Expression {

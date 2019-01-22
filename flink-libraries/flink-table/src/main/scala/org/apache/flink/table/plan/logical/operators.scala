@@ -29,6 +29,7 @@ import org.apache.calcite.tools.RelBuilder
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo._
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.operators.join.JoinType
+import org.apache.flink.table.api.planner.visitor.AggregationCallVisitorImpl
 import org.apache.flink.table.api.{StreamTableEnvironment, TableEnvironment, Types, UnresolvedException}
 import org.apache.flink.table.calcite.{FlinkRelBuilder, FlinkTypeFactory}
 import org.apache.flink.table.expressions.ExpressionUtils.isRowCountLiteral
@@ -221,7 +222,7 @@ case class Aggregate(
     relBuilder.aggregate(
       relBuilder.groupKey(groupingExpressions.map(_.toRexNode(relBuilder)).asJava),
       aggregateExpressions.map {
-        case Alias(agg: Aggregation, name, _) => agg.toAggCall(name)(relBuilder)
+        case Alias(agg: Aggregation, name, _) => agg.accept(new AggregationCallVisitorImpl(relBuilder))
         case _ => throw new RuntimeException("This should never happen.")
       }.asJava)
   }
@@ -615,7 +616,7 @@ case class WindowAggregate(
         case _ => throw new RuntimeException("This should never happen.")
       },
       aggregateExpressions.map {
-        case Alias(agg: Aggregation, name, _) => agg.toAggCall(name)(relBuilder)
+        case Alias(agg: Aggregation, name, _) => agg.accept(new AggregationCallVisitorImpl(relBuilder))
         case _ => throw new RuntimeException("This should never happen.")
       }.asJava)
   }

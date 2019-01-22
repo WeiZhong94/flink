@@ -28,6 +28,7 @@ import org.apache.flink.table.functions.utils.AggSqlFunction
 import org.apache.flink.table.typeutils.TypeCheckUtils
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo
 import org.apache.flink.api.java.typeutils.MultisetTypeInfo
+import org.apache.flink.table.api.base.visitor.{AggregationVisitor, ExpressionVisitor}
 import org.apache.flink.table.calcite.FlinkTypeFactory
 import org.apache.flink.table.functions.utils.UserDefinedFunctionUtils._
 import org.apache.flink.table.validate.{ValidationFailure, ValidationResult, ValidationSuccess}
@@ -36,22 +37,10 @@ abstract sealed class Aggregation extends Expression {
 
   override def toString = s"Aggregate"
 
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode =
+  def accept[T](visitor: AggregationVisitor[T]): T
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]) =
     throw new UnsupportedOperationException("Aggregate cannot be transformed to RexNode")
-
-  /**
-    * Convert Aggregate to its counterpart in Calcite, i.e. AggCall
-    */
-  private[flink] def toAggCall(
-      name: String,
-      isDistinct: Boolean = false
-  )(implicit relBuilder: RelBuilder): AggCall
-
-  /**
-    * Returns the SqlAggFunction for this Aggregation.
-    */
-  private[flink] def getSqlAggFunction()(implicit relBuilder: RelBuilder): SqlAggFunction
-
 }
 
 case class DistinctAgg(child: Expression) extends Aggregation {
@@ -70,15 +59,6 @@ case class DistinctAgg(child: Expression) extends Aggregation {
           s"It can only be applied to an aggregation expression, for example, " +
           s"'a.count.distinct which is equivalent with COUNT(DISTINCT a).")
     }
-  }
-
-  override private[flink] def toAggCall(
-      name: String, isDistinct: Boolean = true)(implicit relBuilder: RelBuilder) = {
-    child.asInstanceOf[Aggregation].toAggCall(name, isDistinct = true)
-  }
-
-  override private[flink] def getSqlAggFunction()(implicit relBuilder: RelBuilder) = {
-    child.asInstanceOf[Aggregation].getSqlAggFunction()
   }
 
   override private[flink] def children = Seq(child)
@@ -190,21 +170,10 @@ case class Count(child: Expression) extends Aggregation {
   override private[flink] def children: Seq[Expression] = Seq(child)
   override def toString = s"count($child)"
 
-  override private[flink] def toAggCall(
-      name: String, isDistinct: Boolean = false)(implicit relBuilder: RelBuilder): AggCall = {
-    relBuilder.aggregateCall(
-      SqlStdOperatorTable.COUNT,
-      isDistinct,
-      false,
-      null,
-      name,
-      child.toRexNode)
-  }
-
   override private[flink] def resultType = BasicTypeInfo.LONG_TYPE_INFO
 
-  override private[flink] def getSqlAggFunction()(implicit relBuilder: RelBuilder) = {
-    SqlStdOperatorTable.COUNT
+  override def accept[T](visitor: AggregationVisitor[T]): T = {
+    visitor.visit(this)
   }
 }
 

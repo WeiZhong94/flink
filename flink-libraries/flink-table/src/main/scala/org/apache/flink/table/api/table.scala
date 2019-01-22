@@ -797,7 +797,8 @@ private[flink] class TableImpl(
     * Similar to a SQL OFFSET clause. Offset is technically part of the Order By operator and
     * thus must be preceded by it.
     *
-    * [[Table.offset(o)]] can be combined with a subsequent [[Table.fetch(n)]] call to return n rows
+    * Table.offset(o) can be combined with a subsequent Table.fetch(n) call to return n
+    * rows
     * after skipping the first o rows.
     *
     * {{{
@@ -818,7 +819,7 @@ private[flink] class TableImpl(
     * Similar to a SQL FETCH clause. Fetch is technically part of the Order By operator and
     * thus must be preceded by it.
     *
-    * [[Table.fetch(n)]] can be combined with a preceding [[Table.offset(o)]] call to return n rows
+    * Table.fetch(n) can be combined with a preceding Table.offset(o) call to return n rows
     * after skipping the first o rows.
     *
     * {{{
