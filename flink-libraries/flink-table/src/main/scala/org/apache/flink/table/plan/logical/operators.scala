@@ -29,7 +29,8 @@ import org.apache.calcite.tools.RelBuilder
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo._
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.operators.join.JoinType
-import org.apache.flink.table.api.planner.visitor.AggregationCallVisitorImpl
+import org.apache.flink.table.api.base.visitor.ExpressionVisitor
+import org.apache.flink.table.api.planner.visitor.{AggregationCallVisitorImpl, AggregationSqlFunVisitorImpl}
 import org.apache.flink.table.api.{StreamTableEnvironment, TableEnvironment, Types, UnresolvedException}
 import org.apache.flink.table.calcite.{FlinkRelBuilder, FlinkTypeFactory}
 import org.apache.flink.table.expressions.ExpressionUtils.isRowCountLiteral
@@ -222,7 +223,8 @@ case class Aggregate(
     relBuilder.aggregate(
       relBuilder.groupKey(groupingExpressions.map(_.toRexNode(relBuilder)).asJava),
       aggregateExpressions.map {
-        case Alias(agg: Aggregation, name, _) => agg.accept(new AggregationCallVisitorImpl(relBuilder))
+        case Alias(agg: Aggregation, name, _) =>
+          AggregationCallVisitorImpl.toAggCall(agg, name, false, relBuilder)
         case _ => throw new RuntimeException("This should never happen.")
       }.asJava)
   }
@@ -246,7 +248,7 @@ case class Aggregate(
         }
       // check aggregate function
       case aggExpr: Aggregation
-        if aggExpr.getSqlAggFunction.requiresOver =>
+        if AggregationSqlFunVisitorImpl.getSqlAggFunction(aggExpr, relBuilder).requiresOver =>
         failValidation(s"OVER clause is necessary for window functions: [${aggExpr.getClass}].")
       // check no nested aggregation exists.
       case aggExpr: Aggregation =>
@@ -414,6 +416,10 @@ case class Join(
       } else {
         JoinFieldReference(newName, resultType, left, right)
       }
+    }
+
+    override private[flink] def accept[T](visitor: ExpressionVisitor[T]) = {
+      visitor.visit(this)
     }
   }
 
@@ -632,7 +638,7 @@ case class WindowAggregate(
     def validateAggregateExpression(expr: Expression): Unit = expr match {
       // check aggregate function
       case aggExpr: Aggregation
-        if aggExpr.getSqlAggFunction.requiresOver =>
+        if AggregationSqlFunVisitorImpl.getSqlAggFunction(aggExpr, relBuilder).requiresOver =>
         failValidation(s"OVER clause is necessary for window functions: [${aggExpr.getClass}].")
       case aggExpr: DistinctAgg =>
         validateAggregateExpression(aggExpr.child)

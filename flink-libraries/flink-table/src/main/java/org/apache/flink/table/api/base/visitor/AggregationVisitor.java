@@ -18,13 +18,49 @@
 
 package org.apache.flink.table.api.base.visitor;
 
+import org.apache.flink.table.expressions.AggFunctionCall;
+import org.apache.flink.table.expressions.Avg;
+import org.apache.flink.table.expressions.Collect;
 import org.apache.flink.table.expressions.Count;
+import org.apache.flink.table.expressions.DistinctAgg;
+import org.apache.flink.table.expressions.Max;
+import org.apache.flink.table.expressions.Min;
+import org.apache.flink.table.expressions.StddevPop;
+import org.apache.flink.table.expressions.StddevSamp;
+import org.apache.flink.table.expressions.Sum;
+import org.apache.flink.table.expressions.Sum0;
+import org.apache.flink.table.expressions.VarPop;
+import org.apache.flink.table.expressions.VarSamp;
 
 /**
  * The aggregation  visitor, define a visit method for each aggregation.
  *
  */
 public interface AggregationVisitor<T> {
+   T visit(DistinctAgg distinctAgg);
+
+   T visit(Sum sum);
+
+   T visit(Sum0 sum);
+
+   T visit(Min min);
+
+   T visit(Max max);
+
    T visit(Count count);
+
+   T visit(Avg avg);
+
+   T visit(Collect collect);
+
+   T visit(StddevPop stddevPop);
+
+   T visit(StddevSamp stddevSamp);
+
+   T visit(VarPop varPop);
+
+   T visit(VarSamp varSamp);
+
+   T visit(AggFunctionCall aggFunctionCall);
     // TODO add visit method for each aggregation.
 }

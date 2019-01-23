@@ -17,19 +17,12 @@
  */
 package org.apache.flink.table.expressions
 
-import org.apache.calcite.rex.RexNode
-import org.apache.calcite.sql.SqlAggFunction
-import org.apache.calcite.sql.fun._
-import org.apache.calcite.tools.RelBuilder
-import org.apache.calcite.tools.RelBuilder.AggCall
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.table.functions.AggregateFunction
-import org.apache.flink.table.functions.utils.AggSqlFunction
 import org.apache.flink.table.typeutils.TypeCheckUtils
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo
 import org.apache.flink.api.java.typeutils.MultisetTypeInfo
 import org.apache.flink.table.api.base.visitor.{AggregationVisitor, ExpressionVisitor}
-import org.apache.flink.table.calcite.FlinkTypeFactory
 import org.apache.flink.table.functions.utils.UserDefinedFunctionUtils._
 import org.apache.flink.table.validate.{ValidationFailure, ValidationResult, ValidationSuccess}
 
@@ -62,108 +55,56 @@ case class DistinctAgg(child: Expression) extends Aggregation {
   }
 
   override private[flink] def children = Seq(child)
+
+  override def accept[T](visitor: AggregationVisitor[T]): T = visitor.visit(this)
 }
 
 case class Sum(child: Expression) extends Aggregation {
   override private[flink] def children: Seq[Expression] = Seq(child)
   override def toString = s"sum($child)"
 
-  override private[flink] def toAggCall(
-      name: String, isDistinct: Boolean = false)(implicit relBuilder: RelBuilder): AggCall = {
-    relBuilder.aggregateCall(
-      SqlStdOperatorTable.SUM,
-      isDistinct,
-      false,
-      null,
-      name,
-      child.toRexNode)
-  }
-
   override private[flink] def resultType = child.resultType
 
   override private[flink] def validateInput() =
     TypeCheckUtils.assertNumericExpr(child.resultType, "sum")
 
-  override private[flink] def getSqlAggFunction()(implicit relBuilder: RelBuilder) = {
-    val returnType = relBuilder
-      .getTypeFactory.asInstanceOf[FlinkTypeFactory]
-      .createTypeFromTypeInfo(resultType, isNullable = true)
-    new SqlSumAggFunction(returnType)
-  }
+  override def accept[T](visitor: AggregationVisitor[T]): T = visitor.visit(this)
 }
 
 case class Sum0(child: Expression) extends Aggregation {
   override private[flink] def children: Seq[Expression] = Seq(child)
   override def toString = s"sum0($child)"
 
-  override private[flink] def toAggCall(
-      name: String, isDistinct: Boolean = false)(implicit relBuilder: RelBuilder): AggCall = {
-    relBuilder.aggregateCall(
-      SqlStdOperatorTable.SUM0,
-      isDistinct,
-      false,
-      null,
-      name,
-      child.toRexNode)
-  }
-
   override private[flink] def resultType = child.resultType
 
   override private[flink] def validateInput() =
     TypeCheckUtils.assertNumericExpr(child.resultType, "sum0")
 
-  override private[flink] def getSqlAggFunction()(implicit relBuilder: RelBuilder) =
-    SqlStdOperatorTable.SUM0
+  override def accept[T](visitor: AggregationVisitor[T]): T = visitor.visit(this)
 }
 
 case class Min(child: Expression) extends Aggregation {
   override private[flink] def children: Seq[Expression] = Seq(child)
   override def toString = s"min($child)"
 
-  override private[flink] def toAggCall(
-      name: String, isDistinct: Boolean = false)(implicit relBuilder: RelBuilder): AggCall = {
-    relBuilder.aggregateCall(
-      SqlStdOperatorTable.MIN,
-      isDistinct,
-      false,
-      null,
-      name,
-      child.toRexNode)
-  }
-
   override private[flink] def resultType = child.resultType
 
   override private[flink] def validateInput() =
     TypeCheckUtils.assertOrderableExpr(child.resultType, "min")
 
-  override private[flink] def getSqlAggFunction()(implicit relBuilder: RelBuilder) = {
-    SqlStdOperatorTable.MIN
-  }
+  override def accept[T](visitor: AggregationVisitor[T]): T = visitor.visit(this)
 }
 
 case class Max(child: Expression) extends Aggregation {
   override private[flink] def children: Seq[Expression] = Seq(child)
   override def toString = s"max($child)"
 
-  override private[flink] def toAggCall(
-      name: String, isDistinct: Boolean = false)(implicit relBuilder: RelBuilder): AggCall = {
-    relBuilder.aggregateCall(
-      SqlStdOperatorTable.MAX,
-      isDistinct,
-      false,
-      null,
-      name,
-      child.toRexNode)
-  }
-
   override private[flink] def resultType = child.resultType
 
   override private[flink] def validateInput() =
     TypeCheckUtils.assertOrderableExpr(child.resultType, "max")
 
-  override private[flink] def getSqlAggFunction()(implicit relBuilder: RelBuilder) = {
-    SqlStdOperatorTable.MAX
-  }
+  override def accept[T](visitor: AggregationVisitor[T]): T = visitor.visit(this)
 }
 
 case class Count(child: Expression) extends Aggregation {
@@ -181,25 +122,12 @@ case class Avg(child: Expression) extends Aggregation {
   override private[flink] def children: Seq[Expression] = Seq(child)
   override def toString = s"avg($child)"
 
-  override private[flink] def toAggCall(
-      name: String, isDistinct: Boolean = false)(implicit relBuilder: RelBuilder): AggCall = {
-    relBuilder.aggregateCall(
-      SqlStdOperatorTable.AVG,
-      isDistinct,
-      false,
-      null,
-      name,
-      child.toRexNode)
-  }
-
   override private[flink] def resultType = child.resultType
 
   override private[flink] def validateInput() =
     TypeCheckUtils.assertNumericExpr(child.resultType, "avg")
 
-  override private[flink] def getSqlAggFunction()(implicit relBuilder: RelBuilder) = {
-    SqlStdOperatorTable.AVG
-  }
+  override def accept[T](visitor: AggregationVisitor[T]): T = visitor.visit(this)
 }
 
 /**
@@ -214,116 +142,56 @@ case class Collect(child: Expression) extends Aggregation  {
 
   override def toString: String = s"collect($child)"
 
-  override private[flink] def toAggCall(
-      name: String, isDistinct: Boolean = false)(implicit relBuilder: RelBuilder): AggCall = {
-    relBuilder.aggregateCall(
-      SqlStdOperatorTable.COLLECT,
-      isDistinct,
-      false,
-      null,
-      name,
-      child.toRexNode)
-  }
-
-  override private[flink] def getSqlAggFunction()(implicit relBuilder: RelBuilder) = {
-    SqlStdOperatorTable.COLLECT
-  }
+  override def accept[T](visitor: AggregationVisitor[T]): T = visitor.visit(this)
 }
 
 case class StddevPop(child: Expression) extends Aggregation {
   override private[flink] def children: Seq[Expression] = Seq(child)
   override def toString = s"stddev_pop($child)"
 
-  override private[flink] def toAggCall(
-      name: String, isDistinct: Boolean = false)(implicit relBuilder: RelBuilder): AggCall = {
-    relBuilder.aggregateCall(
-      SqlStdOperatorTable.STDDEV_POP,
-      isDistinct,
-      false,
-      null,
-      name,
-      child.toRexNode)
-  }
-
   override private[flink] def resultType = child.resultType
 
   override private[flink] def validateInput() =
     TypeCheckUtils.assertNumericExpr(child.resultType, "stddev_pop")
 
-  override private[flink] def getSqlAggFunction()(implicit relBuilder: RelBuilder) =
-    SqlStdOperatorTable.STDDEV_POP
+  override def accept[T](visitor: AggregationVisitor[T]): T = visitor.visit(this)
 }
 
 case class StddevSamp(child: Expression) extends Aggregation {
   override private[flink] def children: Seq[Expression] = Seq(child)
   override def toString = s"stddev_samp($child)"
 
-  override private[flink] def toAggCall(
-      name: String, isDistinct: Boolean = false)(implicit relBuilder: RelBuilder): AggCall = {
-    relBuilder.aggregateCall(
-      SqlStdOperatorTable.STDDEV_SAMP,
-      isDistinct,
-      false,
-      null,
-      name,
-      child.toRexNode)
-  }
-
   override private[flink] def resultType = child.resultType
 
   override private[flink] def validateInput() =
     TypeCheckUtils.assertNumericExpr(child.resultType, "stddev_samp")
 
-  override private[flink] def getSqlAggFunction()(implicit relBuilder: RelBuilder) =
-    SqlStdOperatorTable.STDDEV_SAMP
+
+  override def accept[T](visitor: AggregationVisitor[T]): T = visitor.visit(this)
 }
 
 case class VarPop(child: Expression) extends Aggregation {
   override private[flink] def children: Seq[Expression] = Seq(child)
   override def toString = s"var_pop($child)"
 
-  override private[flink] def toAggCall(
-      name: String, isDistinct: Boolean = false)(implicit relBuilder: RelBuilder): AggCall = {
-    relBuilder.aggregateCall(
-      SqlStdOperatorTable.VAR_POP,
-      isDistinct,
-      false,
-      null,
-      name,
-      child.toRexNode)
-  }
-
   override private[flink] def resultType = child.resultType
 
   override private[flink] def validateInput() =
     TypeCheckUtils.assertNumericExpr(child.resultType, "var_pop")
 
-  override private[flink] def getSqlAggFunction()(implicit relBuilder: RelBuilder) =
-    SqlStdOperatorTable.VAR_POP
+  override def accept[T](visitor: AggregationVisitor[T]): T = visitor.visit(this)
 }
 
 case class VarSamp(child: Expression) extends Aggregation {
   override private[flink] def children: Seq[Expression] = Seq(child)
   override def toString = s"var_samp($child)"
 
-  override private[flink] def toAggCall(
-      name: String, isDistinct: Boolean = false)(implicit relBuilder: RelBuilder): AggCall = {
-    relBuilder.aggregateCall(
-      SqlStdOperatorTable.VAR_SAMP,
-      isDistinct,
-      false,
-      null,
-      name,
-      child.toRexNode)
-  }
-
   override private[flink] def resultType = child.resultType
 
   override private[flink] def validateInput() =
     TypeCheckUtils.assertNumericExpr(child.resultType, "var_samp")
 
-  override private[flink] def getSqlAggFunction()(implicit relBuilder: RelBuilder) =
-    SqlStdOperatorTable.VAR_SAMP
+  override def accept[T](visitor: AggregationVisitor[T]): T = visitor.visit(this)
 }
 
 case class AggFunctionCall(
@@ -356,30 +224,5 @@ case class AggFunctionCall(
 
   override def toString: String = s"${aggregateFunction.getClass.getSimpleName}($args)"
 
-  override def toAggCall(
-      name: String, isDistinct: Boolean = false)(implicit relBuilder: RelBuilder): AggCall = {
-    relBuilder.aggregateCall(
-      this.getSqlAggFunction(),
-      isDistinct,
-      false,
-      null,
-      name,
-      args.map(_.toRexNode): _*)
-  }
-
-  override private[flink] def getSqlAggFunction()(implicit relBuilder: RelBuilder) = {
-    val typeFactory = relBuilder.getTypeFactory.asInstanceOf[FlinkTypeFactory]
-    AggSqlFunction(
-      aggregateFunction.functionIdentifier,
-      aggregateFunction.toString,
-      aggregateFunction,
-      resultType,
-      accTypeInfo,
-      typeFactory,
-      aggregateFunction.requiresOver)
-  }
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(this.getSqlAggFunction(), args.map(_.toRexNode): _*)
-  }
+  override def accept[T](visitor: AggregationVisitor[T]): T = visitor.visit(this)
 }

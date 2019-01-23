@@ -28,6 +28,7 @@ import org.apache.calcite.sql.parser.SqlParserPos
 import org.apache.calcite.tools.RelBuilder
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.table.api._
+import org.apache.flink.table.api.planner.visitor.AggregationSqlFunVisitorImpl
 import org.apache.flink.table.calcite.FlinkTypeFactory
 import org.apache.flink.table.functions.utils.UserDefinedFunctionUtils._
 import org.apache.flink.table.functions._
@@ -101,7 +102,8 @@ case class OverCall(
     val rexBuilder = relBuilder.getRexBuilder
 
     // assemble aggregation
-    val operator: SqlAggFunction = agg.asInstanceOf[Aggregation].getSqlAggFunction()
+    val operator: SqlAggFunction =
+      AggregationSqlFunVisitorImpl.getSqlAggFunction(agg.asInstanceOf[Aggregation], relBuilder)
     val aggResultType = relBuilder
       .getTypeFactory.asInstanceOf[FlinkTypeFactory]
       .createTypeFromTypeInfo(agg.resultType, isNullable = true)
