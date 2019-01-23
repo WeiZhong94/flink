@@ -22,6 +22,7 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable
 import org.apache.calcite.tools.RelBuilder
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo._
 import org.apache.flink.api.common.typeinfo.{BasicTypeInfo, TypeInformation}
+import org.apache.flink.table.api.base.visitor.ExpressionVisitor
 import org.apache.flink.table.expressions.TrimMode.TrimMode
 import org.apache.flink.table.functions.sql.ScalarSqlFunctions
 import org.apache.flink.table.validate._
@@ -48,6 +49,9 @@ case class CharLength(child: Expression) extends UnaryExpression {
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     relBuilder.call(SqlStdOperatorTable.CHAR_LENGTH, child.toRexNode)
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 /**
@@ -71,6 +75,9 @@ case class InitCap(child: Expression) extends UnaryExpression {
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     relBuilder.call(SqlStdOperatorTable.INITCAP, child.toRexNode)
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 /**
@@ -96,6 +103,9 @@ case class Like(str: Expression, pattern: Expression) extends BinaryExpression {
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     relBuilder.call(SqlStdOperatorTable.LIKE, children.map(_.toRexNode))
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 /**
@@ -118,6 +128,9 @@ case class Lower(child: Expression) extends UnaryExpression {
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     relBuilder.call(SqlStdOperatorTable.LOWER, child.toRexNode)
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 /**
@@ -143,6 +156,9 @@ case class Similar(str: Expression, pattern: Expression) extends BinaryExpressio
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     relBuilder.call(SqlStdOperatorTable.SIMILAR_TO, children.map(_.toRexNode))
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 /**
@@ -167,6 +183,9 @@ case class Substring(
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     relBuilder.call(SqlStdOperatorTable.SUBSTRING, children.map(_.toRexNode))
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 /**
@@ -200,6 +219,9 @@ case class Trim(
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     relBuilder.call(SqlStdOperatorTable.TRIM, children.map(_.toRexNode))
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 /**
@@ -224,6 +246,9 @@ case class Upper(child: Expression) extends UnaryExpression with InputTypeSpec {
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     relBuilder.call(SqlStdOperatorTable.UPPER, child.toRexNode)
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 /**
@@ -244,6 +269,9 @@ case class Position(needle: Expression, haystack: Expression)
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     relBuilder.call(SqlStdOperatorTable.POSITION, needle.toRexNode, haystack.toRexNode)
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 /**
@@ -278,6 +306,9 @@ case class Overlay(
       starting.toRexNode,
       position.toRexNode)
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 /**
@@ -298,6 +329,9 @@ case class Concat(strings: Seq[Expression]) extends Expression with InputTypeSpe
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     relBuilder.call(ScalarSqlFunctions.CONCAT, children.map(_.toRexNode))
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 /**
@@ -322,6 +356,9 @@ case class ConcatWs(separator: Expression, strings: Seq[Expression])
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     relBuilder.call(ScalarSqlFunctions.CONCAT_WS, children.map(_.toRexNode))
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 case class Lpad(text: Expression, len: Expression, pad: Expression)
@@ -339,6 +376,9 @@ case class Lpad(text: Expression, len: Expression, pad: Expression)
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     relBuilder.call(ScalarSqlFunctions.LPAD, children.map(_.toRexNode))
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 case class Rpad(text: Expression, len: Expression, pad: Expression)
@@ -356,6 +396,9 @@ case class Rpad(text: Expression, len: Expression, pad: Expression)
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     relBuilder.call(ScalarSqlFunctions.RPAD, children.map(_.toRexNode))
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 /**
@@ -380,6 +423,9 @@ case class RegexpReplace(str: Expression, regex: Expression, replacement: Expres
   }
 
   override def toString: String = s"($str).regexp_replace($regex, $replacement)"
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 /**
@@ -415,6 +461,9 @@ case class RegexpExtract(str: Expression, regex: Expression, extractIndex: Expre
   }
 
   override def toString: String = s"($str).regexp_extract($regex, $extractIndex)"
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 object RegexpExtract {
@@ -446,6 +495,8 @@ case class FromBase64(child: Expression) extends UnaryExpression with InputTypeS
 
   override def toString: String = s"($child).fromBase64"
 
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 /**
@@ -472,6 +523,8 @@ case class ToBase64(child: Expression) extends UnaryExpression with InputTypeSpe
 
   override def toString: String = s"($child).toBase64"
 
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 /**
@@ -496,6 +549,9 @@ case class LTrim(child: Expression) extends UnaryExpression with InputTypeSpec {
   }
 
   override def toString = s"($child).ltrim"
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 /**
@@ -521,6 +577,9 @@ case class RTrim(child: Expression) extends UnaryExpression with InputTypeSpec {
   }
 
   override def toString = s"($child).rtrim"
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 /**
@@ -549,6 +608,9 @@ case class Repeat(str: Expression, n: Expression) extends Expression with InputT
   }
 
   override def toString: String = s"($str).repeat($n)"
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 /**
@@ -573,4 +635,7 @@ case class Replace(str: Expression,
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     relBuilder.call(SqlStdOperatorTable.REPLACE, children.map(_.toRexNode))
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }

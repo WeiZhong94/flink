@@ -24,6 +24,7 @@ import org.apache.calcite.tools.RelBuilder
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo.INT_TYPE_INFO
 import org.apache.flink.api.common.typeinfo.{BasicArrayTypeInfo, BasicTypeInfo, PrimitiveArrayTypeInfo, TypeInformation}
 import org.apache.flink.api.java.typeutils.{GenericTypeInfo, MapTypeInfo, ObjectArrayTypeInfo, RowTypeInfo}
+import org.apache.flink.table.api.base.visitor.ExpressionVisitor
 import org.apache.flink.table.calcite.FlinkRelBuilder
 import org.apache.flink.table.typeutils.TypeCheckUtils.{isArray, isMap}
 import org.apache.flink.table.validate.{ValidationFailure, ValidationResult, ValidationSuccess}
@@ -57,6 +58,9 @@ case class RowConstructor(elements: Seq[Expression]) extends Expression {
     }
     ValidationSuccess
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 case class ArrayConstructor(elements: Seq[Expression]) extends Expression {
@@ -89,6 +93,9 @@ case class ArrayConstructor(elements: Seq[Expression]) extends Expression {
       ValidationSuccess
     }
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 case class MapConstructor(elements: Seq[Expression]) extends Expression {
@@ -130,6 +137,9 @@ case class MapConstructor(elements: Seq[Expression]) extends Expression {
     }
     ValidationSuccess
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 case class ArrayElement(array: Expression) extends Expression {
@@ -156,6 +166,9 @@ case class ArrayElement(array: Expression) extends Expression {
       case other@_ => ValidationFailure(s"Array expected but was '$other'.")
     }
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 case class Cardinality(container: Expression) extends Expression {
@@ -179,6 +192,9 @@ case class Cardinality(container: Expression) extends Expression {
       case other@_ => ValidationFailure(s"Array or map expected but was '$other'.")
     }
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 case class ItemAt(container: Expression, key: Expression) extends Expression {
@@ -229,4 +245,7 @@ case class ItemAt(container: Expression, key: Expression) extends Expression {
       case other@_ => ValidationFailure(s"Array or map expected but was '$other'.")
     }
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }

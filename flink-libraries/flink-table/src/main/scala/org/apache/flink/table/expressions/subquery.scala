@@ -24,6 +24,7 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable
 import org.apache.calcite.tools.RelBuilder
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo._
 import org.apache.flink.api.common.typeinfo.TypeInformation
+import org.apache.flink.table.api.base.visitor.ExpressionVisitor
 import org.apache.flink.table.api.{InnerTable, StreamTableEnvironment, Table}
 import org.apache.flink.table.typeutils.TypeCheckUtils._
 import org.apache.flink.table.validate.{ValidationFailure, ValidationResult, ValidationSuccess}
@@ -88,5 +89,8 @@ case class In(expression: Expression, elements: Seq[Expression]) extends Express
   }
 
   override private[flink] def resultType: TypeInformation[_] = BOOLEAN_TYPE_INFO
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 

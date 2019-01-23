@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *	 http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,21 +18,22 @@
 
 package org.apache.flink.table.api.planner.converters.rex;
 
-import org.apache.calcite.rex.RexNode;
 import org.apache.flink.table.api.planner.visitor.ExpressionVisitorImpl;
 import org.apache.flink.table.calcite.FlinkTypeFactory;
 import org.apache.flink.table.expressions.Cast;
 
+import org.apache.calcite.rex.RexNode;
+
 /**
- * CastRexConverter
+ * CastRexConverter.
  */
 public class CastRexConverter {
-    public static RexNode toRexNode(Cast expr, ExpressionVisitorImpl visitor) {
-        RexNode childRexNode =  expr.child().accept(visitor);
-        FlinkTypeFactory typeFactory = (FlinkTypeFactory)visitor.relBuilder.getTypeFactory();
-        return visitor.relBuilder.getRexBuilder().makeAbstractCast(
-                typeFactory.createTypeFromTypeInfo(
-                        expr.resultType(),
-                        childRexNode.getType().isNullable()), childRexNode);
-    }
+	public static RexNode toRexNode(Cast expr, ExpressionVisitorImpl visitor) {
+		RexNode childRexNode =  expr.child().accept(visitor);
+		FlinkTypeFactory typeFactory = (FlinkTypeFactory) visitor.relBuilder.getTypeFactory();
+		return visitor.relBuilder.getRexBuilder().makeAbstractCast(
+				typeFactory.createTypeFromTypeInfo(
+						expr.resultType(),
+						childRexNode.getType().isNullable()), childRexNode);
+	}
 }

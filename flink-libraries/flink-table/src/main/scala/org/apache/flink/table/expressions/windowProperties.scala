@@ -23,6 +23,7 @@ import org.apache.calcite.tools.RelBuilder
 import org.apache.flink.api.common.typeinfo.{SqlTimeTypeInfo, TypeInformation}
 import org.apache.flink.table.calcite.FlinkRelBuilder
 import FlinkRelBuilder.NamedWindowProperty
+import org.apache.flink.table.api.base.visitor.ExpressionVisitor
 import org.apache.flink.table.validate.{ValidationFailure, ValidationSuccess}
 
 trait WindowProperty {
@@ -57,6 +58,9 @@ case class WindowStart(child: Expression) extends AbstractWindowProperty(child) 
   override def resultType = SqlTimeTypeInfo.TIMESTAMP
 
   override def toString: String = s"start($child)"
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    throwUnsupportedToRexNodeOperationException
 }
 
 case class WindowEnd(child: Expression) extends AbstractWindowProperty(child) {
@@ -64,4 +68,7 @@ case class WindowEnd(child: Expression) extends AbstractWindowProperty(child) {
   override def resultType = SqlTimeTypeInfo.TIMESTAMP
 
   override def toString: String = s"end($child)"
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    throwUnsupportedToRexNodeOperationException
 }

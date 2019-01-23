@@ -23,6 +23,7 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable
 import org.apache.calcite.tools.RelBuilder
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo._
 import org.apache.flink.api.common.typeinfo.{BasicTypeInfo, TypeInformation}
+import org.apache.flink.table.api.base.visitor.ExpressionVisitor
 import org.apache.flink.table.typeutils.TypeCheckUtils.{isArray, isComparable, isNumeric}
 import org.apache.flink.table.validate._
 
@@ -62,6 +63,9 @@ case class EqualTo(left: Expression, right: Expression) extends BinaryComparison
       case (lType, rType) =>
         ValidationFailure(s"Equality predicate on incompatible types: $lType and $rType")
     }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 case class NotEqualTo(left: Expression, right: Expression) extends BinaryComparison {
@@ -78,30 +82,45 @@ case class NotEqualTo(left: Expression, right: Expression) extends BinaryCompari
       case (lType, rType) =>
         ValidationFailure(s"Inequality predicate on incompatible types: $lType and $rType")
     }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 case class GreaterThan(left: Expression, right: Expression) extends BinaryComparison {
   override def toString = s"$left > $right"
 
   private[flink] val sqlOperator: SqlOperator = SqlStdOperatorTable.GREATER_THAN
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 case class GreaterThanOrEqual(left: Expression, right: Expression) extends BinaryComparison {
   override def toString = s"$left >= $right"
 
   private[flink] val sqlOperator: SqlOperator = SqlStdOperatorTable.GREATER_THAN_OR_EQUAL
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 case class LessThan(left: Expression, right: Expression) extends BinaryComparison {
   override def toString = s"$left < $right"
 
   private[flink] val sqlOperator: SqlOperator = SqlStdOperatorTable.LESS_THAN
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 case class LessThanOrEqual(left: Expression, right: Expression) extends BinaryComparison {
   override def toString = s"$left <= $right"
 
   private[flink] val sqlOperator: SqlOperator = SqlStdOperatorTable.LESS_THAN_OR_EQUAL
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 case class IsNull(child: Expression) extends UnaryExpression {
@@ -112,6 +131,9 @@ case class IsNull(child: Expression) extends UnaryExpression {
   }
 
   override private[flink] def resultType = BOOLEAN_TYPE_INFO
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 case class IsNotNull(child: Expression) extends UnaryExpression {
@@ -122,6 +144,9 @@ case class IsNotNull(child: Expression) extends UnaryExpression {
   }
 
   override private[flink] def resultType = BOOLEAN_TYPE_INFO
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 case class IsTrue(child: Expression) extends UnaryExpression {
@@ -132,6 +157,9 @@ case class IsTrue(child: Expression) extends UnaryExpression {
   }
 
   override private[flink] def resultType = BOOLEAN_TYPE_INFO
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 case class IsFalse(child: Expression) extends UnaryExpression {
@@ -142,6 +170,9 @@ case class IsFalse(child: Expression) extends UnaryExpression {
   }
 
   override private[flink] def resultType = BOOLEAN_TYPE_INFO
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 case class IsNotTrue(child: Expression) extends UnaryExpression {
@@ -152,6 +183,9 @@ case class IsNotTrue(child: Expression) extends UnaryExpression {
   }
 
   override private[flink] def resultType = BOOLEAN_TYPE_INFO
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 case class IsNotFalse(child: Expression) extends UnaryExpression {
@@ -162,6 +196,9 @@ case class IsNotFalse(child: Expression) extends UnaryExpression {
   }
 
   override private[flink] def resultType = BOOLEAN_TYPE_INFO
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 abstract class BetweenComparison(
@@ -213,6 +250,9 @@ case class Between(
       )
     )
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 case class NotBetween(
@@ -237,4 +277,7 @@ case class NotBetween(
       )
     )
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }

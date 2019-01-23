@@ -28,6 +28,7 @@ import org.apache.calcite.sql.parser.SqlParserPos
 import org.apache.calcite.tools.RelBuilder
 import org.apache.calcite.util.{DateString, TimeString, TimestampString}
 import org.apache.flink.api.common.typeinfo.{BasicTypeInfo, SqlTimeTypeInfo, TypeInformation}
+import org.apache.flink.table.api.base.visitor.ExpressionVisitor
 import org.apache.flink.table.calcite.FlinkTypeFactory
 import org.apache.flink.table.typeutils.{RowIntervalTypeInfo, TimeIntervalTypeInfo}
 
@@ -120,6 +121,9 @@ case class Literal(value: Any, resultType: TypeInformation[_]) extends LeafExpre
     cal.setTime(date)
     cal
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 case class Null(resultType: TypeInformation[_]) extends LeafExpression {
@@ -133,4 +137,7 @@ case class Null(resultType: TypeInformation[_]) extends LeafExpression {
         typeFactory.createTypeFromTypeInfo(resultType, isNullable = true),
         rexBuilder.constantNull())
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }

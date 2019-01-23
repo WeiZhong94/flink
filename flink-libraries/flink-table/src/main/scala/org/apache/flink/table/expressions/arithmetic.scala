@@ -22,6 +22,7 @@ import org.apache.calcite.sql.SqlOperator
 import org.apache.calcite.sql.fun.SqlStdOperatorTable
 import org.apache.calcite.tools.RelBuilder
 import org.apache.flink.api.common.typeinfo.{BasicTypeInfo, TypeInformation}
+import org.apache.flink.table.api.base.visitor.ExpressionVisitor
 import org.apache.flink.table.typeutils.TypeCheckUtils._
 import org.apache.flink.table.typeutils.TypeCoercion
 import org.apache.flink.table.validate._
@@ -97,6 +98,8 @@ case class Plus(left: Expression, right: Expression) extends BinaryArithmetic {
         s"but was '$left' : '${left.resultType}' and '$right' : '${right.resultType}'.")
     }
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T = visitor.visit(this)
 }
 
 case class UnaryMinus(child: Expression) extends UnaryExpression {
@@ -118,6 +121,8 @@ case class UnaryMinus(child: Expression) extends UnaryExpression {
         s"interval type, but was '${child.resultType}'.")
     }
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T = visitor.visit(this)
 }
 
 case class Minus(left: Expression, right: Expression) extends BinaryArithmetic {
@@ -141,22 +146,30 @@ case class Minus(left: Expression, right: Expression) extends BinaryArithmetic {
         s"but was '$left' : '${left.resultType}' and '$right' : '${right.resultType}'.")
     }
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T = visitor.visit(this)
 }
 
 case class Div(left: Expression, right: Expression) extends BinaryArithmetic {
   override def toString = s"($left / $right)"
 
   private[flink] val sqlOperator = SqlStdOperatorTable.DIVIDE
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T = visitor.visit(this)
 }
 
 case class Mul(left: Expression, right: Expression) extends BinaryArithmetic {
   override def toString = s"($left * $right)"
 
   private[flink] val sqlOperator = SqlStdOperatorTable.MULTIPLY
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T = visitor.visit(this)
 }
 
 case class Mod(left: Expression, right: Expression) extends BinaryArithmetic {
   override def toString = s"($left % $right)"
 
   private[flink] val sqlOperator = SqlStdOperatorTable.MOD
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T = visitor.visit(this)
 }

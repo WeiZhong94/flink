@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *	 http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,69 +21,90 @@ package org.apache.flink.table.api;
 import org.apache.flink.table.expressions.Expression;
 import org.apache.flink.table.functions.TemporalTableFunction;
 import org.apache.flink.table.sinks.TableSink;
-import scala.deprecated;
 
 /**
- * Table
+ * Table.
  */
 public interface Table {
-    TableSchema getSchema();
-    void printSchema();
+	TableSchema getSchema();
 
-    Table select(Expression ... fields);
-    Table select(String fields);
+	void printSchema();
 
-    TemporalTableFunction createTemporalTableFunction(String timeAttribute , String primaryKey );
-    TemporalTableFunction createTemporalTableFunction(Expression timeAttribute, Expression primaryKey);
+	Table select(Expression ... fields);
 
-    Table as(Expression ... fields);
-    Table as(String fields);
+	Table select(String fields);
 
-    Table filter(Expression predicate);
-    Table filter(String predicate);
+	TemporalTableFunction createTemporalTableFunction(String timeAttribute , String primaryKey);
 
-    Table where(Expression predicate);
-    Table where(String predicate);
+	TemporalTableFunction createTemporalTableFunction(Expression timeAttribute, Expression primaryKey);
 
-    GroupedTable groupBy(Expression ... fields);
-    GroupedTable groupBy(String fields);
+	Table as(Expression ... fields);
 
-    Table distinct();
+	Table as(String fields);
 
-    Table join(Table right);
-    Table join(Table right, String joinPredicate);
-    Table join(Table right, Expression joinPredicate);
-    Table leftOuterJoin(Table right );
-    Table leftOuterJoin(Table right , String joinPredicate);
-    Table leftOuterJoin(Table right , Expression joinPredicate);
-    Table rightOuterJoin(Table right , String joinPredicate);
-    Table rightOuterJoin(Table right , Expression joinPredicate);
-    Table fullOuterJoin(Table right , String joinPredicate);
-    Table fullOuterJoin(Table right , Expression joinPredicate);
+	Table filter(Expression predicate);
 
-    Table minus(Table right );
-    Table minusAll(Table right );
+	Table filter(String predicate);
 
-    Table union(Table right );
-    Table unionAll(Table right );
+	Table where(Expression predicate);
 
-    Table intersect(Table right );
-    Table intersectAll(Table right );
+	Table where(String predicate);
 
-    Table orderBy(Expression ... fields);
-    Table orderBy(String fields);
+	GroupedTable groupBy(Expression ... fields);
 
-    Table offset(int offset);
+	GroupedTable groupBy(String fields);
 
-    Table fetch(int fetch);
+	Table distinct();
 
-    <T> void writeToSink(TableSink<T> sink);
-    <T> void writeToSink(TableSink<T> sink, QueryConfig conf);
+	Table join(Table right);
 
-    void insertInto(String tableName );
-    void insertInto(String tableName, QueryConfig conf);
+	Table join(Table right, String joinPredicate);
 
-    WindowedTable window(Window window);
+	Table join(Table right, Expression joinPredicate);
 
-    OverWindowedTable window(OverWindow ...overWindows);
+	Table leftOuterJoin(Table right);
+
+	Table leftOuterJoin(Table right, String joinPredicate);
+
+	Table leftOuterJoin(Table right, Expression joinPredicate);
+
+	Table rightOuterJoin(Table right, String joinPredicate);
+
+	Table rightOuterJoin(Table right, Expression joinPredicate);
+
+	Table fullOuterJoin(Table right, String joinPredicate);
+
+	Table fullOuterJoin(Table right, Expression joinPredicate);
+
+	Table minus(Table right);
+
+	Table minusAll(Table right);
+
+	Table union(Table right);
+
+	Table unionAll(Table right);
+
+	Table intersect(Table right);
+
+	Table intersectAll(Table right);
+
+	Table orderBy(Expression ... fields);
+
+	Table orderBy(String fields);
+
+	Table offset(int offset);
+
+	Table fetch(int fetch);
+
+	<T> void writeToSink(TableSink<T> sink);
+
+	<T> void writeToSink(TableSink<T> sink, QueryConfig conf);
+
+	void insertInto(String tableName);
+
+	void insertInto(String tableName, QueryConfig conf);
+
+	WindowedTable window(Window window);
+
+	OverWindowedTable window(OverWindow ...overWindows);
 }

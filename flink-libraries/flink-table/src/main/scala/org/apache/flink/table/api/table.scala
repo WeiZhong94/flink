@@ -687,7 +687,8 @@ private[flink] class TableImpl(
     if (innerRight.tableEnv != this.tableEnv) {
       throw new ValidationException("Only tables from the same TableEnvironment can be unioned.")
     }
-    new TableImpl(tableEnv, Union(logicalPlan, innerRight.logicalPlan, all = false).validate(tableEnv))
+    new TableImpl(
+      tableEnv, Union(logicalPlan, innerRight.logicalPlan, all = false).validate(tableEnv))
   }
 
   /**
@@ -708,7 +709,8 @@ private[flink] class TableImpl(
     if (innerRight.tableEnv != this.tableEnv) {
       throw new ValidationException("Only tables from the same TableEnvironment can be unioned.")
     }
-    new TableImpl(tableEnv, Union(logicalPlan, innerRight.logicalPlan, all = true).validate(tableEnv))
+    new TableImpl(
+      tableEnv, Union(logicalPlan, innerRight.logicalPlan, all = true).validate(tableEnv))
   }
 
   /**
@@ -732,7 +734,8 @@ private[flink] class TableImpl(
       throw new ValidationException(
         "Only tables from the same TableEnvironment can be intersected.")
     }
-    new TableImpl(tableEnv, Intersect(logicalPlan, innerRight.logicalPlan, all = false).validate(tableEnv))
+    new TableImpl(
+      tableEnv, Intersect(logicalPlan, innerRight.logicalPlan, all = false).validate(tableEnv))
   }
 
   /**
@@ -756,7 +759,8 @@ private[flink] class TableImpl(
       throw new ValidationException(
         "Only tables from the same TableEnvironment can be intersected.")
     }
-    new TableImpl(tableEnv, Intersect(logicalPlan, innerRight.logicalPlan, all = true).validate(tableEnv))
+    new TableImpl(
+      tableEnv, Intersect(logicalPlan, innerRight.logicalPlan, all = true).validate(tableEnv))
   }
 
   /**
@@ -895,13 +899,15 @@ private[flink] class TableImpl(
     // get schema information of table
     val rowType = getRelNode.getRowType
     val fieldNames: Array[String] = rowType.getFieldNames.asScala.toArray
-    val fieldTypes: Array[TypeInformation[_]] = rowType.getFieldList.asScala
-                                                .map(field => FlinkTypeFactory.toTypeInfo(field.getType))
-                                                .map {
-                                                  // replace time indicator types by SQL_TIMESTAMP
-                                                  case t: TypeInformation[_] if FlinkTypeFactory.isTimeIndicatorType(t) => Types.SQL_TIMESTAMP
-                                                  case t: TypeInformation[_] => t
-                                                }.toArray
+    val fieldTypes: Array[TypeInformation[_]] =
+      rowType.getFieldList.asScala
+        .map(field => FlinkTypeFactory.toTypeInfo(field.getType))
+        .map {
+          // replace time indicator types by SQL_TIMESTAMP
+          case t: TypeInformation[_] if FlinkTypeFactory.isTimeIndicatorType(t) =>
+            Types.SQL_TIMESTAMP
+          case t: TypeInformation[_] => t
+        }.toArray
 
     // configure the table sink
     val configuredSink = sink.configure(fieldNames, fieldTypes)
@@ -996,8 +1002,7 @@ private[flink] class TableImpl(
     *                    computed.
     * @return An OverWindowedTable to specify the aggregations.
     */
-  @varargs
-  def window(overWindows: OverWindow*): OverWindowedTable = {
+  override def window(overWindows: OverWindow*): OverWindowedTable = {
 
     if (tableEnv.isInstanceOf[BatchTableEnvironment]) {
       throw new TableException("Over-windows for batch tables are currently not supported.")
@@ -1070,7 +1075,8 @@ class GroupedTableImpl(
     new TableImpl(innerable.tableEnv,
                   Project(projectsOnAgg,
                           Aggregate(groupKey, aggNames.map(a => Alias(a._1, a._2)).toSeq,
-                                    Project(projectFields, innerable.logicalPlan).validate(innerable.tableEnv)
+                                    Project(projectFields, innerable.logicalPlan)
+                                      .validate(innerable.tableEnv)
                           ).validate(innerable.tableEnv)
                   ).validate(innerable.tableEnv))
   }

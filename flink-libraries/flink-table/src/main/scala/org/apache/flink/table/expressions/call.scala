@@ -28,6 +28,7 @@ import org.apache.calcite.sql.parser.SqlParserPos
 import org.apache.calcite.tools.RelBuilder
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.table.api._
+import org.apache.flink.table.api.base.visitor.ExpressionVisitor
 import org.apache.flink.table.api.planner.visitor.AggregationSqlFunVisitorImpl
 import org.apache.flink.table.calcite.FlinkTypeFactory
 import org.apache.flink.table.functions.utils.UserDefinedFunctionUtils._
@@ -57,6 +58,9 @@ case class Call(functionName: String, args: Seq[Expression]) extends Expression 
 
   override private[flink] def validateInput(): ValidationResult =
     ValidationFailure(s"Unresolved function call: $functionName")
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    throw UnresolvedException(s"trying to convert UnresolvedFunction $functionName to RexNode")
 }
 
 /**
@@ -73,6 +77,9 @@ case class UnresolvedOverCall(agg: Expression, alias: Expression) extends Expres
   override private[flink] def resultType = agg.resultType
 
   override private[flink] def children = Seq()
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    throwUnsupportedToRexNodeOperationException
 }
 
 /**
@@ -252,6 +259,9 @@ case class OverCall(
 
     ValidationSuccess
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 /**
@@ -300,6 +310,9 @@ case class ScalarFunctionCall(
       ValidationSuccess
     }
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 /**
@@ -367,4 +380,7 @@ case class TableFunctionCall(
 
   override def toString =
     s"${tableFunction.getClass.getCanonicalName}(${parameters.mkString(", ")})"
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    throwUnsupportedToRexNodeOperationException
 }

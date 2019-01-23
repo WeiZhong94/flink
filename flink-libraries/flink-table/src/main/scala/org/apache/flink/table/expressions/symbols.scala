@@ -23,6 +23,7 @@ import org.apache.calcite.rex.RexNode
 import org.apache.calcite.sql.fun.SqlTrimFunction
 import org.apache.calcite.tools.RelBuilder
 import org.apache.flink.api.common.typeinfo.TypeInformation
+import org.apache.flink.table.api.base.visitor.ExpressionVisitor
 
 import scala.language.{existentials, implicitConversions}
 
@@ -44,6 +45,8 @@ case class SymbolExpression(symbol: TableSymbol) extends LeafExpression {
 
   override def toString: String = s"${symbol.symbols}.${symbol.name}"
 
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 /**

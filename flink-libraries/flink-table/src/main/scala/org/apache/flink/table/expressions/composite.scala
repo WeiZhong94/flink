@@ -23,6 +23,7 @@ import org.apache.calcite.tools.RelBuilder
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.common.typeutils.CompositeType
 import org.apache.flink.table.api.UnresolvedException
+import org.apache.flink.table.api.base.visitor.ExpressionVisitor
 import org.apache.flink.table.validate.{ValidationFailure, ValidationResult, ValidationSuccess}
 
 /**
@@ -38,6 +39,9 @@ case class Flattening(child: Expression) extends UnaryExpression {
 
   override private[flink] def validateInput(): ValidationResult =
     ValidationFailure(s"Unresolved flattening of $child")
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    throwUnsupportedToRexNodeOperationException
 }
 
 case class GetCompositeField(child: Expression, key: Any) extends UnaryExpression {
@@ -103,4 +107,7 @@ case class GetCompositeField(child: Expression, key: Any) extends UnaryExpressio
     case c: ResolvedFieldReference => Some(s"${c.name}$$$key")
     case _ => None
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }

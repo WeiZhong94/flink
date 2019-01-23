@@ -24,6 +24,7 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable
 import org.apache.calcite.tools.RelBuilder
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo._
 import org.apache.flink.api.common.typeinfo.{SqlTimeTypeInfo, TypeInformation}
+import org.apache.flink.table.api.base.visitor.ExpressionVisitor
 import org.apache.flink.table.calcite.FlinkRelBuilder
 import org.apache.flink.table.expressions.TimeIntervalUnit.TimeIntervalUnit
 import org.apache.flink.table.functions.sql.ScalarSqlFunctions
@@ -80,6 +81,9 @@ case class Extract(timeIntervalUnit: Expression, temporal: Expression) extends E
         SqlStdOperatorTable.EXTRACT,
         Seq(timeIntervalUnit.toRexNode, temporal.toRexNode))
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 abstract class TemporalCeilFloor(
@@ -119,6 +123,9 @@ abstract class TemporalCeilFloor(
           s"unit '$timeIntervalUnit' for input of type '${temporal.resultType}'.")
     }
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    throwUnsupportedToRexNodeOperationException
 }
 
 case class TemporalFloor(
@@ -186,15 +193,35 @@ abstract class CurrentTimePoint(
   }
 }
 
-case class CurrentDate() extends CurrentTimePoint(SqlTimeTypeInfo.DATE, local = false)
+case class CurrentDate() extends CurrentTimePoint(SqlTimeTypeInfo.DATE, local = false) {
 
-case class CurrentTime() extends CurrentTimePoint(SqlTimeTypeInfo.TIME, local = false)
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
+}
 
-case class CurrentTimestamp() extends CurrentTimePoint(SqlTimeTypeInfo.TIMESTAMP, local = false)
+case class CurrentTime() extends CurrentTimePoint(SqlTimeTypeInfo.TIME, local = false) {
 
-case class LocalTime() extends CurrentTimePoint(SqlTimeTypeInfo.TIME, local = true)
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
+}
 
-case class LocalTimestamp() extends CurrentTimePoint(SqlTimeTypeInfo.TIMESTAMP, local = true)
+case class CurrentTimestamp() extends CurrentTimePoint(SqlTimeTypeInfo.TIMESTAMP, local = false) {
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
+}
+
+case class LocalTime() extends CurrentTimePoint(SqlTimeTypeInfo.TIME, local = true) {
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
+}
+
+case class LocalTimestamp() extends CurrentTimePoint(SqlTimeTypeInfo.TIMESTAMP, local = true) {
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
+}
 
 /**
   * Extracts the quarter of a year from a SQL date.
@@ -221,6 +248,9 @@ case class Quarter(child: Expression) extends UnaryExpression with InputTypeSpec
       Literal(1L)
     ).toRexNode
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 /**
@@ -328,6 +358,9 @@ case class TemporalOverlaps(
     val r = relBuilder.call(SqlStdOperatorTable.CASE, le, end, start)
     (l, r)
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 case class DateFormat(timestamp: Expression, format: Expression) extends Expression {
@@ -339,6 +372,9 @@ case class DateFormat(timestamp: Expression, format: Expression) extends Express
   override def toString: String = s"$timestamp.dateFormat($format)"
 
   override private[flink] def resultType = STRING_TYPE_INFO
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 case class TimestampDiff(
@@ -393,4 +429,7 @@ case class TimestampDiff(
   override def toString: String = s"timestampDiff(${children.mkString(", ")})"
 
   override private[flink] def resultType = INT_TYPE_INFO
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }

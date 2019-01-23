@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *	 http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,30 +37,29 @@ import org.apache.flink.table.expressions.VarSamp;
  *
  */
 public interface AggregationVisitor<T> {
-   T visit(DistinctAgg distinctAgg);
+	T visit(DistinctAgg distinctAgg);
 
-   T visit(Sum sum);
+	T visit(Sum sum);
 
-   T visit(Sum0 sum);
+	T visit(Sum0 sum);
 
-   T visit(Min min);
+	T visit(Min min);
 
-   T visit(Max max);
+	T visit(Max max);
 
-   T visit(Count count);
+	T visit(Count count);
 
-   T visit(Avg avg);
+	T visit(Avg avg);
 
-   T visit(Collect collect);
+	T visit(Collect collect);
 
-   T visit(StddevPop stddevPop);
+	T visit(StddevPop stddevPop);
 
-   T visit(StddevSamp stddevSamp);
+	T visit(StddevSamp stddevSamp);
 
-   T visit(VarPop varPop);
+	T visit(VarPop varPop);
 
-   T visit(VarSamp varSamp);
+	T visit(VarSamp varSamp);
 
-   T visit(AggFunctionCall aggFunctionCall);
-    // TODO add visit method for each aggregation.
+	T visit(AggFunctionCall aggFunctionCall);
 }

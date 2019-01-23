@@ -385,7 +385,7 @@ case class Join(
     left.output ++ right.output
   }
 
-  private case class JoinFieldReference(
+  private[flink] case class JoinFieldReference(
     name: String,
     resultType: TypeInformation[_],
     left: LogicalNode,
@@ -622,7 +622,8 @@ case class WindowAggregate(
         case _ => throw new RuntimeException("This should never happen.")
       },
       aggregateExpressions.map {
-        case Alias(agg: Aggregation, name, _) => agg.accept(new AggregationCallVisitorImpl(relBuilder))
+        case Alias(agg: Aggregation, name, _) =>
+          agg.accept(new AggregationCallVisitorImpl(relBuilder))
         case _ => throw new RuntimeException("This should never happen.")
       }.asJava)
   }

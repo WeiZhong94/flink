@@ -50,9 +50,7 @@ abstract class Expression extends TreeNode[Expression] {
     * Convert Expression to its counterpart in Calcite, i.e. RexNode
     */
   private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode =
-    throw new UnsupportedOperationException(
-      s"${this.getClass.getName} cannot be transformed to RexNode"
-    )
+    throwUnsupportedToRexNodeOperationException
 
   private[flink] def checkEquals(other: Expression): Boolean = {
     if (this.getClass != other.getClass) {
@@ -72,6 +70,11 @@ abstract class Expression extends TreeNode[Expression] {
   }
 
   private [flink] def accept[T](visitor: ExpressionVisitor[T]): T
+
+  protected def throwUnsupportedToRexNodeOperationException =
+    throw new UnsupportedOperationException(
+      s"${this.getClass.getName} cannot be transformed to RexNode"
+    )
 }
 
 abstract class BinaryExpression extends Expression {

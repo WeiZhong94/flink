@@ -20,8 +20,8 @@ package org.apache.flink.table.expressions
 import org.apache.calcite.rex.RexNode
 import org.apache.calcite.sql.fun.SqlStdOperatorTable
 import org.apache.calcite.tools.RelBuilder
-
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo
+import org.apache.flink.table.api.base.visitor.ExpressionVisitor
 import org.apache.flink.table.validate._
 
 abstract class BinaryPredicate extends BinaryExpression {
@@ -56,6 +56,9 @@ case class Not(child: Expression) extends UnaryExpression {
         s"but $child is of type ${child.resultType}")
     }
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 case class And(left: Expression, right: Expression) extends BinaryPredicate {
@@ -65,6 +68,9 @@ case class And(left: Expression, right: Expression) extends BinaryPredicate {
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     relBuilder.and(left.toRexNode, right.toRexNode)
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 case class Or(left: Expression, right: Expression) extends BinaryPredicate {
@@ -74,6 +80,9 @@ case class Or(left: Expression, right: Expression) extends BinaryPredicate {
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     relBuilder.or(left.toRexNode, right.toRexNode)
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 case class If(
@@ -104,4 +113,7 @@ case class If(
           s"(${condition.resultType}, ${ifTrue.resultType}, ${ifFalse.resultType})")
     }
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }

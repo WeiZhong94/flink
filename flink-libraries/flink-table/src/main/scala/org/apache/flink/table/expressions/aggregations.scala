@@ -32,7 +32,7 @@ abstract sealed class Aggregation extends Expression {
 
   def accept[T](visitor: AggregationVisitor[T]): T
 
-  override private[flink] def accept[T](visitor: ExpressionVisitor[T]) =
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     throw new UnsupportedOperationException("Aggregate cannot be transformed to RexNode")
 }
 
@@ -225,4 +225,6 @@ case class AggFunctionCall(
   override def toString: String = s"${aggregateFunction.getClass.getSimpleName}($args)"
 
   override def accept[T](visitor: AggregationVisitor[T]): T = visitor.visit(this)
+
+  override def accept[T](visitor: ExpressionVisitor[T]): T = visitor.visit(this)
 }
