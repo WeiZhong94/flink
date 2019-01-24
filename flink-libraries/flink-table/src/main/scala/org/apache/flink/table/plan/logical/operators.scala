@@ -623,7 +623,7 @@ case class WindowAggregate(
       },
       aggregateExpressions.map {
         case Alias(agg: Aggregation, name, _) =>
-          agg.accept(new AggregationCallVisitorImpl(relBuilder))
+          AggregationCallVisitorImpl.toAggCall(agg, name, false, relBuilder)
         case _ => throw new RuntimeException("This should never happen.")
       }.asJava)
   }

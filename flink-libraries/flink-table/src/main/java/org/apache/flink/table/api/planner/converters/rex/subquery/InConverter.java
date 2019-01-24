@@ -16,24 +16,35 @@
  * limitations under the License.
  */
 
-package org.apache.flink.table.api.planner.converters.rex;
+package org.apache.flink.table.api.planner.converters.rex.subquery;
 
+import org.apache.flink.table.api.InnerTable;
 import org.apache.flink.table.api.planner.visitor.ExpressionVisitorImpl;
-import org.apache.flink.table.calcite.FlinkTypeFactory;
-import org.apache.flink.table.expressions.Cast;
+import org.apache.flink.table.expressions.In;
+import org.apache.flink.table.expressions.TableReference;
 
+import com.google.common.collect.ImmutableList;
 import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.rex.RexSubQuery;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 /**
- * CastRexConverter.
+ * InConverter.
  */
-public class CastRexConverter {
-	public static RexNode toRexNode(Cast expr, ExpressionVisitorImpl visitor) {
-		RexNode childRexNode =  expr.child().accept(visitor);
-		FlinkTypeFactory typeFactory = (FlinkTypeFactory) visitor.getRelBuilder().getTypeFactory();
-		return visitor.getRelBuilder().getRexBuilder().makeAbstractCast(
-				typeFactory.createTypeFromTypeInfo(
-						expr.resultType(),
-						childRexNode.getType().isNullable()), childRexNode);
+public class InConverter {
+	public static RexNode toRexNode(In in, ExpressionVisitorImpl visitor) {
+		if (in.elements().head() instanceof TableReference) {
+
+			TableReference tableReference = (TableReference) in.elements().head();
+			String name = tableReference.name();
+			InnerTable table = (InnerTable) tableReference.table();
+			return RexSubQuery.in(table.getRelNode(),
+				ImmutableList.of(visitor.toRexNode(in.expression())));
+
+		} else {
+
+			return visitor.toRexNode(SqlStdOperatorTable.IN, in.children());
+
+		}
 	}
 }

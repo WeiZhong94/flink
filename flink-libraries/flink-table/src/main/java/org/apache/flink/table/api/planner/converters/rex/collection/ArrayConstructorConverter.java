@@ -16,24 +16,30 @@
  * limitations under the License.
  */
 
-package org.apache.flink.table.api.planner.converters.rex;
+package org.apache.flink.table.api.planner.converters.rex.collection;
 
 import org.apache.flink.table.api.planner.visitor.ExpressionVisitorImpl;
-import org.apache.flink.table.calcite.FlinkTypeFactory;
-import org.apache.flink.table.expressions.Cast;
+import org.apache.flink.table.calcite.FlinkRelBuilder;
+import org.apache.flink.table.expressions.ArrayConstructor;
 
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+
+import java.util.Arrays;
+
 
 /**
- * CastRexConverter.
+ * ArrayConstructorConverter.
  */
-public class CastRexConverter {
-	public static RexNode toRexNode(Cast expr, ExpressionVisitorImpl visitor) {
-		RexNode childRexNode =  expr.child().accept(visitor);
-		FlinkTypeFactory typeFactory = (FlinkTypeFactory) visitor.getRelBuilder().getTypeFactory();
-		return visitor.getRelBuilder().getRexBuilder().makeAbstractCast(
-				typeFactory.createTypeFromTypeInfo(
-						expr.resultType(),
-						childRexNode.getType().isNullable()), childRexNode);
+public class ArrayConstructorConverter {
+	public static RexNode toRexNode(ArrayConstructor constructor, ExpressionVisitorImpl visitor) {
+		RelDataType relDataType = ((FlinkRelBuilder) visitor.getRelBuilder())
+			.getTypeFactory()
+			.createTypeFromTypeInfo(constructor.resultType(), false);
+		RexNode[] values = visitor.toRexNode(constructor.elements());
+		return visitor.getRelBuilder()
+			.getRexBuilder()
+			.makeCall(relDataType, SqlStdOperatorTable.ARRAY_VALUE_CONSTRUCTOR, Arrays.asList(values));
 	}
 }

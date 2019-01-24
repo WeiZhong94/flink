@@ -39,7 +39,7 @@ case class SymbolExpression(symbol: TableSymbol) extends LeafExpression {
 
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     // dirty hack to pass Java enums to Java from Scala
-    val enum = symbol.enum.asInstanceOf[Enum[T] forSome { type T <: Enum[T] }]
+    val enum = symbol.javaEnum.asInstanceOf[Enum[T] forSome { type T <: Enum[T] }]
     relBuilder.getRexBuilder.makeFlag(enum)
   }
 
@@ -55,7 +55,7 @@ case class SymbolExpression(symbol: TableSymbol) extends LeafExpression {
 trait TableSymbol {
   def symbols: TableSymbols
   def name: String
-  def enum: Enum[_]
+  def javaEnum: Enum[_]
 }
 
 /**
@@ -66,7 +66,7 @@ abstract class TableSymbols extends Enumeration {
   class TableSymbolValue(e: Enum[_]) extends Val(e.name()) with TableSymbol {
     override def symbols: TableSymbols = TableSymbols.this
 
-    override def enum: Enum[_] = e
+    override def javaEnum: Enum[_] = e
 
     override def name: String = toString()
   }

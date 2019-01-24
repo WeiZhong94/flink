@@ -16,24 +16,28 @@
  * limitations under the License.
  */
 
-package org.apache.flink.table.api.planner.converters.rex;
+package org.apache.flink.table.api.planner.converters.rex.call;
 
 import org.apache.flink.table.api.planner.visitor.ExpressionVisitorImpl;
 import org.apache.flink.table.calcite.FlinkTypeFactory;
-import org.apache.flink.table.expressions.Cast;
+import org.apache.flink.table.expressions.ScalarFunctionCall;
+import org.apache.flink.table.functions.utils.UserDefinedFunctionUtils;
 
 import org.apache.calcite.rex.RexNode;
 
 /**
- * CastRexConverter.
+ * ScalarFunctionCallConverter.
  */
-public class CastRexConverter {
-	public static RexNode toRexNode(Cast expr, ExpressionVisitorImpl visitor) {
-		RexNode childRexNode =  expr.child().accept(visitor);
-		FlinkTypeFactory typeFactory = (FlinkTypeFactory) visitor.getRelBuilder().getTypeFactory();
-		return visitor.getRelBuilder().getRexBuilder().makeAbstractCast(
-				typeFactory.createTypeFromTypeInfo(
-						expr.resultType(),
-						childRexNode.getType().isNullable()), childRexNode);
+public class ScalarFunctionCallConverter {
+	public static RexNode toRexNode(ScalarFunctionCall call, ExpressionVisitorImpl visitor) {
+		FlinkTypeFactory typeFactory =
+			(FlinkTypeFactory) visitor.getRelBuilder().getTypeFactory();
+		return visitor.toRexNode(
+			UserDefinedFunctionUtils.createScalarSqlFunction(
+				call.scalarFunction().functionIdentifier(),
+				call.scalarFunction().toString(),
+				call.scalarFunction(),
+				typeFactory),
+			call.parameters());
 	}
 }

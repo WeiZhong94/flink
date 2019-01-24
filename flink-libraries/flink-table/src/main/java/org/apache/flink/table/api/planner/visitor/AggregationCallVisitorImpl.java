@@ -72,7 +72,7 @@ public class AggregationCallVisitorImpl implements AggregationVisitor<RelBuilder
 		return name;
 	}
 
-	public AggregationCallVisitorImpl(RelBuilder relBuilder) {
+	private AggregationCallVisitorImpl(RelBuilder relBuilder) {
 		this.relBuilder = relBuilder;
 	}
 
@@ -142,7 +142,7 @@ public class AggregationCallVisitorImpl implements AggregationVisitor<RelBuilder
 			isDistinct,
 			false,
 			null,
-			count.toString(),
+			name,
 			count.child().accept(new ExpressionVisitorImpl(relBuilder)));
 	}
 

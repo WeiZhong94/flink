@@ -123,9 +123,6 @@ abstract class TemporalCeilFloor(
           s"unit '$timeIntervalUnit' for input of type '${temporal.resultType}'.")
     }
   }
-
-  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
-    throwUnsupportedToRexNodeOperationException
 }
 
 case class TemporalFloor(
@@ -140,6 +137,9 @@ case class TemporalFloor(
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     relBuilder.call(SqlStdOperatorTable.FLOOR, temporal.toRexNode, timeIntervalUnit.toRexNode)
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 case class TemporalCeil(
@@ -154,6 +154,9 @@ case class TemporalCeil(
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     relBuilder.call(SqlStdOperatorTable.CEIL, temporal.toRexNode, timeIntervalUnit.toRexNode)
   }
+
+  override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
+    visitor.visit(this)
 }
 
 abstract class CurrentTimePoint(

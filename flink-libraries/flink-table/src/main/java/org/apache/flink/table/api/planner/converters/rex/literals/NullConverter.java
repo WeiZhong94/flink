@@ -16,24 +16,25 @@
  * limitations under the License.
  */
 
-package org.apache.flink.table.api.planner.converters.rex;
+package org.apache.flink.table.api.planner.converters.rex.literals;
 
 import org.apache.flink.table.api.planner.visitor.ExpressionVisitorImpl;
 import org.apache.flink.table.calcite.FlinkTypeFactory;
-import org.apache.flink.table.expressions.Cast;
+import org.apache.flink.table.expressions.Null;
 
+import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexNode;
 
 /**
- * CastRexConverter.
+ * NullConverter.
  */
-public class CastRexConverter {
-	public static RexNode toRexNode(Cast expr, ExpressionVisitorImpl visitor) {
-		RexNode childRexNode =  expr.child().accept(visitor);
+public class NullConverter {
+	public static RexNode toRexNode(Null nullexpr, ExpressionVisitorImpl visitor) {
+		RexBuilder rexBuilder = visitor.getRelBuilder().getRexBuilder();
 		FlinkTypeFactory typeFactory = (FlinkTypeFactory) visitor.getRelBuilder().getTypeFactory();
-		return visitor.getRelBuilder().getRexBuilder().makeAbstractCast(
-				typeFactory.createTypeFromTypeInfo(
-						expr.resultType(),
-						childRexNode.getType().isNullable()), childRexNode);
+		return rexBuilder
+			.makeCast(
+				typeFactory.createTypeFromTypeInfo(nullexpr.resultType(), true),
+				rexBuilder.constantNull());
 	}
 }

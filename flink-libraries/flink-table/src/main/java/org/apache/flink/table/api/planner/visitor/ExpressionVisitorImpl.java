@@ -20,6 +20,20 @@ package org.apache.flink.table.api.planner.visitor;
 
 import org.apache.flink.table.api.base.visitor.ExpressionVisitor;
 import org.apache.flink.table.api.planner.converters.rex.CastRexConverter;
+import org.apache.flink.table.api.planner.converters.rex.aggregations.AggFunctionCallConverter;
+import org.apache.flink.table.api.planner.converters.rex.arithmetic.PlusConverter;
+import org.apache.flink.table.api.planner.converters.rex.call.OverCallConverter;
+import org.apache.flink.table.api.planner.converters.rex.call.ScalarFunctionCallConverter;
+import org.apache.flink.table.api.planner.converters.rex.collection.ArrayConstructorConverter;
+import org.apache.flink.table.api.planner.converters.rex.collection.MapConstructorConverter;
+import org.apache.flink.table.api.planner.converters.rex.collection.RowConstructorConverter;
+import org.apache.flink.table.api.planner.converters.rex.comparison.BetweenConverter;
+import org.apache.flink.table.api.planner.converters.rex.comparison.NotBetweenConverter;
+import org.apache.flink.table.api.planner.converters.rex.literals.LiteralConverter;
+import org.apache.flink.table.api.planner.converters.rex.literals.NullConverter;
+import org.apache.flink.table.api.planner.converters.rex.subquery.InConverter;
+import org.apache.flink.table.api.planner.converters.rex.time.QuarterConverter;
+import org.apache.flink.table.api.planner.converters.rex.time.TemporalOverlapsConverter;
 import org.apache.flink.table.expressions.Abs;
 import org.apache.flink.table.expressions.Acos;
 import org.apache.flink.table.expressions.AggFunctionCall;
@@ -138,19 +152,33 @@ import org.apache.flink.table.expressions.Trim;
 import org.apache.flink.table.expressions.UUID;
 import org.apache.flink.table.expressions.UnaryMinus;
 import org.apache.flink.table.expressions.Upper;
+import org.apache.flink.table.functions.sql.ScalarSqlFunctions;
+import org.apache.flink.table.functions.sql.ScalarSqlFunctions$;
+import org.apache.flink.table.functions.sql.StreamRecordTimestampSqlFunction$;
 import org.apache.flink.table.plan.logical.Join;
 
 import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.tools.RelBuilder;
+
+import java.util.Arrays;
+
+import scala.collection.JavaConversions;
+import scala.collection.Seq;
 
 /**
  * RexNodeVisitorImpl.
  */
 public class ExpressionVisitorImpl implements ExpressionVisitor<RexNode> {
-	public RelBuilder relBuilder;
+	protected RelBuilder relBuilder;
 
 	public ExpressionVisitorImpl(RelBuilder relBuilder) {
 		this.relBuilder = relBuilder;
+	}
+
+	public RelBuilder getRelBuilder() {
+		return relBuilder;
 	}
 
 	public static RexNode toRexNode(Expression expr, RelBuilder relBuilder) {
@@ -161,49 +189,66 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<RexNode> {
 		return expr.accept(this);
 	}
 
+	public RexNode[] toRexNode(Seq<? extends Expression> expressions) {
+		return JavaConversions.seqAsJavaList(expressions)
+			.stream().map(this::toRexNode).toArray(RexNode[]::new);
+	}
+
+	public RexNode[] toRexNode(Expression... expressions) {
+		return Arrays.stream(expressions).map(this::toRexNode).toArray(RexNode[]::new);
+	}
+
+	public RexNode toRexNode(SqlOperator operator, Expression... operand) {
+		return relBuilder.call(operator, toRexNode(operand));
+	}
+
+	public RexNode toRexNode(SqlOperator operator, Seq<? extends Expression> operands) {
+		return relBuilder.call(operator, toRexNode(operands));
+	}
+
 	@Override
 	public RexNode visit(AggFunctionCall aggFunctionCall) {
-		return null;
+		return AggFunctionCallConverter.toRexNode(aggFunctionCall, this);
 	}
 
 	@Override
 	public RexNode visit(Plus plus) {
-		return null;
+		return PlusConverter.toRexNode(plus, this);
 	}
 
 	@Override
 	public RexNode visit(UnaryMinus unaryMinus) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.UNARY_MINUS, unaryMinus.child());
 	}
 
 	@Override
 	public RexNode visit(Minus minus) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.MINUS, minus.children());
 	}
 
 	@Override
 	public RexNode visit(Div div) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.DIVIDE, div.children());
 	}
 
 	@Override
 	public RexNode visit(Mul mul) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.MULTIPLY, mul.children());
 	}
 
 	@Override
 	public RexNode visit(Mod mod) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.MOD, mod.children());
 	}
 
 	@Override
 	public RexNode visit(OverCall overCall) {
-		return null;
+		return OverCallConverter.toRexNode(overCall, this);
 	}
 
 	@Override
 	public RexNode visit(ScalarFunctionCall scalarFunctionCall) {
-		return null;
+		return ScalarFunctionCallConverter.toRexNode(scalarFunctionCall, this);
 	}
 
 	@Override
@@ -213,541 +258,545 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<RexNode> {
 
 	@Override
 	public RexNode visit(RowConstructor rowConstructor) {
-		return null;
+		return RowConstructorConverter.toRexNode(rowConstructor, this);
 	}
 
 	@Override
 	public RexNode visit(ArrayConstructor arrayConstructor) {
-		return null;
+		return ArrayConstructorConverter.toRexNode(arrayConstructor, this);
 	}
 
 	@Override
 	public RexNode visit(MapConstructor mapConstructor) {
-		return null;
+		return MapConstructorConverter.toRexNode(mapConstructor, this);
 	}
 
 	@Override
 	public RexNode visit(ArrayElement arrayElement) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.ELEMENT, arrayElement.array());
 	}
 
 	@Override
 	public RexNode visit(Cardinality cardinality) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.CARDINALITY, cardinality.container());
 	}
 
 	@Override
 	public RexNode visit(ItemAt itemAt) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.ITEM, itemAt.children());
 	}
 
 	@Override
 	public RexNode visit(EqualTo equalTo) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.EQUALS, equalTo.children());
 	}
 
 	@Override
 	public RexNode visit(NotEqualTo notEqualTo) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.NOT_EQUALS, notEqualTo.children());
 	}
 
 	@Override
 	public RexNode visit(GreaterThan greaterThan) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.GREATER_THAN, greaterThan.children());
 	}
 
 	@Override
 	public RexNode visit(GreaterThanOrEqual greaterThanOrEqual) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.GREATER_THAN_OR_EQUAL, greaterThanOrEqual.children());
 	}
 
 	@Override
 	public RexNode visit(LessThan lessThan) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.LESS_THAN, lessThan.children());
 	}
 
 	@Override
 	public RexNode visit(LessThanOrEqual lessThanOrEqual) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.LESS_THAN_OR_EQUAL, lessThanOrEqual.children());
 	}
 
 	@Override
 	public RexNode visit(IsNull isNull) {
-		return null;
+		return relBuilder.isNull(toRexNode(isNull.child()));
 	}
 
 	@Override
 	public RexNode visit(IsNotNull isNotNull) {
-		return null;
+		return relBuilder.isNotNull(toRexNode(isNotNull.child()));
 	}
 
 	@Override
 	public RexNode visit(IsTrue isTrue) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.IS_TRUE, isTrue.child());
 	}
 
 	@Override
 	public RexNode visit(IsFalse isFalse) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.IS_FALSE, isFalse.child());
 	}
 
 	@Override
 	public RexNode visit(IsNotTrue isNotTrue) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.IS_NOT_TRUE, isNotTrue.child());
 	}
 
 	@Override
 	public RexNode visit(IsNotFalse isNotFalse) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.IS_NOT_FALSE, isNotFalse.child());
 	}
 
 	@Override
 	public RexNode visit(Between between) {
-		return null;
+		return BetweenConverter.toRexNode(between, this);
 	}
 
 	@Override
 	public RexNode visit(NotBetween notBetween) {
-		return null;
+		return NotBetweenConverter.toRexNode(notBetween, this);
 	}
 
 	@Override
 	public RexNode visit(GetCompositeField getCompositeField) {
-		return null;
+		return relBuilder.getRexBuilder().makeFieldAccess(
+			toRexNode(getCompositeField.child()), (Integer) getCompositeField.fieldIndex().get());
 	}
 
 	@Override
 	public RexNode visit(ResolvedFieldReference resolvedFieldReference) {
-		return null;
+		return relBuilder.field(resolvedFieldReference.name());
 	}
 
 	@Override
 	public RexNode visit(Alias alias) {
-		return null;
+		return relBuilder.alias(toRexNode(alias.child()), alias.name());
 	}
 
 	@Override
 	public RexNode visit(StreamRecordTimestamp streamRecordTimestamp) {
-		return null;
+		return relBuilder.getRexBuilder().makeCall(StreamRecordTimestampSqlFunction$.MODULE$);
 	}
 
 	@Override
 	public RexNode visit(Md5 md5) {
-		return null;
+		return toRexNode(ScalarSqlFunctions$.MODULE$.MD5(), md5.child());
 	}
 
 	@Override
 	public RexNode visit(Sha1 sha1) {
-		return null;
+		return toRexNode(ScalarSqlFunctions$.MODULE$.SHA1(), sha1.child());
 	}
 
 	@Override
 	public RexNode visit(Sha224 sha224) {
-		return null;
+		return toRexNode(ScalarSqlFunctions$.MODULE$.SHA224(), sha224.child());
 	}
 
 	@Override
 	public RexNode visit(Sha256 sha256) {
-		return null;
+		return toRexNode(ScalarSqlFunctions$.MODULE$.SHA256(), sha256.child());
 	}
 
 	@Override
 	public RexNode visit(Sha384 sha384) {
-		return null;
+		return toRexNode(ScalarSqlFunctions$.MODULE$.SHA384(), sha384.child());
 	}
 
 	@Override
 	public RexNode visit(Sha512 sha512) {
-		return null;
+		return toRexNode(ScalarSqlFunctions$.MODULE$.SHA512(), sha512.child());
 	}
 
 	@Override
 	public RexNode visit(Sha2 sha2) {
-		return null;
+		return toRexNode(ScalarSqlFunctions$.MODULE$.SHA2(), sha2.children());
 	}
 
 	@Override
 	public RexNode visit(Literal literal) {
-		return null;
+		return LiteralConverter.toRexNode(literal, this);
 	}
 
 	@Override
 	public RexNode visit(Null nullExpr) {
-		return null;
+		return NullConverter.toRexNode(nullExpr, this);
 	}
 
 	@Override
 	public RexNode visit(Not not) {
-		return null;
+		return relBuilder.not(toRexNode(not.child()));
 	}
 
 	@Override
 	public RexNode visit(And and) {
-		return null;
+		return relBuilder.and(toRexNode(and.left()), toRexNode(and.right()));
 	}
 
 	@Override
 	public RexNode visit(Or or) {
-		return null;
+		return relBuilder.or(toRexNode(or.left()), toRexNode(or.right()));
 	}
 
 	@Override
 	public RexNode visit(If ifExpr) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.CASE, ifExpr.children());
 	}
 
 	@Override
 	public RexNode visit(Abs abs) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.ABS, abs.child());
 	}
 
 	@Override
 	public RexNode visit(Ceil ceil) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.CEIL, ceil.child());
 	}
 
 	@Override
 	public RexNode visit(Exp exp) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.EXP, exp.child());
 	}
 
 	@Override
 	public RexNode visit(Floor floor) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.FLOOR, floor.child());
 	}
 
 	@Override
 	public RexNode visit(Log10 log10) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.LOG10, log10.child());
 	}
 
 	@Override
 	public RexNode visit(Log2 log2) {
-		return null;
+		return toRexNode(ScalarSqlFunctions.LOG2(), log2.child());
 	}
 
 	@Override
 	public RexNode visit(Cosh cosh) {
-		return null;
+		return toRexNode(ScalarSqlFunctions.COSH(), cosh.child());
 	}
 
 	@Override
 	public RexNode visit(Log log) {
-		return null;
+		return toRexNode(ScalarSqlFunctions.LOG(), log.children());
 	}
 
 	@Override
 	public RexNode visit(Ln ln) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.LN, ln.child());
 	}
 
 	@Override
 	public RexNode visit(Power power) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.POWER, power.children());
 	}
 
 	@Override
 	public RexNode visit(Sinh sinh) {
-		return null;
+		return toRexNode(ScalarSqlFunctions.SINH(), sinh.child());
 	}
 
 	@Override
 	public RexNode visit(Sqrt sqrt) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.POWER, sqrt.child());
 	}
 
 	@Override
 	public RexNode visit(Sin sin) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.SIN, sin.child());
 	}
 
 	@Override
 	public RexNode visit(Cos cos) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.COS, cos.child());
 	}
 
 	@Override
 	public RexNode visit(Tan tan) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.TAN, tan.child());
 	}
 
 	@Override
 	public RexNode visit(Tanh tanh) {
-		return null;
+		return toRexNode(ScalarSqlFunctions.TANH(), tanh.child());
 	}
 
 	@Override
 	public RexNode visit(Cot cot) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.COT, cot.child());
 	}
 
 	@Override
 	public RexNode visit(Asin asin) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.ASIN, asin.child());
 	}
 
 	@Override
 	public RexNode visit(Acos acos) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.ACOS, acos.child());
 	}
 
 	@Override
 	public RexNode visit(Atan atan) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.ATAN, atan.child());
 	}
 
 	@Override
 	public RexNode visit(Atan2 atan2) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.ATAN2, atan2.children());
 	}
 
 	@Override
 	public RexNode visit(Degrees degrees) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.DEGREES, degrees.child());
 	}
 
 	@Override
 	public RexNode visit(Radians radians) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.RADIANS, radians.child());
 	}
 
 	@Override
 	public RexNode visit(Sign sign) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.SIGN, sign.child());
 	}
 
 	@Override
 	public RexNode visit(Round round) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.ROUND, round.children());
 	}
 
 	@Override
 	public RexNode visit(Pi pi) {
-		return null;
+		return relBuilder.call(SqlStdOperatorTable.PI);
 	}
 
 	@Override
 	public RexNode visit(E e) {
-		return null;
+		return relBuilder.call(ScalarSqlFunctions.E());
 	}
 
 	@Override
 	public RexNode visit(Rand rand) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.RAND, rand.children());
 	}
 
 	@Override
 	public RexNode visit(RandInteger randInteger) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.RAND_INTEGER, randInteger.children());
 	}
 
 	@Override
 	public RexNode visit(Bin bin) {
-		return null;
+		return toRexNode(ScalarSqlFunctions.BIN(), bin.child());
 	}
 
 	@Override
 	public RexNode visit(Hex hex) {
-		return null;
+		return toRexNode(ScalarSqlFunctions.HEX(), hex.child());
 	}
 
 	@Override
 	public RexNode visit(UUID uuid) {
-		return null;
+		return relBuilder.call(ScalarSqlFunctions.UUID());
 	}
 
 	@Override
 	public RexNode visit(Asc asc) {
-		return null;
+		return toRexNode(asc.child());
 	}
 
 	@Override
 	public RexNode visit(Desc desc) {
-		return null;
+		return relBuilder.desc(toRexNode(desc.child()));
 	}
 
 	@Override
 	public RexNode visit(CharLength charLength) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.CHAR_LENGTH, charLength.child());
 	}
 
 	@Override
 	public RexNode visit(InitCap initCap) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.INITCAP, initCap.child());
 	}
 
 	@Override
 	public RexNode visit(Like like) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.LIKE, like.children());
 	}
 
 	@Override
 	public RexNode visit(Lower lower) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.LOWER, lower.child());
 	}
 
 	@Override
 	public RexNode visit(Similar similar) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.SIMILAR_TO, similar.children());
 	}
 
 	@Override
 	public RexNode visit(Substring substring) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.SUBSTRING, substring.children());
 	}
 
 	@Override
 	public RexNode visit(Trim trim) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.TRIM, trim.children());
 	}
 
 	@Override
 	public RexNode visit(Upper upper) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.UPPER, upper.child());
 	}
 
 	@Override
 	public RexNode visit(Position position) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.POSITION, position.children());
 	}
 
 	@Override
 	public RexNode visit(Overlay overlay) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.OVERLAY, overlay.children());
 	}
 
 	@Override
 	public RexNode visit(Concat concat) {
-		return null;
+		return toRexNode(ScalarSqlFunctions.CONCAT(), concat.children());
 	}
 
 	@Override
 	public RexNode visit(ConcatWs concatWs) {
-		return null;
+		return toRexNode(ScalarSqlFunctions.CONCAT_WS(), concatWs.children());
 	}
 
 	@Override
 	public RexNode visit(Lpad lpad) {
-		return null;
+		return toRexNode(ScalarSqlFunctions.LPAD(), lpad.children());
 	}
 
 	@Override
 	public RexNode visit(Rpad rpad) {
-		return null;
+		return toRexNode(ScalarSqlFunctions.RPAD(), rpad.children());
 	}
 
 	@Override
 	public RexNode visit(RegexpReplace regexpReplace) {
-		return null;
+		return toRexNode(ScalarSqlFunctions.REGEXP_REPLACE(), regexpReplace.children());
 	}
 
 	@Override
 	public RexNode visit(RegexpExtract regexpExtract) {
-		return null;
+		return toRexNode(ScalarSqlFunctions.REGEXP_EXTRACT(), regexpExtract.children());
 	}
 
 	@Override
 	public RexNode visit(FromBase64 fromBase64) {
-		return null;
+		return toRexNode(ScalarSqlFunctions.FROM_BASE64(), fromBase64.child());
 	}
 
 	@Override
 	public RexNode visit(ToBase64 toBase64) {
-		return null;
+		return toRexNode(ScalarSqlFunctions.TO_BASE64(), toBase64.child());
 	}
 
 	@Override
 	public RexNode visit(LTrim lTrim) {
-		return null;
+		return toRexNode(ScalarSqlFunctions.LTRIM(), lTrim.child());
 	}
 
 	@Override
 	public RexNode visit(RTrim rTrim) {
-		return null;
+		return toRexNode(ScalarSqlFunctions.RTRIM(), rTrim.child());
 	}
 
 	@Override
 	public RexNode visit(Repeat repeat) {
-		return null;
+		return toRexNode(ScalarSqlFunctions.REPEAT(), repeat.children());
 	}
 
 	@Override
 	public RexNode visit(Replace replace) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.REPLACE, replace.children());
 	}
 
 	@Override
 	public RexNode visit(In in) {
-		return null;
+		return InConverter.toRexNode(in, this);
 	}
 
 	@Override
 	public RexNode visit(SymbolExpression symbolExpression) {
-		return null;
+		return relBuilder.getRexBuilder().makeFlag(symbolExpression.symbol().javaEnum());
 	}
 
 	@Override
 	public RexNode visit(Extract extract) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.EXTRACT, extract.children());
 	}
 
 	@Override
 	public RexNode visit(TemporalFloor temporalFloor) {
-		return null;
+		return relBuilder.call(SqlStdOperatorTable.FLOOR,
+			toRexNode(temporalFloor.temporal()), toRexNode(temporalFloor.timeIntervalUnit()));
 	}
 
 	@Override
 	public RexNode visit(TemporalCeil temporalCeil) {
-		return null;
+		return relBuilder.call(SqlStdOperatorTable.CEIL,
+			toRexNode(temporalCeil.temporal()), toRexNode(temporalCeil.timeIntervalUnit()));
 	}
 
 	@Override
 	public RexNode visit(CurrentDate currentDate) {
-		return null;
+		return relBuilder.call(SqlStdOperatorTable.CURRENT_DATE);
 	}
 
 	@Override
 	public RexNode visit(CurrentTime currentTime) {
-		return null;
+		return relBuilder.call(SqlStdOperatorTable.CURRENT_TIME);
 	}
 
 	@Override
 	public RexNode visit(CurrentTimestamp currentTimestamp) {
-		return null;
+		return relBuilder.call(SqlStdOperatorTable.CURRENT_TIMESTAMP);
 	}
 
 	@Override
 	public RexNode visit(LocalTime localTime) {
-		return null;
+		return relBuilder.call(SqlStdOperatorTable.LOCALTIME);
 	}
 
 	@Override
 	public RexNode visit(LocalTimestamp localTimestamp) {
-		return null;
+		return relBuilder.call(SqlStdOperatorTable.LOCALTIMESTAMP);
 	}
 
 	@Override
 	public RexNode visit(Quarter quarter) {
-		return null;
+		return QuarterConverter.toRexNode(quarter, this);
 	}
 
 	@Override
 	public RexNode visit(TemporalOverlaps temporalOverlaps) {
-		return null;
+		return TemporalOverlapsConverter.toRexNode(temporalOverlaps, this);
 	}
 
 	@Override
 	public RexNode visit(DateFormat dateFormat) {
-		return null;
+		return toRexNode(ScalarSqlFunctions.DATE_FORMAT(), dateFormat.children());
 	}
 
 	@Override
 	public RexNode visit(TimestampDiff timestampDiff) {
-		return null;
+		return toRexNode(SqlStdOperatorTable.TIMESTAMP_DIFF,
+			timestampDiff.timePointUnit(), timestampDiff.timePoint2(), timestampDiff.timePoint1());
 	}
 
 	@Override
 	public RexNode visit(Join.JoinFieldReference joinFieldReference) {
-		return null;
+		return joinFieldReference.toRexNode(relBuilder);
 	}
 }

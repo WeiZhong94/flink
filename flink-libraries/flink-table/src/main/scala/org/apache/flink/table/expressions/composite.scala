@@ -46,7 +46,7 @@ case class Flattening(child: Expression) extends UnaryExpression {
 
 case class GetCompositeField(child: Expression, key: Any) extends UnaryExpression {
 
-  private var fieldIndex: Option[Int] = None
+  private[flink] var fieldIndex: Option[Int] = None
 
   override def toString = s"$child.get($key)"
 

@@ -16,24 +16,25 @@
  * limitations under the License.
  */
 
-package org.apache.flink.table.api.planner.converters.rex;
+package org.apache.flink.table.api.planner.converters.rex.aggregations;
 
+import org.apache.flink.table.api.planner.visitor.AggregationSqlFunVisitorImpl;
 import org.apache.flink.table.api.planner.visitor.ExpressionVisitorImpl;
-import org.apache.flink.table.calcite.FlinkTypeFactory;
-import org.apache.flink.table.expressions.Cast;
+import org.apache.flink.table.expressions.AggFunctionCall;
 
 import org.apache.calcite.rex.RexNode;
 
+import scala.collection.JavaConversions;
+
 /**
- * CastRexConverter.
+ * AggFunctionCallConverter.
  */
-public class CastRexConverter {
-	public static RexNode toRexNode(Cast expr, ExpressionVisitorImpl visitor) {
-		RexNode childRexNode =  expr.child().accept(visitor);
-		FlinkTypeFactory typeFactory = (FlinkTypeFactory) visitor.getRelBuilder().getTypeFactory();
-		return visitor.getRelBuilder().getRexBuilder().makeAbstractCast(
-				typeFactory.createTypeFromTypeInfo(
-						expr.resultType(),
-						childRexNode.getType().isNullable()), childRexNode);
+public class AggFunctionCallConverter {
+	public static RexNode toRexNode(AggFunctionCall aggFunctionCall, ExpressionVisitorImpl visitor) {
+		return visitor.getRelBuilder().call(
+			AggregationSqlFunVisitorImpl
+				.getSqlAggFunction(aggFunctionCall, visitor.getRelBuilder()),
+			JavaConversions.seqAsJavaList(aggFunctionCall.args())
+				.stream().map(visitor::toRexNode).toArray(RexNode[]::new));
 	}
 }

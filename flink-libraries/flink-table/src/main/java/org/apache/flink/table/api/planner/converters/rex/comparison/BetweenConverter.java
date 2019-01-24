@@ -16,24 +16,30 @@
  * limitations under the License.
  */
 
-package org.apache.flink.table.api.planner.converters.rex;
+package org.apache.flink.table.api.planner.converters.rex.comparison;
 
 import org.apache.flink.table.api.planner.visitor.ExpressionVisitorImpl;
-import org.apache.flink.table.calcite.FlinkTypeFactory;
-import org.apache.flink.table.expressions.Cast;
+import org.apache.flink.table.expressions.Between;
 
 import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 /**
- * CastRexConverter.
+ * BetweenConverter.
  */
-public class CastRexConverter {
-	public static RexNode toRexNode(Cast expr, ExpressionVisitorImpl visitor) {
-		RexNode childRexNode =  expr.child().accept(visitor);
-		FlinkTypeFactory typeFactory = (FlinkTypeFactory) visitor.getRelBuilder().getTypeFactory();
-		return visitor.getRelBuilder().getRexBuilder().makeAbstractCast(
-				typeFactory.createTypeFromTypeInfo(
-						expr.resultType(),
-						childRexNode.getType().isNullable()), childRexNode);
+public class BetweenConverter {
+	public static RexNode toRexNode(Between between, ExpressionVisitorImpl visitor) {
+		return visitor.getRelBuilder().and(
+			visitor.getRelBuilder().call(
+				SqlStdOperatorTable.GREATER_THAN_OR_EQUAL,
+				visitor.toRexNode(between.expr()),
+				visitor.toRexNode(between.lowerBound())
+			),
+			visitor.getRelBuilder().call(
+				SqlStdOperatorTable.LESS_THAN_OR_EQUAL,
+				visitor.toRexNode(between.expr()),
+					visitor.toRexNode(between.upperBound())
+			)
+		);
 	}
 }
