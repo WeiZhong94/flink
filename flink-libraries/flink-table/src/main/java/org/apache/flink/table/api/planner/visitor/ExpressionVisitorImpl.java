@@ -219,7 +219,7 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<RexNode> {
 
 	@Override
 	public RexNode visit(UnaryMinus unaryMinus) {
-		return toRexNode(SqlStdOperatorTable.UNARY_MINUS, unaryMinus.child());
+		return toRexNode(SqlStdOperatorTable.UNARY_MINUS, unaryMinus.children());
 	}
 
 	@Override
@@ -274,12 +274,12 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<RexNode> {
 
 	@Override
 	public RexNode visit(ArrayElement arrayElement) {
-		return toRexNode(SqlStdOperatorTable.ELEMENT, arrayElement.array());
+		return toRexNode(SqlStdOperatorTable.ELEMENT, arrayElement.children());
 	}
 
 	@Override
 	public RexNode visit(Cardinality cardinality) {
-		return toRexNode(SqlStdOperatorTable.CARDINALITY, cardinality.container());
+		return toRexNode(SqlStdOperatorTable.CARDINALITY, cardinality.children());
 	}
 
 	@Override
@@ -329,22 +329,22 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<RexNode> {
 
 	@Override
 	public RexNode visit(IsTrue isTrue) {
-		return toRexNode(SqlStdOperatorTable.IS_TRUE, isTrue.child());
+		return toRexNode(SqlStdOperatorTable.IS_TRUE, isTrue.children());
 	}
 
 	@Override
 	public RexNode visit(IsFalse isFalse) {
-		return toRexNode(SqlStdOperatorTable.IS_FALSE, isFalse.child());
+		return toRexNode(SqlStdOperatorTable.IS_FALSE, isFalse.children());
 	}
 
 	@Override
 	public RexNode visit(IsNotTrue isNotTrue) {
-		return toRexNode(SqlStdOperatorTable.IS_NOT_TRUE, isNotTrue.child());
+		return toRexNode(SqlStdOperatorTable.IS_NOT_TRUE, isNotTrue.children());
 	}
 
 	@Override
 	public RexNode visit(IsNotFalse isNotFalse) {
-		return toRexNode(SqlStdOperatorTable.IS_NOT_FALSE, isNotFalse.child());
+		return toRexNode(SqlStdOperatorTable.IS_NOT_FALSE, isNotFalse.children());
 	}
 
 	@Override
@@ -380,32 +380,32 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<RexNode> {
 
 	@Override
 	public RexNode visit(Md5 md5) {
-		return toRexNode(ScalarSqlFunctions$.MODULE$.MD5(), md5.child());
+		return toRexNode(ScalarSqlFunctions$.MODULE$.MD5(), md5.children());
 	}
 
 	@Override
 	public RexNode visit(Sha1 sha1) {
-		return toRexNode(ScalarSqlFunctions$.MODULE$.SHA1(), sha1.child());
+		return toRexNode(ScalarSqlFunctions$.MODULE$.SHA1(), sha1.children());
 	}
 
 	@Override
 	public RexNode visit(Sha224 sha224) {
-		return toRexNode(ScalarSqlFunctions$.MODULE$.SHA224(), sha224.child());
+		return toRexNode(ScalarSqlFunctions$.MODULE$.SHA224(), sha224.children());
 	}
 
 	@Override
 	public RexNode visit(Sha256 sha256) {
-		return toRexNode(ScalarSqlFunctions$.MODULE$.SHA256(), sha256.child());
+		return toRexNode(ScalarSqlFunctions$.MODULE$.SHA256(), sha256.children());
 	}
 
 	@Override
 	public RexNode visit(Sha384 sha384) {
-		return toRexNode(ScalarSqlFunctions$.MODULE$.SHA384(), sha384.child());
+		return toRexNode(ScalarSqlFunctions$.MODULE$.SHA384(), sha384.children());
 	}
 
 	@Override
 	public RexNode visit(Sha512 sha512) {
-		return toRexNode(ScalarSqlFunctions$.MODULE$.SHA512(), sha512.child());
+		return toRexNode(ScalarSqlFunctions$.MODULE$.SHA512(), sha512.children());
 	}
 
 	@Override
@@ -445,37 +445,37 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<RexNode> {
 
 	@Override
 	public RexNode visit(Abs abs) {
-		return toRexNode(SqlStdOperatorTable.ABS, abs.child());
+		return toRexNode(SqlStdOperatorTable.ABS, abs.children());
 	}
 
 	@Override
 	public RexNode visit(Ceil ceil) {
-		return toRexNode(SqlStdOperatorTable.CEIL, ceil.child());
+		return toRexNode(SqlStdOperatorTable.CEIL, ceil.children());
 	}
 
 	@Override
 	public RexNode visit(Exp exp) {
-		return toRexNode(SqlStdOperatorTable.EXP, exp.child());
+		return toRexNode(SqlStdOperatorTable.EXP, exp.children());
 	}
 
 	@Override
 	public RexNode visit(Floor floor) {
-		return toRexNode(SqlStdOperatorTable.FLOOR, floor.child());
+		return toRexNode(SqlStdOperatorTable.FLOOR, floor.children());
 	}
 
 	@Override
 	public RexNode visit(Log10 log10) {
-		return toRexNode(SqlStdOperatorTable.LOG10, log10.child());
+		return toRexNode(SqlStdOperatorTable.LOG10, log10.children());
 	}
 
 	@Override
 	public RexNode visit(Log2 log2) {
-		return toRexNode(ScalarSqlFunctions.LOG2(), log2.child());
+		return toRexNode(ScalarSqlFunctions.LOG2(), log2.children());
 	}
 
 	@Override
 	public RexNode visit(Cosh cosh) {
-		return toRexNode(ScalarSqlFunctions.COSH(), cosh.child());
+		return toRexNode(ScalarSqlFunctions.COSH(), cosh.children());
 	}
 
 	@Override
@@ -485,7 +485,7 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<RexNode> {
 
 	@Override
 	public RexNode visit(Ln ln) {
-		return toRexNode(SqlStdOperatorTable.LN, ln.child());
+		return toRexNode(SqlStdOperatorTable.LN, ln.children());
 	}
 
 	@Override
@@ -495,7 +495,7 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<RexNode> {
 
 	@Override
 	public RexNode visit(Sinh sinh) {
-		return toRexNode(ScalarSqlFunctions.SINH(), sinh.child());
+		return toRexNode(ScalarSqlFunctions.SINH(), sinh.children());
 	}
 
 	@Override
@@ -506,42 +506,42 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<RexNode> {
 
 	@Override
 	public RexNode visit(Sin sin) {
-		return toRexNode(SqlStdOperatorTable.SIN, sin.child());
+		return toRexNode(SqlStdOperatorTable.SIN, sin.children());
 	}
 
 	@Override
 	public RexNode visit(Cos cos) {
-		return toRexNode(SqlStdOperatorTable.COS, cos.child());
+		return toRexNode(SqlStdOperatorTable.COS, cos.children());
 	}
 
 	@Override
 	public RexNode visit(Tan tan) {
-		return toRexNode(SqlStdOperatorTable.TAN, tan.child());
+		return toRexNode(SqlStdOperatorTable.TAN, tan.children());
 	}
 
 	@Override
 	public RexNode visit(Tanh tanh) {
-		return toRexNode(ScalarSqlFunctions.TANH(), tanh.child());
+		return toRexNode(ScalarSqlFunctions.TANH(), tanh.children());
 	}
 
 	@Override
 	public RexNode visit(Cot cot) {
-		return toRexNode(SqlStdOperatorTable.COT, cot.child());
+		return toRexNode(SqlStdOperatorTable.COT, cot.children());
 	}
 
 	@Override
 	public RexNode visit(Asin asin) {
-		return toRexNode(SqlStdOperatorTable.ASIN, asin.child());
+		return toRexNode(SqlStdOperatorTable.ASIN, asin.children());
 	}
 
 	@Override
 	public RexNode visit(Acos acos) {
-		return toRexNode(SqlStdOperatorTable.ACOS, acos.child());
+		return toRexNode(SqlStdOperatorTable.ACOS, acos.children());
 	}
 
 	@Override
 	public RexNode visit(Atan atan) {
-		return toRexNode(SqlStdOperatorTable.ATAN, atan.child());
+		return toRexNode(SqlStdOperatorTable.ATAN, atan.children());
 	}
 
 	@Override
@@ -551,17 +551,17 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<RexNode> {
 
 	@Override
 	public RexNode visit(Degrees degrees) {
-		return toRexNode(SqlStdOperatorTable.DEGREES, degrees.child());
+		return toRexNode(SqlStdOperatorTable.DEGREES, degrees.children());
 	}
 
 	@Override
 	public RexNode visit(Radians radians) {
-		return toRexNode(SqlStdOperatorTable.RADIANS, radians.child());
+		return toRexNode(SqlStdOperatorTable.RADIANS, radians.children());
 	}
 
 	@Override
 	public RexNode visit(Sign sign) {
-		return toRexNode(SqlStdOperatorTable.SIGN, sign.child());
+		return toRexNode(SqlStdOperatorTable.SIGN, sign.children());
 	}
 
 	@Override
@@ -591,12 +591,12 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<RexNode> {
 
 	@Override
 	public RexNode visit(Bin bin) {
-		return toRexNode(ScalarSqlFunctions.BIN(), bin.child());
+		return toRexNode(ScalarSqlFunctions.BIN(), bin.children());
 	}
 
 	@Override
 	public RexNode visit(Hex hex) {
-		return toRexNode(ScalarSqlFunctions.HEX(), hex.child());
+		return toRexNode(ScalarSqlFunctions.HEX(), hex.children());
 	}
 
 	@Override
@@ -616,12 +616,12 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<RexNode> {
 
 	@Override
 	public RexNode visit(CharLength charLength) {
-		return toRexNode(SqlStdOperatorTable.CHAR_LENGTH, charLength.child());
+		return toRexNode(SqlStdOperatorTable.CHAR_LENGTH, charLength.children());
 	}
 
 	@Override
 	public RexNode visit(InitCap initCap) {
-		return toRexNode(SqlStdOperatorTable.INITCAP, initCap.child());
+		return toRexNode(SqlStdOperatorTable.INITCAP, initCap.children());
 	}
 
 	@Override
@@ -631,7 +631,7 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<RexNode> {
 
 	@Override
 	public RexNode visit(Lower lower) {
-		return toRexNode(SqlStdOperatorTable.LOWER, lower.child());
+		return toRexNode(SqlStdOperatorTable.LOWER, lower.children());
 	}
 
 	@Override
@@ -651,7 +651,7 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<RexNode> {
 
 	@Override
 	public RexNode visit(Upper upper) {
-		return toRexNode(SqlStdOperatorTable.UPPER, upper.child());
+		return toRexNode(SqlStdOperatorTable.UPPER, upper.children());
 	}
 
 	@Override
@@ -696,22 +696,22 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<RexNode> {
 
 	@Override
 	public RexNode visit(FromBase64 fromBase64) {
-		return toRexNode(ScalarSqlFunctions.FROM_BASE64(), fromBase64.child());
+		return toRexNode(ScalarSqlFunctions.FROM_BASE64(), fromBase64.children());
 	}
 
 	@Override
 	public RexNode visit(ToBase64 toBase64) {
-		return toRexNode(ScalarSqlFunctions.TO_BASE64(), toBase64.child());
+		return toRexNode(ScalarSqlFunctions.TO_BASE64(), toBase64.children());
 	}
 
 	@Override
 	public RexNode visit(LTrim lTrim) {
-		return toRexNode(ScalarSqlFunctions.LTRIM(), lTrim.child());
+		return toRexNode(ScalarSqlFunctions.LTRIM(), lTrim.children());
 	}
 
 	@Override
 	public RexNode visit(RTrim rTrim) {
-		return toRexNode(ScalarSqlFunctions.RTRIM(), rTrim.child());
+		return toRexNode(ScalarSqlFunctions.RTRIM(), rTrim.children());
 	}
 
 	@Override
