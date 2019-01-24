@@ -18,6 +18,7 @@
 
 package org.apache.flink.table.api.planner.visitor;
 
+import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.table.api.base.visitor.ExpressionVisitor;
 import org.apache.flink.table.api.planner.converters.rex.CastRexConverter;
 import org.apache.flink.table.api.planner.converters.rex.aggregations.AggFunctionCallConverter;
@@ -499,7 +500,8 @@ public class ExpressionVisitorImpl implements ExpressionVisitor<RexNode> {
 
 	@Override
 	public RexNode visit(Sqrt sqrt) {
-		return toRexNode(SqlStdOperatorTable.POWER, sqrt.child());
+		return toRexNode(SqlStdOperatorTable.POWER, sqrt.child(),
+			Literal.apply(0.5, BasicTypeInfo.FLOAT_TYPE_INFO));
 	}
 
 	@Override
