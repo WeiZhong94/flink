@@ -18,12 +18,9 @@
 
 package org.apache.flink.table.expressions
 
-import org.apache.calcite.rex.RexNode
-import org.apache.calcite.tools.RelBuilder
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo._
 import org.apache.flink.api.common.typeinfo.{BasicTypeInfo, TypeInformation}
 import org.apache.flink.table.api.base.visitor.ExpressionVisitor
-import org.apache.flink.table.functions.sql.ScalarSqlFunctions
 
 case class Md5(child: Expression) extends UnaryExpression with InputTypeSpec {
 
@@ -32,10 +29,6 @@ case class Md5(child: Expression) extends UnaryExpression with InputTypeSpec {
   override private[flink] def expectedTypes: Seq[TypeInformation[_]] = STRING_TYPE_INFO :: Nil
 
   override def toString: String = s"($child).md5()"
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(ScalarSqlFunctions.MD5, child.toRexNode)
-  }
 
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
@@ -49,10 +42,6 @@ case class Sha1(child: Expression) extends UnaryExpression with InputTypeSpec {
 
   override def toString: String = s"($child).sha1()"
 
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(ScalarSqlFunctions.SHA1, child.toRexNode)
-  }
-
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
 }
@@ -64,10 +53,6 @@ case class Sha224(child: Expression) extends UnaryExpression with InputTypeSpec 
   override private[flink] def expectedTypes: Seq[TypeInformation[_]] = STRING_TYPE_INFO :: Nil
 
   override def toString: String = s"($child).sha224()"
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(ScalarSqlFunctions.SHA224, child.toRexNode)
-  }
 
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
@@ -81,10 +66,6 @@ case class Sha256(child: Expression) extends UnaryExpression with InputTypeSpec 
 
   override def toString: String = s"($child).sha256()"
 
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(ScalarSqlFunctions.SHA256, child.toRexNode)
-  }
-
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
 }
@@ -97,10 +78,6 @@ case class Sha384(child: Expression) extends UnaryExpression with InputTypeSpec 
 
   override def toString: String = s"($child).sha384()"
 
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(ScalarSqlFunctions.SHA384, child.toRexNode)
-  }
-
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
 }
@@ -112,10 +89,6 @@ case class Sha512(child: Expression) extends UnaryExpression with InputTypeSpec 
   override private[flink] def expectedTypes: Seq[TypeInformation[_]] = STRING_TYPE_INFO :: Nil
 
   override def toString: String = s"($child).sha512()"
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(ScalarSqlFunctions.SHA512, child.toRexNode)
-  }
 
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
@@ -133,10 +106,6 @@ case class Sha2(child: Expression, hashLength: Expression)
     STRING_TYPE_INFO :: INT_TYPE_INFO :: Nil
 
   override def toString: String = s"($child).sha2($hashLength)"
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(ScalarSqlFunctions.SHA2, left.toRexNode, right.toRexNode)
-  }
 
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)

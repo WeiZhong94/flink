@@ -18,21 +18,13 @@
 
 package org.apache.flink.table.expressions
 
-import org.apache.calcite.avatica.util.TimeUnit
-import org.apache.calcite.rex._
-import org.apache.calcite.sql.fun.SqlStdOperatorTable
-import org.apache.calcite.tools.RelBuilder
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo._
 import org.apache.flink.api.common.typeinfo.{SqlTimeTypeInfo, TypeInformation}
 import org.apache.flink.table.api.base.visitor.ExpressionVisitor
-import org.apache.flink.table.calcite.FlinkRelBuilder
 import org.apache.flink.table.expressions.TimeIntervalUnit.TimeIntervalUnit
-import org.apache.flink.table.functions.sql.ScalarSqlFunctions
 import org.apache.flink.table.typeutils.TypeCheckUtils.isTimeInterval
 import org.apache.flink.table.typeutils.{TimeIntervalTypeInfo, TypeCheckUtils}
 import org.apache.flink.table.validate.{ValidationFailure, ValidationResult, ValidationSuccess}
-
-import scala.collection.JavaConversions._
 
 case class Extract(timeIntervalUnit: Expression, temporal: Expression) extends Expression {
 
@@ -73,14 +65,6 @@ case class Extract(timeIntervalUnit: Expression, temporal: Expression) extends E
   }
 
   override def toString: String = s"($temporal).extract($timeIntervalUnit)"
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder
-      .getRexBuilder
-      .makeCall(
-        SqlStdOperatorTable.EXTRACT,
-        Seq(timeIntervalUnit.toRexNode, temporal.toRexNode))
-  }
 
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
@@ -134,10 +118,6 @@ case class TemporalFloor(
 
   override def toString: String = s"($temporal).floor($timeIntervalUnit)"
 
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(SqlStdOperatorTable.FLOOR, temporal.toRexNode, timeIntervalUnit.toRexNode)
-  }
-
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
 }
@@ -150,10 +130,6 @@ case class TemporalCeil(
     temporal) {
 
   override def toString: String = s"($temporal).ceil($timeIntervalUnit)"
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(SqlStdOperatorTable.CEIL, temporal.toRexNode, timeIntervalUnit.toRexNode)
-  }
 
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
@@ -182,17 +158,6 @@ abstract class CurrentTimePoint(
     s"local$targetType()"
   } else {
     s"current$targetType()"
-  }
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    val operator = targetType match {
-      case SqlTimeTypeInfo.TIME if local => SqlStdOperatorTable.LOCALTIME
-      case SqlTimeTypeInfo.TIMESTAMP if local => SqlStdOperatorTable.LOCALTIMESTAMP
-      case SqlTimeTypeInfo.DATE => SqlStdOperatorTable.CURRENT_DATE
-      case SqlTimeTypeInfo.TIME => SqlStdOperatorTable.CURRENT_TIME
-      case SqlTimeTypeInfo.TIMESTAMP => SqlStdOperatorTable.CURRENT_TIMESTAMP
-    }
-    relBuilder.call(operator)
   }
 }
 
@@ -236,21 +201,6 @@ case class Quarter(child: Expression) extends UnaryExpression with InputTypeSpec
   override private[flink] def resultType: TypeInformation[_] = LONG_TYPE_INFO
 
   override def toString: String = s"($child).quarter()"
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    /**
-      * Standard conversion of the QUARTER operator.
-      * Source: [[org.apache.calcite.sql2rel.StandardConvertletTable#convertQuarter()]]
-      */
-    Plus(
-      Div(
-        Minus(
-          Extract(TimeIntervalUnit.MONTH, child),
-          Literal(1L)),
-        Literal(TimeUnit.QUARTER.multiplier.longValue())),
-      Literal(1L)
-    ).toRexNode
-  }
 
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
@@ -311,66 +261,12 @@ case class TemporalOverlaps(
 
   override def toString: String = s"temporalOverlaps(${children.mkString(", ")})"
 
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    convertOverlaps(
-      leftTimePoint.toRexNode,
-      leftTemporal.toRexNode,
-      rightTimePoint.toRexNode,
-      rightTemporal.toRexNode,
-      relBuilder.asInstanceOf[FlinkRelBuilder])
-  }
-
-  /**
-    * Standard conversion of the OVERLAPS operator.
-    * Source: [[org.apache.calcite.sql2rel.StandardConvertletTable#convertOverlaps()]]
-    */
-  private def convertOverlaps(
-      leftP: RexNode,
-      leftT: RexNode,
-      rightP: RexNode,
-      rightT: RexNode,
-      relBuilder: FlinkRelBuilder)
-    : RexNode = {
-    val convLeftT = convertOverlapsEnd(relBuilder, leftP, leftT, leftTemporal.resultType)
-    val convRightT = convertOverlapsEnd(relBuilder, rightP, rightT, rightTemporal.resultType)
-
-    // sort end points into start and end, such that (s0 <= e0) and (s1 <= e1).
-    val (s0, e0) = buildSwap(relBuilder, leftP, convLeftT)
-    val (s1, e1) = buildSwap(relBuilder, rightP, convRightT)
-
-    // (e0 >= s1) AND (e1 >= s0)
-    val leftPred = relBuilder.call(SqlStdOperatorTable.GREATER_THAN_OR_EQUAL, e0, s1)
-    val rightPred = relBuilder.call(SqlStdOperatorTable.GREATER_THAN_OR_EQUAL, e1, s0)
-    relBuilder.call(SqlStdOperatorTable.AND, leftPred, rightPred)
-  }
-
-  private def convertOverlapsEnd(
-      relBuilder: FlinkRelBuilder,
-      start: RexNode, end: RexNode,
-      endType: TypeInformation[_]) = {
-    if (isTimeInterval(endType)) {
-      relBuilder.call(SqlStdOperatorTable.DATETIME_PLUS, start, end)
-    } else {
-      end
-    }
-  }
-
-  private def buildSwap(relBuilder: FlinkRelBuilder, start: RexNode, end: RexNode) = {
-    val le = relBuilder.call(SqlStdOperatorTable.LESS_THAN_OR_EQUAL, start, end)
-    val l = relBuilder.call(SqlStdOperatorTable.CASE, le, start, end)
-    val r = relBuilder.call(SqlStdOperatorTable.CASE, le, end, start)
-    (l, r)
-  }
-
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
 }
 
 case class DateFormat(timestamp: Expression, format: Expression) extends Expression {
   override private[flink] def children = timestamp :: format :: Nil
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder) =
-    relBuilder.call(ScalarSqlFunctions.DATE_FORMAT, timestamp.toRexNode, format.toRexNode)
 
   override def toString: String = s"$timestamp.dateFormat($format)"
 
@@ -421,12 +317,6 @@ case class TimestampDiff(
         ValidationFailure(s"$this operator does not support unit '$timePointUnit'" +
             s" for input of type ('${timePoint1.resultType}', '${timePoint2.resultType}').")
     }
-  }
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder
-    .getRexBuilder
-    .makeCall(SqlStdOperatorTable.TIMESTAMP_DIFF,
-       Seq(timePointUnit.toRexNode, timePoint2.toRexNode, timePoint1.toRexNode))
   }
 
   override def toString: String = s"timestampDiff(${children.mkString(", ")})"

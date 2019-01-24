@@ -33,6 +33,7 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
  */
 public class InConverter {
 	public static RexNode toRexNode(In in, ExpressionVisitorImpl visitor) {
+		// check if this is a sub-query expression or an element list
 		if (in.elements().head() instanceof TableReference) {
 
 			TableReference tableReference = (TableReference) in.elements().head();

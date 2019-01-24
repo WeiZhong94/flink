@@ -17,9 +17,6 @@
  */
 package org.apache.flink.table.expressions
 
-import org.apache.calcite.rex.RexNode
-import org.apache.calcite.sql.fun.SqlStdOperatorTable
-import org.apache.calcite.tools.RelBuilder
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo
 import org.apache.flink.table.api.base.visitor.ExpressionVisitor
 import org.apache.flink.table.validate._
@@ -42,10 +39,6 @@ case class Not(child: Expression) extends UnaryExpression {
 
   override def toString = s"!($child)"
 
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.not(child.toRexNode)
-  }
-
   override private[flink] def resultType = BasicTypeInfo.BOOLEAN_TYPE_INFO
 
   override private[flink] def validateInput(): ValidationResult = {
@@ -65,10 +58,6 @@ case class And(left: Expression, right: Expression) extends BinaryPredicate {
 
   override def toString = s"$left && $right"
 
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.and(left.toRexNode, right.toRexNode)
-  }
-
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
 }
@@ -76,10 +65,6 @@ case class And(left: Expression, right: Expression) extends BinaryPredicate {
 case class Or(left: Expression, right: Expression) extends BinaryPredicate {
 
   override def toString = s"$left || $right"
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.or(left.toRexNode, right.toRexNode)
-  }
 
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
@@ -95,13 +80,6 @@ case class If(
   override private[flink] def resultType = ifTrue.resultType
 
   override def toString = s"($condition)? $ifTrue : $ifFalse"
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    val c = condition.toRexNode
-    val t = ifTrue.toRexNode
-    val f = ifFalse.toRexNode
-    relBuilder.call(SqlStdOperatorTable.CASE, c, t, f)
-  }
 
   override private[flink] def validateInput(): ValidationResult = {
     if (condition.resultType == BasicTypeInfo.BOOLEAN_TYPE_INFO &&

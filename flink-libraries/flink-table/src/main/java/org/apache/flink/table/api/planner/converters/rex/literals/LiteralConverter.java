@@ -53,22 +53,22 @@ public class LiteralConverter {
 			return visitor.getRelBuilder().getRexBuilder().makeExactLiteral(bigDecValue, decType);
 
 		} else if (type.equals(BasicTypeInfo.LONG_TYPE_INFO)) {
-
+			// create BIGINT literals for long type
 			BigDecimal bigint = BigDecimal.valueOf((Long) literal.value());
 			return visitor.getRelBuilder().getRexBuilder().makeBigintLiteral(bigint);
 
 		} else if (type.equals(SqlTimeTypeInfo.DATE)) {
-
+			// date
 			DateString datestr = DateString.fromCalendarFields(valueAsCalendar(literal.value()));
 			return visitor.getRelBuilder().getRexBuilder().makeDateLiteral(datestr);
 
 		} else if (type.equals(SqlTimeTypeInfo.TIME)) {
-
+			//time
 			TimeString timestr = TimeString.fromCalendarFields(valueAsCalendar(literal.value()));
 			return visitor.getRelBuilder().getRexBuilder().makeTimeLiteral(timestr, 0);
 
 		} else if (type.equals(SqlTimeTypeInfo.TIMESTAMP)) {
-
+			//timestamp
 			TimestampString timestampstr =
 				TimestampString.fromCalendarFields(valueAsCalendar(literal.value()));
 			return visitor.getRelBuilder().getRexBuilder().makeTimestampLiteral(timestampstr, 3);

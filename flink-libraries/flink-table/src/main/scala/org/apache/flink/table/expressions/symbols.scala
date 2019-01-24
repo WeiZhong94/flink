@@ -19,9 +19,7 @@
 package org.apache.flink.table.expressions
 
 import org.apache.calcite.avatica.util.{TimeUnit, TimeUnitRange}
-import org.apache.calcite.rex.RexNode
 import org.apache.calcite.sql.fun.SqlTrimFunction
-import org.apache.calcite.tools.RelBuilder
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.table.api.base.visitor.ExpressionVisitor
 
@@ -36,12 +34,6 @@ case class SymbolExpression(symbol: TableSymbol) extends LeafExpression {
     throw new UnsupportedOperationException("This should not happen. A symbol has no result type.")
 
   def toExpr: SymbolExpression = this // triggers implicit conversion
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    // dirty hack to pass Java enums to Java from Scala
-    val enum = symbol.javaEnum.asInstanceOf[Enum[T] forSome { type T <: Enum[T] }]
-    relBuilder.getRexBuilder.makeFlag(enum)
-  }
 
   override def toString: String = s"${symbol.symbols}.${symbol.name}"
 

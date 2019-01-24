@@ -17,17 +17,11 @@
  */
 package org.apache.flink.table.expressions
 
-import org.apache.calcite.rex.RexNode
-import org.apache.calcite.sql.fun.SqlStdOperatorTable
-import org.apache.calcite.tools.RelBuilder
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo._
 import org.apache.flink.api.common.typeinfo.{BasicTypeInfo, TypeInformation}
 import org.apache.flink.table.api.base.visitor.ExpressionVisitor
-import org.apache.flink.table.functions.sql.ScalarSqlFunctions
 import org.apache.flink.table.typeutils.TypeCheckUtils
 import org.apache.flink.table.validate._
-
-import scala.collection.JavaConversions._
 
 case class Abs(child: Expression) extends UnaryExpression {
   override private[flink] def resultType: TypeInformation[_] = child.resultType
@@ -36,10 +30,6 @@ case class Abs(child: Expression) extends UnaryExpression {
     TypeCheckUtils.assertNumericExpr(child.resultType, "Abs")
 
   override def toString: String = s"abs($child)"
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(SqlStdOperatorTable.ABS, child.toRexNode)
-  }
 
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
@@ -53,10 +43,6 @@ case class Ceil(child: Expression) extends UnaryExpression {
 
   override def toString: String = s"ceil($child)"
 
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(SqlStdOperatorTable.CEIL, child.toRexNode)
-  }
-
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
 }
@@ -67,10 +53,6 @@ case class Exp(child: Expression) extends UnaryExpression with InputTypeSpec {
   override private[flink] def expectedTypes: Seq[TypeInformation[_]] = DOUBLE_TYPE_INFO :: Nil
 
   override def toString: String = s"exp($child)"
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(SqlStdOperatorTable.EXP, child.toRexNode)
-  }
 
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
@@ -85,10 +67,6 @@ case class Floor(child: Expression) extends UnaryExpression {
 
   override def toString: String = s"floor($child)"
 
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(SqlStdOperatorTable.FLOOR, child.toRexNode)
-  }
-
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
 }
@@ -100,10 +78,6 @@ case class Log10(child: Expression) extends UnaryExpression with InputTypeSpec {
 
   override def toString: String = s"log10($child)"
 
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(SqlStdOperatorTable.LOG10, child.toRexNode)
-  }
-
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
 }
@@ -112,10 +86,6 @@ case class Log2(child: Expression) extends UnaryExpression with InputTypeSpec {
   override private[flink] def expectedTypes: Seq[TypeInformation[_]] = DOUBLE_TYPE_INFO :: Nil
 
   override private[flink] def resultType: TypeInformation[_] = DOUBLE_TYPE_INFO
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder) = {
-    relBuilder.call(ScalarSqlFunctions.LOG2, child.toRexNode)
-  }
 
   override def toString: String = s"log2($child)"
 
@@ -126,10 +96,6 @@ case class Log2(child: Expression) extends UnaryExpression with InputTypeSpec {
 case class Cosh(child: Expression) extends UnaryExpression {
 
   override private[flink] def resultType: TypeInformation[_] = DOUBLE_TYPE_INFO
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder) = {
-    relBuilder.call(ScalarSqlFunctions.COSH, child.toRexNode)
-  }
 
   override private[flink] def validateInput(): ValidationResult =
     TypeCheckUtils.assertNumericExpr(child.resultType, "Cosh")
@@ -153,10 +119,6 @@ case class Log(base: Expression, antilogarithm: Expression) extends Expression w
 
   override def toString: String = s"log(${children.mkString(",")})"
 
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(ScalarSqlFunctions.LOG, children.map(_.toRexNode))
-  }
-
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
 }
@@ -172,10 +134,6 @@ case class Ln(child: Expression) extends UnaryExpression with InputTypeSpec {
 
   override def toString: String = s"ln($child)"
 
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(SqlStdOperatorTable.LN, child.toRexNode)
-  }
-
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
 }
@@ -188,10 +146,6 @@ case class Power(left: Expression, right: Expression) extends BinaryExpression w
 
   override def toString: String = s"pow($left, $right)"
 
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(SqlStdOperatorTable.POWER, left.toRexNode, right.toRexNode)
-  }
-
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
 }
@@ -202,10 +156,6 @@ case class Sinh(child: Expression) extends UnaryExpression {
 
   override private[flink] def validateInput(): ValidationResult =
     TypeCheckUtils.assertNumericExpr(child.resultType, "Sinh")
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder) = {
-    relBuilder.call(ScalarSqlFunctions.SINH, child.toRexNode)
-  }
 
   override def toString = s"sinh($child)"
 
@@ -221,10 +171,6 @@ case class Sqrt(child: Expression) extends UnaryExpression with InputTypeSpec {
 
   override def toString: String = s"sqrt($child)"
 
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(SqlStdOperatorTable.POWER, child.toRexNode, Literal(0.5).toRexNode)
-  }
-
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
 }
@@ -236,10 +182,6 @@ case class Sin(child: Expression) extends UnaryExpression {
     TypeCheckUtils.assertNumericExpr(child.resultType, "Sin")
 
   override def toString: String = s"sin($child)"
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(SqlStdOperatorTable.SIN, child.toRexNode)
-  }
 
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
@@ -253,10 +195,6 @@ case class Cos(child: Expression) extends UnaryExpression {
 
   override def toString: String = s"cos($child)"
 
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(SqlStdOperatorTable.COS, child.toRexNode)
-  }
-
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
 }
@@ -269,10 +207,6 @@ case class Tan(child: Expression) extends UnaryExpression {
 
   override def toString: String = s"tan($child)"
 
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(SqlStdOperatorTable.TAN, child.toRexNode)
-  }
-
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
 }
@@ -280,10 +214,6 @@ case class Tan(child: Expression) extends UnaryExpression {
 case class Tanh(child: Expression) extends UnaryExpression {
 
   override private[flink] def resultType: TypeInformation[_] = DOUBLE_TYPE_INFO
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder) = {
-    relBuilder.call(ScalarSqlFunctions.TANH, child.toRexNode)
-  }
 
   override private[flink] def validateInput(): ValidationResult =
     TypeCheckUtils.assertNumericExpr(child.resultType, "Tanh")
@@ -302,10 +232,6 @@ case class Cot(child: Expression) extends UnaryExpression {
 
   override def toString: String = s"cot($child)"
 
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(SqlStdOperatorTable.COT, child.toRexNode)
-  }
-
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
 }
@@ -317,10 +243,6 @@ case class Asin(child: Expression) extends UnaryExpression {
     TypeCheckUtils.assertNumericExpr(child.resultType, "Asin")
 
   override def toString: String = s"asin($child)"
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(SqlStdOperatorTable.ASIN, child.toRexNode)
-  }
 
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
@@ -334,10 +256,6 @@ case class Acos(child: Expression) extends UnaryExpression {
 
   override def toString: String = s"acos($child)"
 
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(SqlStdOperatorTable.ACOS, child.toRexNode)
-  }
-
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
 }
@@ -349,10 +267,6 @@ case class Atan(child: Expression) extends UnaryExpression {
     TypeCheckUtils.assertNumericExpr(child.resultType, "Atan")
 
   override def toString: String = s"atan($child)"
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(SqlStdOperatorTable.ATAN, child.toRexNode)
-  }
 
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
@@ -373,10 +287,6 @@ case class Atan2(y: Expression, x: Expression) extends BinaryExpression {
 
   override def toString: String = s"atan2($left, $right)"
 
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(SqlStdOperatorTable.ATAN2, left.toRexNode, right.toRexNode)
-  }
-
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
 }
@@ -388,10 +298,6 @@ case class Degrees(child: Expression) extends UnaryExpression {
     TypeCheckUtils.assertNumericExpr(child.resultType, "Degrees")
 
   override def toString: String = s"degrees($child)"
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(SqlStdOperatorTable.DEGREES, child.toRexNode)
-  }
 
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
@@ -405,10 +311,6 @@ case class Radians(child: Expression) extends UnaryExpression {
 
   override def toString: String = s"radians($child)"
 
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(SqlStdOperatorTable.RADIANS, child.toRexNode)
-  }
-
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
 }
@@ -420,10 +322,6 @@ case class Sign(child: Expression) extends UnaryExpression {
     TypeCheckUtils.assertNumericExpr(child.resultType, "sign")
 
   override def toString: String = s"sign($child)"
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(SqlStdOperatorTable.SIGN, child.toRexNode)
-  }
 
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
@@ -442,10 +340,6 @@ case class Round(left: Expression, right: Expression) extends BinaryExpression {
 
   override def toString: String = s"round($left, $right)"
 
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(SqlStdOperatorTable.ROUND, left.toRexNode, right.toRexNode)
-  }
-
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
 }
@@ -455,10 +349,6 @@ case class Pi() extends LeafExpression {
 
   override def toString: String = s"pi()"
 
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(SqlStdOperatorTable.PI)
-  }
-
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
 }
@@ -467,10 +357,6 @@ case class E() extends LeafExpression {
   override private[flink] def resultType: TypeInformation[_] = DOUBLE_TYPE_INFO
 
   override def toString: String = s"e()"
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(ScalarSqlFunctions.E)
-  }
 
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
@@ -498,10 +384,6 @@ case class Rand(seed: Expression) extends Expression with InputTypeSpec {
     s"rand($seed)"
   } else {
     s"rand()"
-  }
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(SqlStdOperatorTable.RAND, children.map(_.toRexNode))
   }
 
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
@@ -532,10 +414,6 @@ case class RandInteger(seed: Expression, bound: Expression) extends Expression w
     s"randInteger($bound)"
   }
 
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(SqlStdOperatorTable.RAND_INTEGER, children.map(_.toRexNode))
-  }
-
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
 }
@@ -547,10 +425,6 @@ case class Bin(child: Expression) extends UnaryExpression {
     TypeCheckUtils.assertIntegerFamilyExpr(child.resultType, "Bin")
 
   override def toString: String = s"bin($child)"
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(ScalarSqlFunctions.BIN, child.toRexNode)
-  }
 
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
@@ -570,10 +444,6 @@ case class Hex(child: Expression) extends UnaryExpression {
 
   override def toString: String = s"hex($child)"
 
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(ScalarSqlFunctions.HEX, child.toRexNode)
-  }
-
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)
 }
@@ -582,10 +452,6 @@ case class UUID() extends LeafExpression {
   override private[flink] def resultType = BasicTypeInfo.STRING_TYPE_INFO
 
   override def toString: String = s"uuid()"
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(ScalarSqlFunctions.UUID)
-  }
 
   override private[flink] def accept[T](visitor: ExpressionVisitor[T]): T =
     visitor.visit(this)

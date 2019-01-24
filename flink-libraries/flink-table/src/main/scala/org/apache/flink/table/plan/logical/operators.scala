@@ -404,7 +404,7 @@ case class Join(
 
     override def toString = s"'$name"
 
-    override def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
+    def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
       // look up type of field
       val fieldType = relBuilder.field(2, if (isFromLeftInput) 0 else 1, name).getType
       // create a new RexInputRef with index offset

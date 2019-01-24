@@ -17,27 +17,14 @@
  */
 package org.apache.flink.table.expressions
 
-import java.util
-
-import com.google.common.collect.ImmutableList
-import org.apache.calcite.rex.RexWindowBound._
-import org.apache.calcite.rex.{RexFieldCollation, RexNode, RexWindowBound}
-import org.apache.calcite.sql._
-import org.apache.calcite.sql.`type`.OrdinalReturnTypeInference
-import org.apache.calcite.sql.parser.SqlParserPos
-import org.apache.calcite.tools.RelBuilder
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.table.api._
 import org.apache.flink.table.api.base.visitor.ExpressionVisitor
-import org.apache.flink.table.api.planner.visitor.AggregationSqlFunVisitorImpl
-import org.apache.flink.table.calcite.FlinkTypeFactory
 import org.apache.flink.table.functions.utils.UserDefinedFunctionUtils._
 import org.apache.flink.table.functions._
 import org.apache.flink.table.plan.logical.{LogicalNode, LogicalTableFunctionCall}
 import org.apache.flink.table.validate.{ValidationFailure, ValidationResult, ValidationSuccess}
 import org.apache.flink.table.typeutils.{RowIntervalTypeInfo, TimeIntervalTypeInfo}
-
-import _root_.scala.collection.JavaConverters._
 
 /**
   * General expression for unresolved function calls. The function can be a built-in
@@ -46,10 +33,6 @@ import _root_.scala.collection.JavaConverters._
 case class Call(functionName: String, args: Seq[Expression]) extends Expression {
 
   override private[flink] def children: Seq[Expression] = args
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    throw UnresolvedException(s"trying to convert UnresolvedFunction $functionName to RexNode")
-  }
 
   override def toString = s"\\$functionName(${args.mkString(", ")})"
 
@@ -103,87 +86,6 @@ case class OverCall(
     s"ORDER BY $orderBy " +
     s"PRECEDING $preceding " +
     s"FOLLOWING $following)"
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-
-    val rexBuilder = relBuilder.getRexBuilder
-
-    // assemble aggregation
-    val operator: SqlAggFunction =
-      AggregationSqlFunVisitorImpl.getSqlAggFunction(agg.asInstanceOf[Aggregation], relBuilder)
-    val aggResultType = relBuilder
-      .getTypeFactory.asInstanceOf[FlinkTypeFactory]
-      .createTypeFromTypeInfo(agg.resultType, isNullable = true)
-
-    // assemble exprs by agg children
-    val aggExprs = agg.asInstanceOf[Aggregation].children.map(_.toRexNode(relBuilder)).asJava
-
-    // assemble order by key
-    val orderKey = new RexFieldCollation(orderBy.toRexNode, Set[SqlKind]().asJava)
-    val orderKeys = ImmutableList.of(orderKey)
-
-    // assemble partition by keys
-    val partitionKeys = partitionBy.map(_.toRexNode).asJava
-
-    // assemble bounds
-    val isPhysical: Boolean = preceding.resultType.isInstanceOf[RowIntervalTypeInfo]
-
-    val lowerBound = createBound(relBuilder, preceding, SqlKind.PRECEDING)
-    val upperBound = createBound(relBuilder, following, SqlKind.FOLLOWING)
-
-    // build RexOver
-    rexBuilder.makeOver(
-      aggResultType,
-      operator,
-      aggExprs,
-      partitionKeys,
-      orderKeys,
-      lowerBound,
-      upperBound,
-      isPhysical,
-      true,
-      false,
-      false)
-  }
-
-  private def createBound(
-    relBuilder: RelBuilder,
-    bound: Expression,
-    sqlKind: SqlKind): RexWindowBound = {
-
-    bound match {
-      case _: UnboundedRow | _: UnboundedRange =>
-        val unbounded = SqlWindow.createUnboundedPreceding(SqlParserPos.ZERO)
-        create(unbounded, null)
-      case _: CurrentRow | _: CurrentRange =>
-        val currentRow = SqlWindow.createCurrentRow(SqlParserPos.ZERO)
-        create(currentRow, null)
-      case b: Literal =>
-        val returnType = relBuilder
-          .getTypeFactory.asInstanceOf[FlinkTypeFactory]
-          .createTypeFromTypeInfo(Types.DECIMAL, isNullable = true)
-
-        val sqlOperator = new SqlPostfixOperator(
-          sqlKind.name,
-          sqlKind,
-          2,
-          new OrdinalReturnTypeInference(0),
-          null,
-          null)
-
-        val operands: Array[SqlNode] = new Array[SqlNode](1)
-        operands(0) = SqlLiteral.createExactNumeric("1", SqlParserPos.ZERO)
-
-        val node = new SqlBasicCall(sqlOperator, operands, SqlParserPos.ZERO)
-
-        val expressions: util.ArrayList[RexNode] = new util.ArrayList[RexNode]()
-        expressions.add(relBuilder.literal(b.value))
-
-        val rexNode = relBuilder.getRexBuilder.makeCall(returnType, sqlOperator, expressions)
-
-        create(node, rexNode)
-    }
-  }
 
   override private[flink] def children: Seq[Expression] =
     Seq(agg) ++ Seq(orderBy) ++ partitionBy ++ Seq(preceding) ++ Seq(following)
@@ -278,17 +180,6 @@ case class ScalarFunctionCall(
   private var foundSignature: Option[Array[Class[_]]] = None
 
   override private[flink] def children: Seq[Expression] = parameters
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    val typeFactory = relBuilder.getTypeFactory.asInstanceOf[FlinkTypeFactory]
-    relBuilder.call(
-      createScalarSqlFunction(
-        scalarFunction.functionIdentifier,
-        scalarFunction.toString,
-        scalarFunction,
-        typeFactory),
-      parameters.map(_.toRexNode): _*)
-  }
 
   override def toString =
     s"${scalarFunction.getClass.getCanonicalName}(${parameters.mkString(", ")})"
