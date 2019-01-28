@@ -80,7 +80,8 @@ class CorrelateValidationTest extends TableTestBase {
     // table function call filter
     expectExceptionThrown(
       func1('c).filter('f0 === "?"),
-      "TableFunction can only be used in join and leftOuterJoin."
+      null,
+      classOf[NullPointerException]
     )
 
     // table function call filter
@@ -122,7 +123,8 @@ class CorrelateValidationTest extends TableTestBase {
     // table function call where
     expectExceptionThrown(
       func1('c).where('f0 === "?"),
-      "TableFunction can only be used in join and leftOuterJoin."
+      null,
+      classOf[NullPointerException]
     )
 
   }

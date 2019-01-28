@@ -17,9 +17,11 @@
  */
 package org.apache.flink.table.api
 
+import org.apache.flink.table.apiexpressions.{ApiExpression, ApiOverWindow, ApiWindow}
 import org.apache.flink.table.expressions.Expression
-import org.apache.flink.table.functions.TemporalTableFunction
+import org.apache.flink.table.functions.TableFunction
 import org.apache.flink.table.sinks.TableSink
+import org.apache.flink.types.Row
 
 import _root_.scala.annotation.varargs
 
@@ -28,41 +30,53 @@ trait Table {
   def getSchema: TableSchema
   def printSchema(): Unit
 
-  def select(fields: Expression*): Table
+  def selectApi(fields: Expression*): Table
   def select(fields: String): Table
+  def select(fields: ApiExpression*): Table
 
   def createTemporalTableFunction(
       timeAttribute: String,
-      primaryKey: String): TemporalTableFunction
-  def createTemporalTableFunction(
+      primaryKey: String): TableFunction[Row]
+  def createTemporalTableFunctionApi(
       timeAttribute: Expression,
-      primaryKey: Expression): TemporalTableFunction
+      primaryKey: Expression): TableFunction[Row]
+  def createTemporalTableFunction(
+      timeAttribute: ApiExpression,
+      primaryKey: ApiExpression): TableFunction[Row]
 
 
-  def as(fields: Expression*): Table
+  def asApi(fields: Expression*): Table
   def as(fields: String): Table
+  def as(fields: ApiExpression*): Table
 
-  def filter(predicate: Expression): Table
+  def filterApi(predicate: Expression): Table
   def filter(predicate: String): Table
+  def filter(predicate: ApiExpression): Table
 
-  def where(predicate: Expression): Table
+  def whereApi(predicate: Expression): Table
   def where(predicate: String): Table
+  def where(predicate: ApiExpression): Table
 
-  def groupBy(fields: Expression*): GroupedTable
+  def groupByApi(fields: Expression*): GroupedTable
   def groupBy(fields: String): GroupedTable
+  def groupBy(fields: ApiExpression*): GroupedTable
 
   def distinct(): Table
 
   def join(right: Table): Table
   def join(right: Table, joinPredicate: String): Table
-  def join(right: Table, joinPredicate: Expression): Table
+  def joinApi(right: Table, joinPredicate: Expression): Table
+  def join(right: Table, joinPredicate: ApiExpression): Table
   def leftOuterJoin(right: Table): Table
   def leftOuterJoin(right: Table, joinPredicate: String): Table
-  def leftOuterJoin(right: Table, joinPredicate: Expression): Table
+  def leftOuterJoinApi(right: Table, joinPredicate: Expression): Table
+  def leftOuterJoin(right: Table, joinPredicate: ApiExpression): Table
   def rightOuterJoin(right: Table, joinPredicate: String): Table
-  def rightOuterJoin(right: Table, joinPredicate: Expression): Table
+  def rightOuterJoinApi(right: Table, joinPredicate: Expression): Table
+  def rightOuterJoin(right: Table, joinPredicate: ApiExpression): Table
   def fullOuterJoin(right: Table, joinPredicate: String): Table
-  def fullOuterJoin(right: Table, joinPredicate: Expression): Table
+  def fullOuterJoinApi(right: Table, joinPredicate: Expression): Table
+  def fullOuterJoin(right: Table, joinPredicate: ApiExpression): Table
 
   def minus(right: Table): Table
   def minusAll(right: Table): Table
@@ -73,8 +87,9 @@ trait Table {
   def intersect(right: Table): Table
   def intersectAll(right: Table): Table
 
-  def orderBy(fields: Expression*): Table
+  def orderByApi(fields: Expression*): Table
   def orderBy(fields: String): Table
+  def orderBy(fields: ApiExpression*): Table
 
   def offset(offset: Int): Table
 
@@ -92,28 +107,33 @@ trait Table {
   def insertInto(tableName: String): Unit
   def insertInto(tableName: String, conf: QueryConfig): Unit
 
+  def window(window: ApiWindow): WindowedTable
   def window(window: Window): WindowedTable
 
   @varargs
-  def window(overWindows: OverWindow*): OverWindowedTable
+  def window(overWindows: UnresolvedOverWindow*): OverWindowedTable
 }
 
 trait GroupedTable {
-  def select(fields: Expression*): Table
+  def selectApi(fields: Expression*): Table
   def select(fields: String): Table
+  def select(fields: ApiExpression*): Table
 }
 
 trait WindowedTable{
-  def groupBy(fields: Expression*): WindowGroupedTable
+  def groupByApi(fields: Expression*): WindowGroupedTable
   def groupBy(fields: String): WindowGroupedTable
+  def groupBy(fields: ApiExpression*): WindowGroupedTable
 }
 
 trait OverWindowedTable {
-  def select(fields: Expression*): Table
+  def selectApi(fields: Expression*): Table
   def select(fields: String): Table
+  def select(fields: ApiExpression*): Table
 }
 
 trait WindowGroupedTable {
-  def select(fields: Expression*): Table
+  def selectApi(fields: Expression*): Table
   def select(fields: String): Table
+  def select(fields: ApiExpression*): Table
 }

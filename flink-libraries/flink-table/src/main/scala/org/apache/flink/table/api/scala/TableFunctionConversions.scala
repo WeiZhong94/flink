@@ -20,7 +20,8 @@ package org.apache.flink.table.api.scala
 
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.table.api.{Table, TableImpl}
-import org.apache.flink.table.expressions._
+import org.apache.flink.table.apiexpressions.ApiExpression
+import org.apache.flink.table.expressions.ApiExpressionParser
 import org.apache.flink.table.functions.TableFunction
 import org.apache.flink.table.plan.logical.LogicalTableFunctionCall
 
@@ -37,7 +38,7 @@ class TableFunctionConversions[T](tf: TableFunction[T]) {
     * @param args The arguments of the table function call.
     * @return A [[Table]] with which represents the [[LogicalTableFunctionCall]].
     */
-  final def apply(args: Expression*)(implicit typeInfo: TypeInformation[T]): Table = {
+  final def apply(args: ApiExpression*)(implicit typeInfo: TypeInformation[T]): Table = {
 
     val resultType = if (tf.getResultType == null) typeInfo else tf.getResultType
 
@@ -46,7 +47,7 @@ class TableFunctionConversions[T](tf: TableFunction[T]) {
       LogicalTableFunctionCall(
         tf.getClass.getCanonicalName,
         tf,
-        args.toList,
+        args.map(ApiExpressionParser.parse).toList,
         resultType,
         Array.empty,
         child = null // Child will be set later.

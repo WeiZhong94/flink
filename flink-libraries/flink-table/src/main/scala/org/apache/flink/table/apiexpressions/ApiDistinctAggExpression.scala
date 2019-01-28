@@ -15,16 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flink.table.api
+package org.apache.flink.table.apiexpressions
 
-import org.apache.calcite.rel.RelNode
-import org.apache.flink.table.calcite.FlinkRelBuilder
-import org.apache.flink.table.plan.logical.LogicalNode
-
-trait InnerTable extends Table {
-  def logicalPlan: LogicalNode
-  def tableEnv: TableEnvironment
-  def relBuilder: FlinkRelBuilder
-  def getRelNode: RelNode
+case class ApiDistinctAggExpression(apiCall: ApiCall) {
+  def distinct: ApiDistinctAgg = {
+    ApiDistinctAgg(apiCall)
+  }
 }
-
