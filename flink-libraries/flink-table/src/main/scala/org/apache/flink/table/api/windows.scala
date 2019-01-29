@@ -29,13 +29,13 @@ trait UnresolvedOverWindow
   * Over window is similar to the traditional OVER SQL.
   */
 case class OverWindow(
-    private[flink] val alias: Expression,
-    private[flink] val partitionBy: Seq[Expression],
-    private[flink] val orderBy: Expression,
-    private[flink] val preceding: Expression,
-    private[flink] val following: Expression) extends UnresolvedOverWindow
+    private[flink] val alias: PlannerExpression,
+    private[flink] val partitionBy: Seq[PlannerExpression],
+    private[flink] val orderBy: PlannerExpression,
+    private[flink] val preceding: PlannerExpression,
+    private[flink] val following: PlannerExpression) extends UnresolvedOverWindow
 
-case class CurrentRow() extends Expression {
+case class PlannerCurrentRow() extends PlannerExpression {
   override private[flink] def resultType = RowIntervalTypeInfo.INTERVAL_ROWS
 
   override private[flink] def children = Seq()
@@ -43,7 +43,7 @@ case class CurrentRow() extends Expression {
   override def toString = "CURRENT ROW"
 }
 
-case class CurrentRange() extends Expression {
+case class PlannerCurrentRange() extends PlannerExpression {
   override private[flink] def resultType = TimeIntervalTypeInfo.INTERVAL_MILLIS
 
   override private[flink] def children = Seq()
@@ -51,7 +51,7 @@ case class CurrentRange() extends Expression {
   override def toString = "CURRENT RANGE"
 }
 
-case class UnboundedRow() extends Expression {
+case class PlannerUnboundedRow() extends PlannerExpression {
   override private[flink] def resultType = RowIntervalTypeInfo.INTERVAL_ROWS
 
   override private[flink] def children = Seq()
@@ -59,7 +59,7 @@ case class UnboundedRow() extends Expression {
   override def toString = "UNBOUNDED ROW"
 }
 
-case class UnboundedRange() extends Expression {
+case class PlannerUnboundedRange() extends PlannerExpression {
   override private[flink] def resultType = TimeIntervalTypeInfo.INTERVAL_MILLIS
 
   override private[flink] def children = Seq()
@@ -71,11 +71,11 @@ case class UnboundedRange() extends Expression {
   * A partially defined over window.
   */
 class OverWindowWithPreceding(
-    private val partitionBy: Seq[Expression],
-    private val orderBy: Expression,
-    private val preceding: Expression) {
+    private val partitionBy: Seq[PlannerExpression],
+    private val orderBy: PlannerExpression,
+    private val preceding: PlannerExpression) {
 
-  private[flink] var following: Expression = _
+  private[flink] var following: PlannerExpression = _
 
   /**
     * Assigns an alias for this window that the following `select()` clause can refer to.
@@ -91,14 +91,14 @@ class OverWindowWithPreceding(
     * @param alias alias for this over window
     * @return over window
     */
-  def as(alias: Expression): OverWindow = {
+  def as(alias: PlannerExpression): OverWindow = {
 
     // set following to CURRENT_ROW / CURRENT_RANGE if not defined
     if (null == following) {
       if (preceding.resultType.isInstanceOf[RowIntervalTypeInfo]) {
-        following = CurrentRow()
+        following = PlannerCurrentRow()
       } else {
-        following = CurrentRange()
+        following = PlannerCurrentRange()
       }
     }
     OverWindow(alias, partitionBy, orderBy, preceding, following)
@@ -120,7 +120,7 @@ class OverWindowWithPreceding(
     * @param following following offset that relative to the current row.
     * @return this over window
     */
-  def following(following: Expression): OverWindowWithPreceding = {
+  def following(following: PlannerExpression): OverWindowWithPreceding = {
     this.following = following
     this
   }
@@ -139,7 +139,7 @@ class OverWindowWithPreceding(
   * For finite batch tables, window provides shortcuts for time-based groupBy.
   *
   */
-abstract class Window(val alias: Expression, val timeField: Expression) {
+abstract class Window(val alias: PlannerExpression, val timeField: PlannerExpression) {
 
   /**
     * Converts an API class to a logical window for planning.
@@ -161,7 +161,7 @@ abstract class Window(val alias: Expression, val timeField: Expression) {
   *
   * @param size the size of the window either as time or row-count interval.
   */
-class TumbleWithSize(size: Expression) {
+class TumbleWithSize(size: PlannerExpression) {
 
   /**
     * Tumbling window.
@@ -184,7 +184,7 @@ class TumbleWithSize(size: Expression) {
     * @param timeField time attribute for streaming and batch tables
     * @return a tumbling window on event-time
     */
-  def on(timeField: Expression): TumbleWithSizeOnTime =
+  def on(timeField: PlannerExpression): TumbleWithSizeOnTime =
     new TumbleWithSizeOnTime(timeField, size)
 
   /**
@@ -204,7 +204,7 @@ class TumbleWithSize(size: Expression) {
 /**
   * Tumbling window on time.
   */
-class TumbleWithSizeOnTime(time: Expression, size: Expression) {
+class TumbleWithSizeOnTime(time: PlannerExpression, size: PlannerExpression) {
 
   /**
     * Assigns an alias for this window that the following `groupBy()` and `select()` clause can
@@ -213,7 +213,7 @@ class TumbleWithSizeOnTime(time: Expression, size: Expression) {
     * @param alias alias for this window
     * @return this window
     */
-  def as(alias: Expression): TumbleWithSizeOnTimeWithAlias = {
+  def as(alias: PlannerExpression): TumbleWithSizeOnTimeWithAlias = {
     new TumbleWithSizeOnTimeWithAlias(alias, time, size)
   }
 
@@ -233,9 +233,9 @@ class TumbleWithSizeOnTime(time: Expression, size: Expression) {
   * Tumbling window on time with alias. Fully specifies a window.
   */
 class TumbleWithSizeOnTimeWithAlias(
-    alias: Expression,
-    timeField: Expression,
-    size: Expression)
+    alias: PlannerExpression,
+    timeField: PlannerExpression,
+    size: PlannerExpression)
   extends Window(
     alias,
     timeField) {
@@ -257,7 +257,7 @@ class TumbleWithSizeOnTimeWithAlias(
   *
   * @param size the size of the window either as time or row-count interval.
   */
-class SlideWithSize(size: Expression) {
+class SlideWithSize(size: PlannerExpression) {
 
   /**
     * Partially specified sliding window.
@@ -279,7 +279,8 @@ class SlideWithSize(size: Expression) {
     * @param slide the slide of the window either as time or row-count interval.
     * @return a sliding window
     */
-  def every(slide: Expression): SlideWithSizeAndSlide = new SlideWithSizeAndSlide(size, slide)
+  def every(slide: PlannerExpression): SlideWithSizeAndSlide =
+    new SlideWithSizeAndSlide(size, slide)
 
   /**
     * Specifies the window's slide as time or row-count interval.
@@ -306,7 +307,7 @@ class SlideWithSize(size: Expression) {
   *
   * @param size the size of the window either as time or row-count interval.
   */
-class SlideWithSizeAndSlide(size: Expression, slide: Expression) {
+class SlideWithSizeAndSlide(size: PlannerExpression, slide: PlannerExpression) {
 
   /**
     * Specifies the time attribute on which rows are grouped.
@@ -318,7 +319,7 @@ class SlideWithSizeAndSlide(size: Expression, slide: Expression) {
     * @param timeField time attribute for streaming and batch tables
     * @return a tumbling window on event-time
     */
-  def on(timeField: Expression): SlideWithSizeAndSlideOnTime =
+  def on(timeField: PlannerExpression): SlideWithSizeAndSlideOnTime =
     new SlideWithSizeAndSlideOnTime(timeField, size, slide)
 
   /**
@@ -338,7 +339,10 @@ class SlideWithSizeAndSlide(size: Expression, slide: Expression) {
 /**
   * Sliding window on time.
   */
-class SlideWithSizeAndSlideOnTime(timeField: Expression, size: Expression, slide: Expression) {
+class SlideWithSizeAndSlideOnTime(
+    timeField: PlannerExpression,
+    size: PlannerExpression,
+    slide: PlannerExpression) {
 
   /**
     * Assigns an alias for this window that the following `groupBy()` and `select()` clause can
@@ -347,7 +351,7 @@ class SlideWithSizeAndSlideOnTime(timeField: Expression, size: Expression, slide
     * @param alias alias for this window
     * @return this window
     */
-  def as(alias: Expression): SlideWithSizeAndSlideOnTimeWithAlias = {
+  def as(alias: PlannerExpression): SlideWithSizeAndSlideOnTimeWithAlias = {
     new SlideWithSizeAndSlideOnTimeWithAlias(alias, timeField, size, slide)
   }
 
@@ -367,10 +371,10 @@ class SlideWithSizeAndSlideOnTime(timeField: Expression, size: Expression, slide
   * Sliding window on time with alias. Fully specifies a window.
   */
 class SlideWithSizeAndSlideOnTimeWithAlias(
-    alias: Expression,
-    timeField: Expression,
-    size: Expression,
-    slide: Expression)
+    alias: PlannerExpression,
+    timeField: PlannerExpression,
+    size: PlannerExpression,
+    slide: PlannerExpression)
   extends Window(
     alias,
     timeField) {
@@ -396,7 +400,7 @@ class SlideWithSizeAndSlideOnTimeWithAlias(
   *
   * @param gap the time interval of inactivity before a window is closed.
   */
-class SessionWithGap(gap: Expression) {
+class SessionWithGap(gap: PlannerExpression) {
 
   /**
     * Session window.
@@ -419,7 +423,7 @@ class SessionWithGap(gap: Expression) {
     * @param timeField time attribute for streaming and batch tables
     * @return a tumbling window on event-time
     */
-  def on(timeField: Expression): SessionWithGapOnTime =
+  def on(timeField: PlannerExpression): SessionWithGapOnTime =
     new SessionWithGapOnTime(timeField, gap)
 
   /**
@@ -439,7 +443,7 @@ class SessionWithGap(gap: Expression) {
 /**
   * Session window on time.
   */
-class SessionWithGapOnTime(timeField: Expression, gap: Expression) {
+class SessionWithGapOnTime(timeField: PlannerExpression, gap: PlannerExpression) {
 
   /**
     * Assigns an alias for this window that the following `groupBy()` and `select()` clause can
@@ -448,7 +452,7 @@ class SessionWithGapOnTime(timeField: Expression, gap: Expression) {
     * @param alias alias for this window
     * @return this window
     */
-  def as(alias: Expression): SessionWithGapOnTimeWithAlias = {
+  def as(alias: PlannerExpression): SessionWithGapOnTimeWithAlias = {
     new SessionWithGapOnTimeWithAlias(alias, timeField, gap)
   }
 
@@ -468,9 +472,9 @@ class SessionWithGapOnTime(timeField: Expression, gap: Expression) {
   * Session window on time with alias. Fully specifies a window.
   */
 class SessionWithGapOnTimeWithAlias(
-    alias: Expression,
-    timeField: Expression,
-    gap: Expression)
+    alias: PlannerExpression,
+    timeField: PlannerExpression,
+    gap: PlannerExpression)
   extends Window(
     alias,
     timeField) {

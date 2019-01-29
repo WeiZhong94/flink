@@ -31,9 +31,9 @@ case class UDAGGExpression[T: TypeInformation, ACC: TypeInformation](
     * Creates a call to an [[AggregateFunction]].
     *
     * @param params actual parameters of function
-    * @return a [[AggFunctionCall]]
+    * @return a [[PlannerAggFunctionCall]]
     */
-  def apply(params: Expression*): AggFunctionCall = {
+  def apply(params: PlannerExpression*): PlannerAggFunctionCall = {
     val resultTypeInfo: TypeInformation[_] = getResultTypeOfAggregateFunction(
       aggregateFunction,
       implicitly[TypeInformation[T]])
@@ -42,6 +42,6 @@ case class UDAGGExpression[T: TypeInformation, ACC: TypeInformation](
       aggregateFunction,
       implicitly[TypeInformation[ACC]])
 
-    AggFunctionCall(aggregateFunction, resultTypeInfo, accTypeInfo, params)
+    PlannerAggFunctionCall(aggregateFunction, resultTypeInfo, accTypeInfo, params)
   }
 }

@@ -1007,7 +1007,8 @@ abstract class TableEnvironment(val config: TableConfig) {
     * used if the input type has a defined field order (tuple, case class, Row) and no of fields
     * references a field of the input type.
     */
-  protected def isReferenceByPosition(ct: CompositeType[_], fields: Array[Expression]): Boolean = {
+  protected def isReferenceByPosition(
+      ct: CompositeType[_], fields: Array[PlannerExpression]): Boolean = {
     if (!ct.isInstanceOf[TupleTypeInfoBase[_]]) {
       return false
     }
@@ -1044,16 +1045,17 @@ abstract class TableEnvironment(val config: TableConfig) {
 
   /**
     * Returns field names and field positions for a given [[TypeInformation]] and [[Array]] of
-    * [[Expression]]. It does not handle time attributes but considers them in indices.
+    * [[PlannerExpression]]. It does not handle time attributes but considers them in indices.
     *
-    * @param inputType The [[TypeInformation]] against which the [[Expression]]s are evaluated.
+    * @param inputType The [[TypeInformation]] against which the [[PlannerExpression]]s are
+    *                  evaluated.
     * @param exprs     The expressions that define the field names.
     * @tparam A The type of the TypeInformation.
     * @return A tuple of two arrays holding the field names and corresponding field positions.
     */
   protected def getFieldInfo[A](
       inputType: TypeInformation[A],
-      exprs: Array[Expression])
+      exprs: Array[PlannerExpression])
     : (Array[String], Array[Int]) = {
 
     TableEnvironment.validateType(inputType)
@@ -1088,14 +1090,14 @@ abstract class TableEnvironment(val config: TableConfig) {
             } else {
               referenceByName(name, t).map((_, name))
             }
-          case (Alias(UnresolvedFieldReference(origName), name: String, _), _) =>
+          case (PlannerAlias(UnresolvedFieldReference(origName), name: String, _), _) =>
             if (isRefByPos) {
               throw new TableException(
                 s"Alias '$name' is not allowed if other fields are referenced by position.")
             } else {
               referenceByName(origName, t).map((_, name))
             }
-          case (_: TimeAttribute, _) | (Alias(_: TimeAttribute, _, _), _) =>
+          case (_: PlannerTimeAttribute, _) | (PlannerAlias(_: PlannerTimeAttribute, _, _), _) =>
             None
           case _ => throw new TableException(
             "Field reference expression or alias on field expression expected.")
@@ -1105,9 +1107,9 @@ abstract class TableEnvironment(val config: TableConfig) {
         exprs flatMap {
           case (UnresolvedFieldReference(name: String)) =>
             referenceByName(name, p).map((_, name))
-          case Alias(UnresolvedFieldReference(origName), name: String, _) =>
+          case PlannerAlias(UnresolvedFieldReference(origName), name: String, _) =>
             referenceByName(origName, p).map((_, name))
-          case _: TimeAttribute | Alias(_: TimeAttribute, _, _) =>
+          case _: PlannerTimeAttribute | PlannerAlias(_: PlannerTimeAttribute, _, _) =>
             None
           case _ => throw new TableException(
             "Field reference expression or alias on field expression expected.")
@@ -1116,7 +1118,7 @@ abstract class TableEnvironment(val config: TableConfig) {
       case _: TypeInformation[_] => // atomic or other custom type information
         var referenced = false
         exprs flatMap {
-          case _: TimeAttribute =>
+          case _: PlannerTimeAttribute =>
             None
           case UnresolvedFieldReference(_) if referenced =>
             // only accept the first field for an atomic type

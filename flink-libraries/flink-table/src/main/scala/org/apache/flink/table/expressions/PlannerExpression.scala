@@ -24,7 +24,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.table.plan.TreeNode
 import org.apache.flink.table.validate.{ValidationResult, ValidationSuccess}
 
-abstract class Expression extends TreeNode[Expression] {
+abstract class PlannerExpression extends TreeNode[PlannerExpression] {
   /**
     * Returns the [[TypeInformation]] for evaluating this expression.
     * It is sometimes not available until the expression is valid.
@@ -54,13 +54,13 @@ abstract class Expression extends TreeNode[Expression] {
       s"${this.getClass.getName} cannot be transformed to RexNode"
     )
 
-  private[flink] def checkEquals(other: Expression): Boolean = {
+  private[flink] def checkEquals(other: PlannerExpression): Boolean = {
     if (this.getClass != other.getClass) {
       false
     } else {
       def checkEquality(elements1: Seq[Any], elements2: Seq[Any]): Boolean = {
         elements1.length == elements2.length && elements1.zip(elements2).forall {
-          case (e1: Expression, e2: Expression) => e1.checkEquals(e2)
+          case (e1: PlannerExpression, e2: PlannerExpression) => e1.checkEquals(e2)
           case (t1: Seq[_], t2: Seq[_]) => checkEquality(t1, t2)
           case (i1, i2) => i1 == i2
         }
@@ -72,17 +72,17 @@ abstract class Expression extends TreeNode[Expression] {
   }
 }
 
-abstract class BinaryExpression extends Expression {
-  private[flink] def left: Expression
-  private[flink] def right: Expression
+abstract class PlannerBinaryExpression extends PlannerExpression {
+  private[flink] def left: PlannerExpression
+  private[flink] def right: PlannerExpression
   private[flink] def children = Seq(left, right)
 }
 
-abstract class UnaryExpression extends Expression {
-  private[flink] def child: Expression
+abstract class PlannerUnaryExpression extends PlannerExpression {
+  private[flink] def child: PlannerExpression
   private[flink] def children = Seq(child)
 }
 
-abstract class LeafExpression extends Expression {
+abstract class PlannerLeafExpression extends PlannerExpression {
   private[flink] val children = Nil
 }

@@ -28,7 +28,7 @@ import org.apache.flink.table.validate._
 
 import scala.collection.JavaConversions._
 
-abstract class BinaryArithmetic extends BinaryExpression {
+abstract class BinaryArithmetic extends PlannerBinaryExpression {
   private[flink] def sqlOperator: SqlOperator
 
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
@@ -52,17 +52,17 @@ abstract class BinaryArithmetic extends BinaryExpression {
   }
 }
 
-case class Plus(left: Expression, right: Expression) extends BinaryArithmetic {
+case class Plus(left: PlannerExpression, right: PlannerExpression) extends BinaryArithmetic {
   override def toString = s"($left + $right)"
 
   private[flink] val sqlOperator = SqlStdOperatorTable.PLUS
 
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     if(isString(left.resultType)) {
-      val castedRight = Cast(right, BasicTypeInfo.STRING_TYPE_INFO)
+      val castedRight = PlannerCast(right, BasicTypeInfo.STRING_TYPE_INFO)
       relBuilder.call(SqlStdOperatorTable.CONCAT, left.toRexNode, castedRight.toRexNode)
     } else if(isString(right.resultType)) {
-      val castedLeft = Cast(left, BasicTypeInfo.STRING_TYPE_INFO)
+      val castedLeft = PlannerCast(left, BasicTypeInfo.STRING_TYPE_INFO)
       relBuilder.call(SqlStdOperatorTable.CONCAT, castedLeft.toRexNode, right.toRexNode)
     } else if (isTimeInterval(left.resultType) && left.resultType == right.resultType) {
       relBuilder.call(SqlStdOperatorTable.PLUS, left.toRexNode, right.toRexNode)
@@ -73,8 +73,8 @@ case class Plus(left: Expression, right: Expression) extends BinaryArithmetic {
     } else if (isTemporal(left.resultType) && isTemporal(right.resultType)) {
       relBuilder.call(SqlStdOperatorTable.DATETIME_PLUS, left.toRexNode, right.toRexNode)
     } else {
-      val castedLeft = Cast(left, resultType)
-      val castedRight = Cast(right, resultType)
+      val castedLeft = PlannerCast(left, resultType)
+      val castedRight = PlannerCast(right, resultType)
       relBuilder.call(SqlStdOperatorTable.PLUS, castedLeft.toRexNode, castedRight.toRexNode)
     }
   }
@@ -99,7 +99,7 @@ case class Plus(left: Expression, right: Expression) extends BinaryArithmetic {
   }
 }
 
-case class UnaryMinus(child: Expression) extends UnaryExpression {
+case class UnaryMinus(child: PlannerExpression) extends PlannerUnaryExpression {
   override def toString = s"-($child)"
 
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
@@ -120,7 +120,7 @@ case class UnaryMinus(child: Expression) extends UnaryExpression {
   }
 }
 
-case class Minus(left: Expression, right: Expression) extends BinaryArithmetic {
+case class Minus(left: PlannerExpression, right: PlannerExpression) extends BinaryArithmetic {
   override def toString = s"($left - $right)"
 
   private[flink] val sqlOperator = SqlStdOperatorTable.MINUS
@@ -143,19 +143,19 @@ case class Minus(left: Expression, right: Expression) extends BinaryArithmetic {
   }
 }
 
-case class Div(left: Expression, right: Expression) extends BinaryArithmetic {
+case class Div(left: PlannerExpression, right: PlannerExpression) extends BinaryArithmetic {
   override def toString = s"($left / $right)"
 
   private[flink] val sqlOperator = SqlStdOperatorTable.DIVIDE
 }
 
-case class Mul(left: Expression, right: Expression) extends BinaryArithmetic {
+case class Mul(left: PlannerExpression, right: PlannerExpression) extends BinaryArithmetic {
   override def toString = s"($left * $right)"
 
   private[flink] val sqlOperator = SqlStdOperatorTable.MULTIPLY
 }
 
-case class Mod(left: Expression, right: Expression) extends BinaryArithmetic {
+case class Mod(left: PlannerExpression, right: PlannerExpression) extends BinaryArithmetic {
   override def toString = s"($left % $right)"
 
   private[flink] val sqlOperator = SqlStdOperatorTable.MOD

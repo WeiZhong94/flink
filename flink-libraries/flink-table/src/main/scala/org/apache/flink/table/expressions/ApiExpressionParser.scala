@@ -22,117 +22,117 @@ import org.apache.flink.table.api._
 import org.apache.flink.table.apiexpressions._
 
 object ApiExpressionParser {
-  def parse(expr: ApiExpression): Expression = {
+  def parse(expr: ApiExpression): PlannerExpression = {
     if (expr == null) {
       return null
     }
     expr match {
       case ApiDistinctAgg(child) =>
-        DistinctAgg(parse(child))
+        PlannerDistinctAgg(parse(child))
 
       case ApiAggFunctionCall(function, resultTypeInfo, accTypeInfo, args) =>
-        AggFunctionCall(function, resultTypeInfo, accTypeInfo, args.map(parse))
+        PlannerAggFunctionCall(function, resultTypeInfo, accTypeInfo, args.map(parse))
 
       case ApiCall(functionName, args) =>
-        Call(functionName, args.map(parse))
+        PlannerCall(functionName, args.map(parse))
 
       case ApiUnresolvedOverCall(agg, alias) =>
-        UnresolvedOverCall(parse(agg), parse(alias))
+        PlannerUnresolvedOverCall(parse(agg), parse(alias))
 
       case ApiScalarFunctionCall(scalarFunction, parameters) =>
-        ScalarFunctionCall(scalarFunction, parameters.map(parse))
+        PlannerScalarFunctionCall(scalarFunction, parameters.map(parse))
 
       case ApiTableFunctionCall(functionName, tableFunction, parameters, resultType) =>
-        TableFunctionCall(functionName, tableFunction, parameters.map(parse), resultType)
+        PlannerTableFunctionCall(functionName, tableFunction, parameters.map(parse), resultType)
 
       case ApiCast(child, resultType) =>
-        Cast(parse(child), resultType)
+        PlannerCast(parse(child), resultType)
 
       case ApiFlattening(child) =>
-        Flattening(parse(child))
+        PlannerFlattening(parse(child))
 
       case ApiGetCompositeField(child, key) =>
-        GetCompositeField(parse(child), key)
+        PlannerGetCompositeField(parse(child), key)
 
       case ApiUnresolvedFieldReference(name) =>
         UnresolvedFieldReference(name)
 
       case ApiAlias(child, name, extraNames) =>
-        Alias(parse(child), name, extraNames)
+        PlannerAlias(parse(child), name, extraNames)
 
       case ApiTableReference(name, table) =>
-        TableReference(name, table)
+        PlannerTableReference(name, table)
 
       case ApiRowtimeAttribute(expression) =>
-        RowtimeAttribute(parse(expression))
+        PlannerRowtimeAttribute(parse(expression))
 
       case ApiProctimeAttribute(expression) =>
-        ProctimeAttribute(parse(expression))
+        PlannerProctimeAttribute(parse(expression))
 
       case ApiStreamRecordTimestamp() =>
-        StreamRecordTimestamp()
+        PlannerStreamRecordTimestamp()
 
       case ApiLiteral(l, None) =>
-        Literal(l)
+        PlannerLiteral(l)
 
       case ApiLiteral(l, Some(t)) =>
-        Literal(l, t)
+        PlannerLiteral(l, t)
 
       case ApiNull(resultType) =>
-        Null(resultType)
+        PlannerNull(resultType)
 
       case ApiIn(expression, elements) =>
-        In(parse(expression), elements.map(parse))
+        PlannerIn(parse(expression), elements.map(parse))
 
       case ApiCurrentRow() =>
-        CurrentRow()
+        PlannerCurrentRow()
 
       case ApiCurrentRange() =>
-        CurrentRange()
+        PlannerCurrentRange()
 
       case ApiUnboundedRow() =>
-        UnboundedRow()
+        PlannerUnboundedRow()
 
       case ApiUnboundedRange() =>
-        UnboundedRange()
+        PlannerUnboundedRange()
 
       case ApiSymbolExpression(symbol) =>
         val tableSymbol = symbol match {
-          case ApiTimeIntervalUnit.YEAR => TimeIntervalUnit.YEAR
-          case ApiTimeIntervalUnit.YEAR_TO_MONTH => TimeIntervalUnit.YEAR_TO_MONTH
-          case ApiTimeIntervalUnit.QUARTER => TimeIntervalUnit.QUARTER
-          case ApiTimeIntervalUnit.MONTH => TimeIntervalUnit.MONTH
-          case ApiTimeIntervalUnit.WEEK => TimeIntervalUnit.WEEK
-          case ApiTimeIntervalUnit.DAY => TimeIntervalUnit.DAY
-          case ApiTimeIntervalUnit.DAY_TO_HOUR => TimeIntervalUnit.DAY_TO_HOUR
-          case ApiTimeIntervalUnit.DAY_TO_MINUTE => TimeIntervalUnit.DAY_TO_MINUTE
-          case ApiTimeIntervalUnit.DAY_TO_SECOND => TimeIntervalUnit.DAY_TO_SECOND
-          case ApiTimeIntervalUnit.HOUR => TimeIntervalUnit.HOUR
-          case ApiTimeIntervalUnit.HOUR_TO_MINUTE => TimeIntervalUnit.HOUR_TO_MINUTE
-          case ApiTimeIntervalUnit.HOUR_TO_SECOND => TimeIntervalUnit.HOUR_TO_SECOND
-          case ApiTimeIntervalUnit.MINUTE => TimeIntervalUnit.MINUTE
-          case ApiTimeIntervalUnit.MINUTE_TO_SECOND => TimeIntervalUnit.MINUTE_TO_SECOND
-          case ApiTimeIntervalUnit.SECOND => TimeIntervalUnit.SECOND
+          case ApiTimeIntervalUnit.YEAR => PlannerTimeIntervalUnit.YEAR
+          case ApiTimeIntervalUnit.YEAR_TO_MONTH => PlannerTimeIntervalUnit.YEAR_TO_MONTH
+          case ApiTimeIntervalUnit.QUARTER => PlannerTimeIntervalUnit.QUARTER
+          case ApiTimeIntervalUnit.MONTH => PlannerTimeIntervalUnit.MONTH
+          case ApiTimeIntervalUnit.WEEK => PlannerTimeIntervalUnit.WEEK
+          case ApiTimeIntervalUnit.DAY => PlannerTimeIntervalUnit.DAY
+          case ApiTimeIntervalUnit.DAY_TO_HOUR => PlannerTimeIntervalUnit.DAY_TO_HOUR
+          case ApiTimeIntervalUnit.DAY_TO_MINUTE => PlannerTimeIntervalUnit.DAY_TO_MINUTE
+          case ApiTimeIntervalUnit.DAY_TO_SECOND => PlannerTimeIntervalUnit.DAY_TO_SECOND
+          case ApiTimeIntervalUnit.HOUR => PlannerTimeIntervalUnit.HOUR
+          case ApiTimeIntervalUnit.HOUR_TO_MINUTE => PlannerTimeIntervalUnit.HOUR_TO_MINUTE
+          case ApiTimeIntervalUnit.HOUR_TO_SECOND => PlannerTimeIntervalUnit.HOUR_TO_SECOND
+          case ApiTimeIntervalUnit.MINUTE => PlannerTimeIntervalUnit.MINUTE
+          case ApiTimeIntervalUnit.MINUTE_TO_SECOND => PlannerTimeIntervalUnit.MINUTE_TO_SECOND
+          case ApiTimeIntervalUnit.SECOND => PlannerTimeIntervalUnit.SECOND
 
-          case ApiTimePointUnit.YEAR => TimePointUnit.YEAR
-          case ApiTimePointUnit.MONTH => TimePointUnit.MONTH
-          case ApiTimePointUnit.DAY => TimePointUnit.DAY
-          case ApiTimePointUnit.HOUR => TimePointUnit.HOUR
-          case ApiTimePointUnit.MINUTE => TimePointUnit.MINUTE
-          case ApiTimePointUnit.SECOND => TimePointUnit.SECOND
-          case ApiTimePointUnit.QUARTER => TimePointUnit.QUARTER
-          case ApiTimePointUnit.WEEK => TimePointUnit.WEEK
-          case ApiTimePointUnit.MILLISECOND => TimePointUnit.MILLISECOND
-          case ApiTimePointUnit.MICROSECOND => TimePointUnit.MICROSECOND
+          case ApiTimePointUnit.YEAR => PlannerTimePointUnit.YEAR
+          case ApiTimePointUnit.MONTH => PlannerTimePointUnit.MONTH
+          case ApiTimePointUnit.DAY => PlannerTimePointUnit.DAY
+          case ApiTimePointUnit.HOUR => PlannerTimePointUnit.HOUR
+          case ApiTimePointUnit.MINUTE => PlannerTimePointUnit.MINUTE
+          case ApiTimePointUnit.SECOND => PlannerTimePointUnit.SECOND
+          case ApiTimePointUnit.QUARTER => PlannerTimePointUnit.QUARTER
+          case ApiTimePointUnit.WEEK => PlannerTimePointUnit.WEEK
+          case ApiTimePointUnit.MILLISECOND => PlannerTimePointUnit.MILLISECOND
+          case ApiTimePointUnit.MICROSECOND => PlannerTimePointUnit.MICROSECOND
 
-          case ApiTrimMode.BOTH => TrimMode.BOTH
-          case ApiTrimMode.LEADING => TrimMode.LEADING
-          case ApiTrimMode.TRAILING => TrimMode.TRAILING
+          case ApiTrimMode.BOTH => PlannerTrimMode.BOTH
+          case ApiTrimMode.LEADING => PlannerTrimMode.LEADING
+          case ApiTrimMode.TRAILING => PlannerTrimMode.TRAILING
 
           case _ =>
             throw new TableException("unsupported TableSymbolValue: " + symbol)
         }
-        SymbolExpression(tableSymbol)
+        PlannerSymbolExpression(tableSymbol)
 
       case _ =>
         throw new TableException("unsupported Expression: " + expr.getClass.getSimpleName)

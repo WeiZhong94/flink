@@ -30,9 +30,9 @@ import org.apache.flink.table.validate.{ValidationFailure, ValidationResult, Val
 
 import scala.collection.JavaConverters._
 
-case class RowConstructor(elements: Seq[Expression]) extends Expression {
+case class RowConstructor(elements: Seq[PlannerExpression]) extends PlannerExpression {
 
-  override private[flink] def children: Seq[Expression] = elements
+  override private[flink] def children: Seq[PlannerExpression] = elements
 
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     val relDataType = relBuilder
@@ -59,9 +59,9 @@ case class RowConstructor(elements: Seq[Expression]) extends Expression {
   }
 }
 
-case class ArrayConstructor(elements: Seq[Expression]) extends Expression {
+case class ArrayConstructor(elements: Seq[PlannerExpression]) extends PlannerExpression {
 
-  override private[flink] def children: Seq[Expression] = elements
+  override private[flink] def children: Seq[PlannerExpression] = elements
 
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     val relDataType = relBuilder
@@ -91,8 +91,8 @@ case class ArrayConstructor(elements: Seq[Expression]) extends Expression {
   }
 }
 
-case class MapConstructor(elements: Seq[Expression]) extends Expression {
-  override private[flink] def children: Seq[Expression] = elements
+case class MapConstructor(elements: Seq[PlannerExpression]) extends PlannerExpression {
+  override private[flink] def children: Seq[PlannerExpression] = elements
 
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     val typeFactory = relBuilder.asInstanceOf[FlinkRelBuilder].getTypeFactory
@@ -132,9 +132,9 @@ case class MapConstructor(elements: Seq[Expression]) extends Expression {
   }
 }
 
-case class ArrayElement(array: Expression) extends Expression {
+case class ArrayElement(array: PlannerExpression) extends PlannerExpression {
 
-  override private[flink] def children: Seq[Expression] = Seq(array)
+  override private[flink] def children: Seq[PlannerExpression] = Seq(array)
 
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     relBuilder
@@ -158,9 +158,9 @@ case class ArrayElement(array: Expression) extends Expression {
   }
 }
 
-case class Cardinality(container: Expression) extends Expression {
+case class Cardinality(container: PlannerExpression) extends PlannerExpression {
 
-  override private[flink] def children: Seq[Expression] = Seq(container)
+  override private[flink] def children: Seq[PlannerExpression] = Seq(container)
 
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     relBuilder
@@ -181,9 +181,9 @@ case class Cardinality(container: Expression) extends Expression {
   }
 }
 
-case class ItemAt(container: Expression, key: Expression) extends Expression {
+case class ItemAt(container: PlannerExpression, key: PlannerExpression) extends PlannerExpression {
 
-  override private[flink] def children: Seq[Expression] = Seq(container, key)
+  override private[flink] def children: Seq[PlannerExpression] = Seq(container, key)
 
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     relBuilder
@@ -207,7 +207,7 @@ case class ItemAt(container: Expression, key: Expression) extends Expression {
         if (key.resultType == INT_TYPE_INFO) {
           // check for common user mistake
           key match {
-            case Literal(value: Int, INT_TYPE_INFO) if value < 1 =>
+            case PlannerLiteral(value: Int, INT_TYPE_INFO) if value < 1 =>
               ValidationFailure(
                 s"Array element access needs an index starting at 1 but was $value.")
             case _ => ValidationSuccess

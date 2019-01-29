@@ -29,12 +29,12 @@ import scala.language.{existentials, implicitConversions}
 /**
   * General expression class to represent a symbol.
   */
-case class SymbolExpression(symbol: TableSymbol) extends LeafExpression {
+case class PlannerSymbolExpression(symbol: PlannerTableSymbol) extends PlannerLeafExpression {
 
   override private[flink] def resultType: TypeInformation[_] =
     throw new UnsupportedOperationException("This should not happen. A symbol has no result type.")
 
-  def toExpr: SymbolExpression = this // triggers implicit conversion
+  def toExpr: PlannerSymbolExpression = this // triggers implicit conversion
 
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     // dirty hack to pass Java enums to Java from Scala
@@ -49,8 +49,8 @@ case class SymbolExpression(symbol: TableSymbol) extends LeafExpression {
 /**
   * Symbol that wraps a Calcite symbol in form of a Java enum.
   */
-trait TableSymbol {
-  def symbols: TableSymbols
+trait PlannerTableSymbol {
+  def symbols: PlannerTableSymbols
   def name: String
   def enum: Enum[_]
 }
@@ -58,29 +58,30 @@ trait TableSymbol {
 /**
   * Enumeration of symbols.
   */
-abstract class TableSymbols extends Enumeration {
+abstract class PlannerTableSymbols extends Enumeration {
 
-  class TableSymbolValue(e: Enum[_]) extends Val(e.name()) with TableSymbol {
-    override def symbols: TableSymbols = TableSymbols.this
+  class PlannerTableSymbolValue(e: Enum[_]) extends Val(e.name()) with PlannerTableSymbol {
+    override def symbols: PlannerTableSymbols = PlannerTableSymbols.this
 
     override def enum: Enum[_] = e
 
     override def name: String = toString()
   }
 
-  protected final def Value(enum: Enum[_]): TableSymbolValue = new TableSymbolValue(enum)
+  protected final def Value(enum: Enum[_]): PlannerTableSymbolValue =
+    new PlannerTableSymbolValue(enum)
 
-  implicit def symbolToExpression(symbol: TableSymbolValue): SymbolExpression =
-    SymbolExpression(symbol)
+  implicit def symbolToExpression(symbol: PlannerTableSymbolValue): PlannerSymbolExpression =
+    PlannerSymbolExpression(symbol)
 
 }
 
 /**
   * Units for working with time intervals.
   */
-object TimeIntervalUnit extends TableSymbols {
+object PlannerTimeIntervalUnit extends PlannerTableSymbols {
 
-  type TimeIntervalUnit = TableSymbolValue
+  type TimeIntervalUnit = PlannerTableSymbolValue
 
   val YEAR = Value(TimeUnitRange.YEAR)
   val YEAR_TO_MONTH = Value(TimeUnitRange.YEAR_TO_MONTH)
@@ -103,9 +104,9 @@ object TimeIntervalUnit extends TableSymbols {
 /**
   * Units for working with time points.
   */
-object TimePointUnit extends TableSymbols {
+object PlannerTimePointUnit extends PlannerTableSymbols {
 
-  type TimePointUnit = TableSymbolValue
+  type PlannerTimePointUnit = PlannerTableSymbolValue
 
   val YEAR = Value(TimeUnit.YEAR)
   val MONTH = Value(TimeUnit.MONTH)
@@ -123,9 +124,9 @@ object TimePointUnit extends TableSymbols {
 /**
   * Modes for trimming strings.
   */
-object TrimMode extends TableSymbols {
+object PlannerTrimMode extends PlannerTableSymbols {
 
-  type TrimMode = TableSymbolValue
+  type PlannerTrimMode = PlannerTableSymbolValue
 
   val BOTH = Value(SqlTrimFunction.Flag.BOTH)
   val LEADING = Value(SqlTrimFunction.Flag.LEADING)

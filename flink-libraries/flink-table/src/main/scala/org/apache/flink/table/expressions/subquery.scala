@@ -28,17 +28,18 @@ import org.apache.flink.table.api.{InnerTable, StreamTableEnvironment, Table}
 import org.apache.flink.table.typeutils.TypeCheckUtils._
 import org.apache.flink.table.validate.{ValidationFailure, ValidationResult, ValidationSuccess}
 
-case class In(expression: Expression, elements: Seq[Expression]) extends Expression  {
+case class PlannerIn(expression: PlannerExpression, elements: Seq[PlannerExpression])
+  extends PlannerExpression  {
 
   override def toString = s"$expression.in(${elements.mkString(", ")})"
 
-  override private[flink] def children: Seq[Expression] = expression +: elements.distinct
+  override private[flink] def children: Seq[PlannerExpression] = expression +: elements.distinct
 
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     // check if this is a sub-query expression or an element list
     elements.head match {
 
-      case TableReference(name, table: Table) =>
+      case PlannerTableReference(name, table: Table) =>
         RexSubQuery.in(table.asInstanceOf[InnerTable].getRelNode, ImmutableList.of(expression
                                                                                  .toRexNode))
 
@@ -51,7 +52,7 @@ case class In(expression: Expression, elements: Seq[Expression]) extends Express
     // check if this is a sub-query expression or an element list
     elements.head match {
 
-      case TableReference(name, table: Table) =>
+      case PlannerTableReference(name, table: Table) =>
         if (elements.length != 1) {
           return ValidationFailure("IN operator supports only one table reference.")
         }

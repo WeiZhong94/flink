@@ -22,7 +22,7 @@ import org.apache.flink.api.scala._
 import org.apache.flink.table.runtime.utils.JavaUserDefinedAggFunctions.{WeightedAvg, WeightedAvgWithMerge}
 import org.apache.flink.table.api.scala._
 import org.apache.flink.table.apiexpressions.ApiExpression
-import org.apache.flink.table.expressions.{ApiExpressionParser, Expression, WindowReference}
+import org.apache.flink.table.expressions.{ApiExpressionParser, PlannerExpression, PlannerWindowReference}
 import org.apache.flink.table.plan.logical._
 import org.apache.flink.table.utils.TableTestUtil._
 import org.apache.flink.table.utils.TableTestBase
@@ -30,11 +30,11 @@ import org.junit.{Ignore, Test}
 
 class GroupWindowTest extends TableTestBase {
 
-  implicit def apiExpression2Expression(apiExpression: ApiExpression): Expression = {
+  implicit def apiExpression2Expression(apiExpression: ApiExpression): PlannerExpression = {
     ApiExpressionParser.parse(apiExpression)
   }
 
-  implicit def symbol2Expression(apiExpression: Symbol): Expression = {
+  implicit def symbol2Expression(apiExpression: Symbol): PlannerExpression = {
     ApiExpressionParser.parse(apiExpression)
   }
 
@@ -66,7 +66,7 @@ class GroupWindowTest extends TableTestBase {
           term(
             "window",
             TumblingGroupWindow(
-              WindowReference("w1"),
+              PlannerWindowReference("w1"),
               'proctime,
               50.milli)),
           term("select", "string", "COUNT(int) AS TMP_1", "proctime('w1) AS TMP_0")
@@ -76,7 +76,7 @@ class GroupWindowTest extends TableTestBase {
       term(
         "window",
         SlidingGroupWindow(
-          WindowReference("w2"),
+          PlannerWindowReference("w2"),
           'proctime,
           20.milli,
           10.milli)),
@@ -106,7 +106,7 @@ class GroupWindowTest extends TableTestBase {
       term(
         "window",
         TumblingGroupWindow(
-          WindowReference("w"),
+          PlannerWindowReference("w"),
           'proctime,
           50.milli)),
       term("select", "string", "COUNT(int) AS TMP_0")
@@ -135,7 +135,7 @@ class GroupWindowTest extends TableTestBase {
       term("groupBy", "string"),
       term(
         "window",
-        TumblingGroupWindow(WindowReference("w"), 'proctime, 2.rows)),
+        TumblingGroupWindow(PlannerWindowReference("w"), 'proctime, 2.rows)),
       term("select", "string", "COUNT(int) AS TMP_0")
     )
 
@@ -159,7 +159,7 @@ class GroupWindowTest extends TableTestBase {
       term(
         "window",
         TumblingGroupWindow(
-          WindowReference("w"),
+          PlannerWindowReference("w"),
           'long,
           5.milli)),
       term("select", "string", "COUNT(int) AS TMP_0")
@@ -187,7 +187,7 @@ class GroupWindowTest extends TableTestBase {
       term(
         "window",
         TumblingGroupWindow(
-          WindowReference("w"),
+          PlannerWindowReference("w"),
           'rowtime,
           5.milli)),
       term("select", "string", "myWeightedAvg(long, int) AS TMP_0")
@@ -217,7 +217,7 @@ class GroupWindowTest extends TableTestBase {
       term(
         "window",
         SlidingGroupWindow(
-          WindowReference("w"),
+          PlannerWindowReference("w"),
           'proctime,
           50.milli,
           50.milli)),
@@ -248,7 +248,7 @@ class GroupWindowTest extends TableTestBase {
       term(
         "window",
         SlidingGroupWindow(
-          WindowReference("w"),
+          PlannerWindowReference("w"),
           'proctime,
           2.rows,
           1.rows)),
@@ -276,7 +276,7 @@ class GroupWindowTest extends TableTestBase {
         term("select", "string", "int", "rowtime")
       ),
       term("groupBy", "string"),
-      term("window", SlidingGroupWindow(WindowReference("w"), 'rowtime, 8.milli, 10.milli)),
+      term("window", SlidingGroupWindow(PlannerWindowReference("w"), 'rowtime, 8.milli, 10.milli)),
       term("select", "string", "COUNT(int) AS TMP_0")
     )
 
@@ -301,7 +301,7 @@ class GroupWindowTest extends TableTestBase {
       term(
         "window",
         SlidingGroupWindow(
-          WindowReference("w"),
+          PlannerWindowReference("w"),
           'long,
           8.milli,
           10.milli)),
@@ -327,7 +327,7 @@ class GroupWindowTest extends TableTestBase {
       "DataStreamGroupWindowAggregate",
       streamTableNode(0),
       term("groupBy", "string"),
-      term("window", SlidingGroupWindow(WindowReference("w"), 'rowtime, 8.milli, 10.milli)),
+      term("window", SlidingGroupWindow(PlannerWindowReference("w"), 'rowtime, 8.milli, 10.milli)),
       term("select", "string", "myWeightedAvg(long, int) AS TMP_0")
     )
 
@@ -348,7 +348,7 @@ class GroupWindowTest extends TableTestBase {
       "DataStreamGroupWindowAggregate",
       streamTableNode(0),
       term("groupBy", "string"),
-      term("window", SessionGroupWindow(WindowReference("w"), 'long, 7.milli)),
+      term("window", SessionGroupWindow(PlannerWindowReference("w"), 'long, 7.milli)),
       term("select", "string", "COUNT(int) AS TMP_0")
     )
 
@@ -371,7 +371,7 @@ class GroupWindowTest extends TableTestBase {
       "DataStreamGroupWindowAggregate",
       streamTableNode(0),
       term("groupBy", "string"),
-      term("window", SessionGroupWindow(WindowReference("w"), 'rowtime, 7.milli)),
+      term("window", SessionGroupWindow(PlannerWindowReference("w"), 'rowtime, 7.milli)),
       term("select", "string", "myWeightedAvg(long, int) AS TMP_0")
     )
 
@@ -399,7 +399,7 @@ class GroupWindowTest extends TableTestBase {
       term(
         "window",
         TumblingGroupWindow(
-          WindowReference("w"),
+          PlannerWindowReference("w"),
           'proctime,
           50.milli)),
       term("select", "string", "COUNT(int) AS TMP_0")
@@ -428,7 +428,7 @@ class GroupWindowTest extends TableTestBase {
       term(
         "window",
         TumblingGroupWindow(
-          WindowReference("w"),
+          PlannerWindowReference("w"),
           'proctime,
           2.rows)),
       term("select", "COUNT(int) AS TMP_0")
@@ -454,7 +454,7 @@ class GroupWindowTest extends TableTestBase {
         streamTableNode(0),
         term("select", "int", "rowtime")
       ),
-      term("window", TumblingGroupWindow(WindowReference("w"), 'rowtime, 5.milli)),
+      term("window", TumblingGroupWindow(PlannerWindowReference("w"), 'rowtime, 5.milli)),
       term("select", "COUNT(int) AS TMP_0")
     )
 
@@ -482,7 +482,7 @@ class GroupWindowTest extends TableTestBase {
       term(
         "window",
         TumblingGroupWindow(
-          WindowReference("w"),
+          PlannerWindowReference("w"),
           'long,
           5.milli)),
       term("select", "COUNT(int) AS TMP_0")
@@ -511,7 +511,7 @@ class GroupWindowTest extends TableTestBase {
       term(
         "window",
         SlidingGroupWindow(
-          WindowReference("w"),
+          PlannerWindowReference("w"),
           'proctime,
           50.milli,
           50.milli)),
@@ -541,7 +541,7 @@ class GroupWindowTest extends TableTestBase {
       term(
         "window",
         SlidingGroupWindow(
-          WindowReference("w"),
+          PlannerWindowReference("w"),
           'proctime,
           2.rows,
           1.rows)),
@@ -568,7 +568,7 @@ class GroupWindowTest extends TableTestBase {
         streamTableNode(0),
         term("select", "int", "rowtime")
       ),
-      term("window", SlidingGroupWindow(WindowReference("w"), 'rowtime, 8.milli, 10.milli)),
+      term("window", SlidingGroupWindow(PlannerWindowReference("w"), 'rowtime, 8.milli, 10.milli)),
       term("select", "COUNT(int) AS TMP_0")
     )
 
@@ -593,7 +593,7 @@ class GroupWindowTest extends TableTestBase {
         streamTableNode(0),
         term("select", "int", "long")
       ),
-      term("window", SlidingGroupWindow(WindowReference("w"), 'long, 8.milli, 10.milli)),
+      term("window", SlidingGroupWindow(PlannerWindowReference("w"), 'long, 8.milli, 10.milli)),
       term("select", "COUNT(int) AS TMP_0")
     )
 
@@ -620,7 +620,7 @@ class GroupWindowTest extends TableTestBase {
       term(
         "window",
         SessionGroupWindow(
-          WindowReference("w"),
+          PlannerWindowReference("w"),
           'long,
           7.milli)),
       term("select", "COUNT(int) AS TMP_0")
@@ -647,7 +647,7 @@ class GroupWindowTest extends TableTestBase {
         term("select", "string", "int", "rowtime")
       ),
       term("groupBy", "string"),
-      term("window", TumblingGroupWindow(WindowReference("w"), 'rowtime, 5.milli)),
+      term("window", TumblingGroupWindow(PlannerWindowReference("w"), 'rowtime, 5.milli)),
       term("select",
         "string",
         "COUNT(int) AS TMP_0",
@@ -683,7 +683,8 @@ class GroupWindowTest extends TableTestBase {
           "DataStreamGroupWindowAggregate",
           streamTableNode(0),
           term("groupBy", "string, int2, int3"),
-          term("window", SlidingGroupWindow(WindowReference("w"), 'proctime,  2.rows, 1.rows)),
+          term("window",
+            SlidingGroupWindow(PlannerWindowReference("w"), 'proctime,  2.rows, 1.rows)),
           term(
             "select",
             "string",
@@ -715,7 +716,7 @@ class GroupWindowTest extends TableTestBase {
         term("select", "string", "int", "rowtime")
       ),
       term("groupBy", "string"),
-      term("window", SlidingGroupWindow(WindowReference("w"), 'rowtime, 10.milli, 5.milli)),
+      term("window", SlidingGroupWindow(PlannerWindowReference("w"), 'rowtime, 10.milli, 5.milli)),
       term("select",
         "string",
         "COUNT(int) AS TMP_0",
@@ -742,7 +743,7 @@ class GroupWindowTest extends TableTestBase {
         "DataStreamGroupWindowAggregate",
         streamTableNode(0),
         term("groupBy", "string"),
-        term("window", SessionGroupWindow(WindowReference("w"), 'long, 3.milli)),
+        term("window", SessionGroupWindow(PlannerWindowReference("w"), 'long, 3.milli)),
         term("select",
           "string",
           "COUNT(int) AS TMP_1",
@@ -772,7 +773,7 @@ class GroupWindowTest extends TableTestBase {
         "DataStreamGroupWindowAggregate",
         streamTableNode(0),
         term("groupBy", "string"),
-        term("window", TumblingGroupWindow(WindowReference("w"), 'long, 5.millis)),
+        term("window", TumblingGroupWindow(PlannerWindowReference("w"), 'long, 5.millis)),
         term("select",
           "string",
           "SUM(int) AS TMP_0",

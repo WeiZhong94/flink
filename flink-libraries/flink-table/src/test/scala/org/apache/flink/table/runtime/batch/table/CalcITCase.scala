@@ -28,7 +28,7 @@ import org.apache.flink.table.api.TableEnvironment
 import org.apache.flink.table.api.Types._
 import org.apache.flink.table.api.scala._
 import org.apache.flink.table.apiexpressions.ApiLiteral
-import org.apache.flink.table.expressions.Literal
+import org.apache.flink.table.expressions.PlannerLiteral
 import org.apache.flink.table.expressions.utils._
 import org.apache.flink.table.functions.ScalarFunction
 import org.apache.flink.table.runtime.utils.TableProgramsTestBase.TableConfigMode

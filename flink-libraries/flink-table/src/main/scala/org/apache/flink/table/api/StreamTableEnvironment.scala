@@ -539,7 +539,7 @@ abstract class StreamTableEnvironment(
   protected def registerDataStreamInternal[T](
       name: String,
       dataStream: DataStream[T],
-      fields: Array[Expression])
+      fields: Array[PlannerExpression])
     : Unit = {
 
     val streamType = dataStream.getType
@@ -577,7 +577,7 @@ abstract class StreamTableEnvironment(
     */
   private def validateAndExtractTimeAttributes(
     streamType: TypeInformation[_],
-    exprs: Array[Expression])
+    exprs: Array[PlannerExpression])
   : (Option[(Int, String)], Option[(Int, String)]) = {
 
     val (isRefByPos, fieldTypes) = streamType match {
@@ -668,21 +668,23 @@ abstract class StreamTableEnvironment(
     }
 
     exprs.zipWithIndex.foreach {
-      case (RowtimeAttribute(UnresolvedFieldReference(name)), idx) =>
+      case (PlannerRowtimeAttribute(UnresolvedFieldReference(name)), idx) =>
         extractRowtime(idx, name, None)
 
-      case (Alias(RowtimeAttribute(UnresolvedFieldReference(origName)), name, _), idx) =>
+      case (PlannerAlias(
+      PlannerRowtimeAttribute(UnresolvedFieldReference(origName)), name, _), idx) =>
         extractRowtime(idx, name, Some(origName))
 
-      case (ProctimeAttribute(UnresolvedFieldReference(name)), idx) =>
+      case (PlannerProctimeAttribute(UnresolvedFieldReference(name)), idx) =>
         extractProctime(idx, name)
 
-      case (Alias(ProctimeAttribute(UnresolvedFieldReference(_)), name, _), idx) =>
+      case (PlannerAlias(PlannerProctimeAttribute(UnresolvedFieldReference(_)), name, _), idx) =>
         extractProctime(idx, name)
 
       case (UnresolvedFieldReference(name), _) => fieldNames = name :: fieldNames
 
-      case (Alias(UnresolvedFieldReference(_), name, _), _) => fieldNames = name :: fieldNames
+      case (PlannerAlias(UnresolvedFieldReference(_), name, _), _) =>
+        fieldNames = name :: fieldNames
 
       case (e, _) =>
         throw new TableException(s"Time attributes can only be defined on field references. " +

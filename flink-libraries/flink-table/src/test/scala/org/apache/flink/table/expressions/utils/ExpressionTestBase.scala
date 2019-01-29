@@ -43,7 +43,7 @@ import org.apache.flink.table.api.{BatchTableEnvironment, InnerTable, TableConfi
 import org.apache.flink.table.apiexpressions.ApiExpression
 import org.apache.flink.table.calcite.FlinkPlannerImpl
 import org.apache.flink.table.codegen.{Compiler, FunctionCodeGenerator, GeneratedFunction}
-import org.apache.flink.table.expressions.{Expression, ExpressionParser}
+import org.apache.flink.table.expressions.{PlannerExpression, ExpressionParser}
 import org.apache.flink.table.functions.ScalarFunction
 import org.apache.flink.table.plan.nodes.FlinkConventions
 import org.apache.flink.table.plan.nodes.dataset.{DataSetCalc, DataSetScan}

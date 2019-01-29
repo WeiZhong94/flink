@@ -24,18 +24,18 @@ import org.apache.flink.api.scala._
 import org.apache.flink.table.runtime.utils.JavaUserDefinedAggFunctions.WeightedAvgWithMerge
 import org.apache.flink.table.api.scala._
 import org.apache.flink.table.apiexpressions.ApiExpression
-import org.apache.flink.table.expressions.{ApiExpressionParser, Expression}
+import org.apache.flink.table.expressions.{ApiExpressionParser, PlannerExpression}
 import org.apache.flink.table.plan.logical._
 import org.apache.flink.table.utils.TableTestUtil._
 import org.apache.flink.table.utils.TableTestBase
 import org.junit.Test
 
 class GroupWindowTest extends TableTestBase {
-  implicit def apiExpression2Expression(apiExpression: ApiExpression): Expression = {
+  implicit def apiExpression2Expression(apiExpression: ApiExpression): PlannerExpression = {
     ApiExpressionParser.parse(apiExpression)
   }
 
-  implicit def symbol2Expression(apiExpression: Symbol): Expression = {
+  implicit def symbol2Expression(apiExpression: Symbol): PlannerExpression = {
     ApiExpressionParser.parse(apiExpression)
   }
 

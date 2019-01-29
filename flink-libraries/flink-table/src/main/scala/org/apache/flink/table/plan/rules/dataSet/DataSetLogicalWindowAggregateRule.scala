@@ -25,7 +25,7 @@ import org.apache.calcite.rex._
 import org.apache.flink.table.api.scala.{Session, Slide, Tumble}
 import org.apache.flink.table.api._
 import org.apache.flink.table.calcite.FlinkTypeFactory
-import org.apache.flink.table.expressions.{Expression, Literal, ResolvedFieldReference, WindowReference}
+import org.apache.flink.table.expressions.{PlannerExpression, PlannerLiteral, PlannerResolvedFieldReference, PlannerWindowReference}
 import org.apache.flink.table.plan.rules.common.LogicalWindowAggregateRule
 import org.apache.flink.table.typeutils.TimeIntervalTypeInfo
 import org.apache.flink.table.validate.BasicOperatorTable
@@ -57,13 +57,13 @@ class DataSetLogicalWindowAggregateRule
         case _ => throw new TableException("Only constant window descriptors are supported")
       }
 
-    def getFieldReference(operand: RexNode): Expression = {
+    def getFieldReference(operand: RexNode): PlannerExpression = {
       operand match {
         case ref: RexInputRef =>
           // resolve field name of window attribute
           val fieldName = rowType.getFieldList.get(ref.getIndex).getName
           val fieldType = rowType.getFieldList.get(ref.getIndex).getType
-          ResolvedFieldReference(fieldName, FlinkTypeFactory.toTypeInfo(fieldType))
+          PlannerResolvedFieldReference(fieldName, FlinkTypeFactory.toTypeInfo(fieldType))
       }
     }
 
@@ -72,24 +72,24 @@ class DataSetLogicalWindowAggregateRule
       case BasicOperatorTable.TUMBLE =>
         val interval = getOperandAsLong(windowExpr, 1)
         new TumbleWithSizeOnTimeWithAlias(
-          WindowReference("w$", Some(timeField.resultType)),
+          PlannerWindowReference("w$", Some(timeField.resultType)),
           timeField,
-          Literal(interval, TimeIntervalTypeInfo.INTERVAL_MILLIS))
+          PlannerLiteral(interval, TimeIntervalTypeInfo.INTERVAL_MILLIS))
 
       case BasicOperatorTable.HOP =>
         val (slide, size) = (getOperandAsLong(windowExpr, 1), getOperandAsLong(windowExpr, 2))
         new SlideWithSizeAndSlideOnTimeWithAlias(
-          WindowReference("w$", Some(timeField.resultType)),
+          PlannerWindowReference("w$", Some(timeField.resultType)),
           timeField,
-          Literal(size, TimeIntervalTypeInfo.INTERVAL_MILLIS),
-          Literal(slide, TimeIntervalTypeInfo.INTERVAL_MILLIS))
+          PlannerLiteral(size, TimeIntervalTypeInfo.INTERVAL_MILLIS),
+          PlannerLiteral(slide, TimeIntervalTypeInfo.INTERVAL_MILLIS))
 
       case BasicOperatorTable.SESSION =>
         val gap = getOperandAsLong(windowExpr, 1)
         new SessionWithGapOnTimeWithAlias(
-          WindowReference("w$", Some(timeField.resultType)),
+          PlannerWindowReference("w$", Some(timeField.resultType)),
           timeField,
-          Literal(gap, TimeIntervalTypeInfo.INTERVAL_MILLIS))
+          PlannerLiteral(gap, TimeIntervalTypeInfo.INTERVAL_MILLIS))
     }
   }
 }

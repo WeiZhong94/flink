@@ -24,7 +24,7 @@ import org.apache.flink.api.scala._
 import org.apache.flink.table.api.{TableSchema, ValidationException}
 import org.apache.flink.table.api.scala._
 import org.apache.flink.table.api.stream.table.TemporalTableJoinTest._
-import org.apache.flink.table.expressions.ResolvedFieldReference
+import org.apache.flink.table.expressions.PlannerResolvedFieldReference
 import org.apache.flink.table.functions.TemporalTableFunction
 import org.apache.flink.table.plan.logical.rel.LogicalTemporalTableJoin._
 import org.apache.flink.table.utils.TableTestUtil._
@@ -161,10 +161,10 @@ class TemporalTableJoinTest extends TableTestBase {
       rates: TemporalTableFunction,
       proctime: Boolean = false): Unit = {
     assertEquals("currency", rates.getPrimaryKey)
-    assertTrue(rates.getTimeAttribute.isInstanceOf[ResolvedFieldReference])
+    assertTrue(rates.getTimeAttribute.isInstanceOf[PlannerResolvedFieldReference])
     assertEquals(
       if (proctime) "proctime" else "rowtime",
-      rates.getTimeAttribute.asInstanceOf[ResolvedFieldReference].name)
+      rates.getTimeAttribute.asInstanceOf[PlannerResolvedFieldReference].name)
     assertArrayEquals(
       expectedSchema.getFieldNames.asInstanceOf[Array[Object]],
       rates.getResultType.getFieldNames.asInstanceOf[Array[Object]])

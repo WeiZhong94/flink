@@ -20,7 +20,7 @@ package org.apache.flink.table.api.scala
 
 import org.apache.flink.table.api._
 import org.apache.flink.table.apiexpressions.{ApiExpression, ApiOverWindowWithOrderBy, ApiPartitionedOver, ApiSessionWithGap, ApiSlideWithSize, ApiTumbleWithSize}
-import org.apache.flink.table.expressions.{Expression, ExpressionParser}
+import org.apache.flink.table.expressions.{PlannerExpression, ExpressionParser}
 
 /**
   * Helper object for creating a tumbling window. Tumbling windows are consecutive, non-overlapping
@@ -113,7 +113,7 @@ object Over {
   }
 }
 
-case class PartitionedOver(partitionBy: Array[Expression]) {
+case class PartitionedOver(partitionBy: Array[PlannerExpression]) {
 
   /**
     * Specifies the time attribute on which rows are grouped.
@@ -122,12 +122,12 @@ case class PartitionedOver(partitionBy: Array[Expression]) {
     *
     * For batch tables, refer to a timestamp or long attribute.
     */
-  def orderBy(orderBy: Expression): OverWindowWithOrderBy = {
+  def orderBy(orderBy: PlannerExpression): OverWindowWithOrderBy = {
     OverWindowWithOrderBy(partitionBy, orderBy)
   }
 }
 
-case class OverWindowWithOrderBy(partitionBy: Seq[Expression], orderBy: Expression) {
+case class OverWindowWithOrderBy(partitionBy: Seq[PlannerExpression], orderBy: PlannerExpression) {
 
   /**
     * Set the preceding offset (based on time or row-count intervals) for over window.
@@ -135,7 +135,7 @@ case class OverWindowWithOrderBy(partitionBy: Seq[Expression], orderBy: Expressi
     * @param preceding preceding offset relative to the current row.
     * @return this over window
     */
-  def preceding(preceding: Expression): OverWindowWithPreceding = {
+  def preceding(preceding: PlannerExpression): OverWindowWithPreceding = {
     new OverWindowWithPreceding(partitionBy, orderBy, preceding)
   }
 
@@ -153,7 +153,7 @@ case class OverWindowWithOrderBy(partitionBy: Seq[Expression], orderBy: Expressi
     * @param alias alias for this over window
     * @return over window
     */
-  def as(alias: Expression): OverWindow = {
-    OverWindow(alias, partitionBy, orderBy, UnboundedRange(), CurrentRange())
+  def as(alias: PlannerExpression): OverWindow = {
+    OverWindow(alias, partitionBy, orderBy, PlannerUnboundedRange(), PlannerCurrentRange())
   }
 }

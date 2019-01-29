@@ -41,9 +41,10 @@ import _root_.scala.collection.JavaConverters._
   * General expression for unresolved function calls. The function can be a built-in
   * scalar function or a user-defined scalar function.
   */
-case class Call(functionName: String, args: Seq[Expression]) extends Expression {
+case class PlannerCall(functionName: String, args: Seq[PlannerExpression])
+  extends PlannerExpression {
 
-  override private[flink] def children: Seq[Expression] = args
+  override private[flink] def children: Seq[PlannerExpression] = args
 
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     throw UnresolvedException(s"trying to convert UnresolvedFunction $functionName to RexNode")
@@ -64,7 +65,8 @@ case class Call(functionName: String, args: Seq[Expression]) extends Expression 
   * @param agg The aggregation of the over call.
   * @param alias The alias of the referenced over window.
   */
-case class UnresolvedOverCall(agg: Expression, alias: Expression) extends Expression {
+case class PlannerUnresolvedOverCall(agg: PlannerExpression, alias: PlannerExpression)
+  extends PlannerExpression {
 
   override private[flink] def validateInput() =
     ValidationFailure(s"Over window with alias $alias could not be resolved.")
@@ -83,12 +85,12 @@ case class UnresolvedOverCall(agg: Expression, alias: Expression) extends Expres
   * @param preceding      The lower bound of the window
   * @param following      The upper bound of the window
   */
-case class OverCall(
-    agg: Expression,
-    partitionBy: Seq[Expression],
-    orderBy: Expression,
-    preceding: Expression,
-    following: Expression) extends Expression {
+case class PlannerOverCall(
+    agg: PlannerExpression,
+    partitionBy: Seq[PlannerExpression],
+    orderBy: PlannerExpression,
+    preceding: PlannerExpression,
+    following: PlannerExpression) extends PlannerExpression {
 
   override def toString: String = s"$agg OVER (" +
     s"PARTITION BY (${partitionBy.mkString(", ")}) " +
@@ -139,17 +141,17 @@ case class OverCall(
 
   private def createBound(
     relBuilder: RelBuilder,
-    bound: Expression,
+    bound: PlannerExpression,
     sqlKind: SqlKind): RexWindowBound = {
 
     bound match {
-      case _: UnboundedRow | _: UnboundedRange =>
+      case _: PlannerUnboundedRow | _: PlannerUnboundedRange =>
         val unbounded = SqlWindow.createUnboundedPreceding(SqlParserPos.ZERO)
         create(unbounded, null)
-      case _: CurrentRow | _: CurrentRange =>
+      case _: PlannerCurrentRow | _: PlannerCurrentRange =>
         val currentRow = SqlWindow.createCurrentRow(SqlParserPos.ZERO)
         create(currentRow, null)
-      case b: Literal =>
+      case b: PlannerLiteral =>
         val returnType = relBuilder
           .getTypeFactory.asInstanceOf[FlinkTypeFactory]
           .createTypeFromTypeInfo(Types.DECIMAL, isNullable = true)
@@ -176,7 +178,7 @@ case class OverCall(
     }
   }
 
-  override private[flink] def children: Seq[Expression] =
+  override private[flink] def children: Seq[PlannerExpression] =
     Seq(agg) ++ Seq(orderBy) ++ partitionBy ++ Seq(preceding) ++ Seq(following)
 
   override private[flink] def resultType = agg.resultType
@@ -193,9 +195,9 @@ case class OverCall(
 
     // check partitionBy expression keys are resolved field reference
     partitionBy.foreach {
-      case r: ResolvedFieldReference if r.resultType.isKeyType  =>
+      case r: PlannerResolvedFieldReference if r.resultType.isKeyType  =>
         ValidationSuccess
-      case r: ResolvedFieldReference =>
+      case r: PlannerResolvedFieldReference =>
         return ValidationFailure(s"Invalid PartitionBy expression: $r. " +
           s"Expression must return key type.")
       case r =>
@@ -205,39 +207,41 @@ case class OverCall(
 
     // check preceding is valid
     preceding match {
-      case _: CurrentRow | _: CurrentRange | _: UnboundedRow | _: UnboundedRange =>
+      case _: PlannerCurrentRow | _: PlannerCurrentRange
+           | _: PlannerUnboundedRow | _: PlannerUnboundedRange =>
         ValidationSuccess
-      case Literal(v: Long, _: RowIntervalTypeInfo) if v > 0 =>
+      case PlannerLiteral(v: Long, _: RowIntervalTypeInfo) if v > 0 =>
         ValidationSuccess
-      case Literal(_, _: RowIntervalTypeInfo) =>
+      case PlannerLiteral(_, _: RowIntervalTypeInfo) =>
         return ValidationFailure("Preceding row interval must be larger than 0.")
-      case Literal(v: Long, _: TimeIntervalTypeInfo[_]) if v >= 0 =>
+      case PlannerLiteral(v: Long, _: TimeIntervalTypeInfo[_]) if v >= 0 =>
         ValidationSuccess
-      case Literal(_, _: TimeIntervalTypeInfo[_]) =>
+      case PlannerLiteral(_, _: TimeIntervalTypeInfo[_]) =>
         return ValidationFailure("Preceding time interval must be equal or larger than 0.")
-      case Literal(_, _) =>
+      case PlannerLiteral(_, _) =>
         return ValidationFailure("Preceding must be a row interval or time interval literal.")
     }
 
     // check following is valid
     following match {
-      case _: CurrentRow | _: CurrentRange | _: UnboundedRow | _: UnboundedRange =>
+      case _: PlannerCurrentRow | _: PlannerCurrentRange
+           | _: PlannerUnboundedRow | _: PlannerUnboundedRange =>
         ValidationSuccess
-      case Literal(v: Long, _: RowIntervalTypeInfo) if v > 0 =>
+      case PlannerLiteral(v: Long, _: RowIntervalTypeInfo) if v > 0 =>
         ValidationSuccess
-      case Literal(_, _: RowIntervalTypeInfo) =>
+      case PlannerLiteral(_, _: RowIntervalTypeInfo) =>
         return ValidationFailure("Following row interval must be larger than 0.")
-      case Literal(v: Long, _: TimeIntervalTypeInfo[_]) if v >= 0 =>
+      case PlannerLiteral(v: Long, _: TimeIntervalTypeInfo[_]) if v >= 0 =>
         ValidationSuccess
-      case Literal(_, _: TimeIntervalTypeInfo[_]) =>
+      case PlannerLiteral(_, _: TimeIntervalTypeInfo[_]) =>
         return ValidationFailure("Following time interval must be equal or larger than 0.")
-      case Literal(_, _) =>
+      case PlannerLiteral(_, _) =>
         return ValidationFailure("Following must be a row interval or time interval literal.")
     }
 
     // check that preceding and following are of same type
     (preceding, following) match {
-      case (p: Expression, f: Expression) if p.resultType == f.resultType =>
+      case (p: PlannerExpression, f: PlannerExpression) if p.resultType == f.resultType =>
         ValidationSuccess
       case _ =>
         return ValidationFailure("Preceding and following must be of same interval type.")
@@ -258,14 +262,14 @@ case class OverCall(
   * @param scalarFunction scalar function to be called (might be overloaded)
   * @param parameters actual parameters that determine target evaluation method
   */
-case class ScalarFunctionCall(
+case class PlannerScalarFunctionCall(
     scalarFunction: ScalarFunction,
-    parameters: Seq[Expression])
-  extends Expression {
+    parameters: Seq[PlannerExpression])
+  extends PlannerExpression {
 
   private var foundSignature: Option[Array[Class[_]]] = None
 
-  override private[flink] def children: Seq[Expression] = parameters
+  override private[flink] def children: Seq[PlannerExpression] = parameters
 
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     val typeFactory = relBuilder.getTypeFactory.asInstanceOf[FlinkTypeFactory]
@@ -309,16 +313,16 @@ case class ScalarFunctionCall(
   * @param parameters actual parameters of function
   * @param resultType type information of returned table
   */
-case class TableFunctionCall(
+case class PlannerTableFunctionCall(
     functionName: String,
     tableFunction: TableFunction[_],
-    parameters: Seq[Expression],
+    parameters: Seq[PlannerExpression],
     resultType: TypeInformation[_])
-  extends Expression {
+  extends PlannerExpression {
 
   private var aliases: Option[Seq[String]] = None
 
-  override private[flink] def children: Seq[Expression] = parameters
+  override private[flink] def children: Seq[PlannerExpression] = parameters
 
   /**
     * Assigns an alias for this table function's returned fields that the following operator
@@ -327,7 +331,7 @@ case class TableFunctionCall(
     * @param aliasList alias for this table function's returned fields
     * @return this table function call
     */
-  private[flink] def as(aliasList: Option[Seq[String]]): TableFunctionCall = {
+  private[flink] def as(aliasList: Option[Seq[String]]): PlannerTableFunctionCall = {
     this.aliases = aliasList
     this
   }

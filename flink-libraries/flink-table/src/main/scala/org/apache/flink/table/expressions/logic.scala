@@ -24,7 +24,7 @@ import org.apache.calcite.tools.RelBuilder
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo
 import org.apache.flink.table.validate._
 
-abstract class BinaryPredicate extends BinaryExpression {
+abstract class BinaryPredicate extends PlannerBinaryExpression {
   override private[flink] def resultType = BasicTypeInfo.BOOLEAN_TYPE_INFO
 
   override private[flink] def validateInput(): ValidationResult = {
@@ -38,7 +38,7 @@ abstract class BinaryPredicate extends BinaryExpression {
   }
 }
 
-case class Not(child: Expression) extends UnaryExpression {
+case class Not(child: PlannerExpression) extends PlannerUnaryExpression {
 
   override def toString = s"!($child)"
 
@@ -58,7 +58,7 @@ case class Not(child: Expression) extends UnaryExpression {
   }
 }
 
-case class And(left: Expression, right: Expression) extends BinaryPredicate {
+case class And(left: PlannerExpression, right: PlannerExpression) extends BinaryPredicate {
 
   override def toString = s"$left && $right"
 
@@ -67,7 +67,7 @@ case class And(left: Expression, right: Expression) extends BinaryPredicate {
   }
 }
 
-case class Or(left: Expression, right: Expression) extends BinaryPredicate {
+case class Or(left: PlannerExpression, right: PlannerExpression) extends BinaryPredicate {
 
   override def toString = s"$left || $right"
 
@@ -77,10 +77,10 @@ case class Or(left: Expression, right: Expression) extends BinaryPredicate {
 }
 
 case class If(
-    condition: Expression,
-    ifTrue: Expression,
-    ifFalse: Expression)
-  extends Expression {
+    condition: PlannerExpression,
+    ifTrue: PlannerExpression,
+    ifFalse: PlannerExpression)
+  extends PlannerExpression {
   private[flink] def children = Seq(condition, ifTrue, ifFalse)
 
   override private[flink] def resultType = ifTrue.resultType

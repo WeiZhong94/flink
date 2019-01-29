@@ -69,12 +69,16 @@ abstract class WindowPropertiesBaseRule(rulePredicate: RelOptRuleOperand, ruleNa
     val timeProperties = windowType match {
       case 'streamRowtime =>
         Seq(
-          NamedWindowProperty(propertyName(w, "rowtime"), RowtimeAttribute(w.aliasAttribute)),
-          NamedWindowProperty(propertyName(w, "proctime"), ProctimeAttribute(w.aliasAttribute)))
+          NamedWindowProperty(
+            propertyName(w, "rowtime"), PlannerRowtimeAttribute(w.aliasAttribute)),
+          NamedWindowProperty(
+            propertyName(w, "proctime"), PlannerProctimeAttribute(w.aliasAttribute)))
       case 'streamProctime =>
-        Seq(NamedWindowProperty(propertyName(w, "proctime"), ProctimeAttribute(w.aliasAttribute)))
+        Seq(NamedWindowProperty(
+          propertyName(w, "proctime"), PlannerProctimeAttribute(w.aliasAttribute)))
       case 'batchRowtime =>
-        Seq(NamedWindowProperty(propertyName(w, "rowtime"), RowtimeAttribute(w.aliasAttribute)))
+        Seq(NamedWindowProperty(
+          propertyName(w, "rowtime"), PlannerRowtimeAttribute(w.aliasAttribute)))
       case _ =>
         throw new TableException("Unknown window type encountered. Please report this bug.")
     }
@@ -118,7 +122,7 @@ abstract class WindowPropertiesBaseRule(rulePredicate: RelOptRuleOperand, ruleNa
 
   /** Generates a property name for a window. */
   private def propertyName(window: LogicalWindow, name: String): String = {
-    window.aliasAttribute.asInstanceOf[WindowReference].name + name
+    window.aliasAttribute.asInstanceOf[PlannerWindowReference].name + name
   }
 
   /** Replace group auxiliaries with field references. */

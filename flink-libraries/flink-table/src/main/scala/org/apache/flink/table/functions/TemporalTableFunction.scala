@@ -22,7 +22,7 @@ import java.sql.Timestamp
 
 import org.apache.flink.api.java.typeutils.RowTypeInfo
 import org.apache.flink.table.api.Table
-import org.apache.flink.table.expressions.Expression
+import org.apache.flink.table.expressions.PlannerExpression
 import org.apache.flink.types.Row
 
 /**
@@ -34,10 +34,10 @@ import org.apache.flink.types.Row
   * into other operators (like Temporal Table Join).
   */
 class TemporalTableFunction private(
-    @transient private val underlyingHistoryTable: Table,
-    private val timeAttribute: Expression,
-    private val primaryKey: String,
-    private val resultType: RowTypeInfo)
+                                     @transient private val underlyingHistoryTable: Table,
+                                     private val timeAttribute: PlannerExpression,
+                                     private val primaryKey: String,
+                                     private val resultType: RowTypeInfo)
   extends TableFunction[Row] {
 
   def eval(row: Timestamp): Unit = {
@@ -48,7 +48,7 @@ class TemporalTableFunction private(
     resultType
   }
 
-  def getTimeAttribute: Expression = {
+  def getTimeAttribute: PlannerExpression = {
     timeAttribute
   }
 
@@ -66,9 +66,9 @@ class TemporalTableFunction private(
 
 object TemporalTableFunction {
   private[flink] def create(
-      table: Table,
-      timeAttribute: Expression,
-      primaryKey: String): TemporalTableFunction = {
+                             table: Table,
+                             timeAttribute: PlannerExpression,
+                             primaryKey: String): TemporalTableFunction = {
     new TemporalTableFunction(
       table,
       timeAttribute,

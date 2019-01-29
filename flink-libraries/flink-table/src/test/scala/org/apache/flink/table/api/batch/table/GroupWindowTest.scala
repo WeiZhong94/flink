@@ -24,18 +24,18 @@ import org.apache.flink.api.scala._
 import org.apache.flink.table.runtime.utils.JavaUserDefinedAggFunctions.WeightedAvgWithMerge
 import org.apache.flink.table.api.scala._
 import org.apache.flink.table.apiexpressions.ApiExpression
-import org.apache.flink.table.expressions.{ApiExpressionParser, Expression, WindowReference}
+import org.apache.flink.table.expressions.{ApiExpressionParser, PlannerExpression, PlannerWindowReference}
 import org.apache.flink.table.plan.logical._
 import org.apache.flink.table.utils.TableTestUtil._
 import org.apache.flink.table.utils.TableTestBase
 import org.junit.Test
 
 class GroupWindowTest extends TableTestBase {
-  implicit def apiExpression2Expression(apiExpression: ApiExpression): Expression = {
+  implicit def apiExpression2Expression(apiExpression: ApiExpression): PlannerExpression = {
     ApiExpressionParser.parse(apiExpression)
   }
 
-  implicit def symbol2Expression(apiExpression: Symbol): Expression = {
+  implicit def symbol2Expression(apiExpression: Symbol): PlannerExpression = {
     ApiExpressionParser.parse(apiExpression)
   }
 
@@ -57,7 +57,7 @@ class GroupWindowTest extends TableTestBase {
       "DataSetWindowAggregate",
       batchTableNode(0),
       term("groupBy", "string"),
-      term("window", TumblingGroupWindow(WindowReference("w"), 'long, 2.rows)),
+      term("window", TumblingGroupWindow(PlannerWindowReference("w"), 'long, 2.rows)),
       term("select", "string", "COUNT(int) AS TMP_0")
     )
 
@@ -80,7 +80,7 @@ class GroupWindowTest extends TableTestBase {
       "DataSetWindowAggregate",
       batchTableNode(0),
       term("groupBy", "string"),
-      term("window", TumblingGroupWindow(WindowReference("w"), 'long, 5.milli)),
+      term("window", TumblingGroupWindow(PlannerWindowReference("w"), 'long, 5.milli)),
       term("select", "string", "myWeightedAvg(long, int) AS TMP_0")
     )
 
@@ -101,7 +101,7 @@ class GroupWindowTest extends TableTestBase {
       "DataSetWindowAggregate",
       batchTableNode(0),
       term("groupBy", "string"),
-      term("window", TumblingGroupWindow(WindowReference("w"), 'long, 5.milli)),
+      term("window", TumblingGroupWindow(PlannerWindowReference("w"), 'long, 5.milli)),
       term("select", "string", "COUNT(int) AS TMP_0")
     )
 
@@ -125,7 +125,7 @@ class GroupWindowTest extends TableTestBase {
         batchTableNode(0),
         term("select", "int", "long")
       ),
-      term("window", TumblingGroupWindow(WindowReference("w"), 'long, 5.milli)),
+      term("window", TumblingGroupWindow(PlannerWindowReference("w"), 'long, 5.milli)),
       term("select", "COUNT(int) AS TMP_0")
     )
 
@@ -149,7 +149,7 @@ class GroupWindowTest extends TableTestBase {
         batchTableNode(0),
         term("select", "int", "long")
       ),
-      term("window", TumblingGroupWindow(WindowReference("w"), 'long, 2.rows)),
+      term("window", TumblingGroupWindow(PlannerWindowReference("w"), 'long, 2.rows)),
       term("select", "COUNT(int) AS TMP_0")
     )
 
@@ -170,7 +170,7 @@ class GroupWindowTest extends TableTestBase {
       "DataSetWindowAggregate",
       batchTableNode(0),
       term("groupBy", "string"),
-      term("window", TumblingGroupWindow(WindowReference("w"), 'ts, 2.hours)),
+      term("window", TumblingGroupWindow(PlannerWindowReference("w"), 'ts, 2.hours)),
       term("select", "string", "COUNT(int) AS TMP_0",
         "start('w) AS TMP_1", "end('w) AS TMP_2", "rowtime('w) AS TMP_3")
     )
@@ -192,7 +192,7 @@ class GroupWindowTest extends TableTestBase {
       "DataSetWindowAggregate",
       batchTableNode(0),
       term("groupBy", "string"),
-      term("window", TumblingGroupWindow(WindowReference("w"), 'ts, 2.hours)),
+      term("window", TumblingGroupWindow(PlannerWindowReference("w"), 'ts, 2.hours)),
       term("select", "string", "COUNT(int) AS TMP_0",
         "start('w) AS TMP_1", "end('w) AS TMP_2", "rowtime('w) AS TMP_3")
     )
@@ -219,7 +219,7 @@ class GroupWindowTest extends TableTestBase {
       batchTableNode(0),
       term("groupBy", "string"),
       term("window",
-        SlidingGroupWindow(WindowReference("w"), 'long, 8.milli, 10.milli)),
+        SlidingGroupWindow(PlannerWindowReference("w"), 'long, 8.milli, 10.milli)),
       term("select", "string", "COUNT(int) AS TMP_0")
     )
 
@@ -241,7 +241,7 @@ class GroupWindowTest extends TableTestBase {
       batchTableNode(0),
       term("groupBy", "string"),
       term("window",
-        SlidingGroupWindow(WindowReference("w"), 'long, 2.rows, 1.rows)),
+        SlidingGroupWindow(PlannerWindowReference("w"), 'long, 2.rows, 1.rows)),
       term("select", "string", "COUNT(int) AS TMP_0")
     )
 
@@ -265,7 +265,7 @@ class GroupWindowTest extends TableTestBase {
       batchTableNode(0),
       term("groupBy", "string"),
       term("window",
-           SlidingGroupWindow(WindowReference("w"), 'long, 8.milli, 10.milli)),
+           SlidingGroupWindow(PlannerWindowReference("w"), 'long, 8.milli, 10.milli)),
       term("select", "string", "myWeightedAvg(long, int) AS TMP_0")
     )
 
@@ -290,7 +290,7 @@ class GroupWindowTest extends TableTestBase {
         term("select", "int", "long")
       ),
       term("window",
-        SlidingGroupWindow(WindowReference("w"), 'long, 8.milli, 10.milli)),
+        SlidingGroupWindow(PlannerWindowReference("w"), 'long, 8.milli, 10.milli)),
       term("select", "COUNT(int) AS TMP_0")
     )
 
@@ -315,7 +315,7 @@ class GroupWindowTest extends TableTestBase {
         term("select", "int", "long")
       ),
       term("window",
-        SlidingGroupWindow(WindowReference("w"), 'long, 2.rows, 1.rows)),
+        SlidingGroupWindow(PlannerWindowReference("w"), 'long, 2.rows, 1.rows)),
       term("select", "COUNT(int) AS TMP_0")
     )
 
@@ -336,7 +336,7 @@ class GroupWindowTest extends TableTestBase {
       "DataSetWindowAggregate",
       batchTableNode(0),
       term("groupBy", "string"),
-      term("window", SlidingGroupWindow(WindowReference("w"), 'ts, 1.hour, 10.minutes)),
+      term("window", SlidingGroupWindow(PlannerWindowReference("w"), 'ts, 1.hour, 10.minutes)),
       term("select", "string", "COUNT(int) AS TMP_0",
         "start('w) AS TMP_1", "end('w) AS TMP_2", "rowtime('w) AS TMP_3")
     )
@@ -358,7 +358,7 @@ class GroupWindowTest extends TableTestBase {
       "DataSetWindowAggregate",
       batchTableNode(0),
       term("groupBy", "string"),
-      term("window", SlidingGroupWindow(WindowReference("w"), 'ts, 1.hour, 10.minutes)),
+      term("window", SlidingGroupWindow(PlannerWindowReference("w"), 'ts, 1.hour, 10.minutes)),
       term("select", "string", "COUNT(int) AS TMP_0",
         "start('w) AS TMP_1", "end('w) AS TMP_2", "rowtime('w) AS TMP_3")
     )
@@ -384,7 +384,7 @@ class GroupWindowTest extends TableTestBase {
       "DataSetWindowAggregate",
       batchTableNode(0),
       term("groupBy", "string"),
-      term("window", SessionGroupWindow(WindowReference("w"), 'long, 7.milli)),
+      term("window", SessionGroupWindow(PlannerWindowReference("w"), 'long, 7.milli)),
       term("select", "string", "COUNT(int) AS TMP_0")
     )
 
@@ -407,7 +407,7 @@ class GroupWindowTest extends TableTestBase {
       "DataSetWindowAggregate",
       batchTableNode(0),
       term("groupBy", "string"),
-      term("window", SessionGroupWindow(WindowReference("w"), 'long, 7.milli)),
+      term("window", SessionGroupWindow(PlannerWindowReference("w"), 'long, 7.milli)),
       term("select", "string", "myWeightedAvg(long, int) AS TMP_0")
     )
 
@@ -428,7 +428,7 @@ class GroupWindowTest extends TableTestBase {
       "DataSetWindowAggregate",
       batchTableNode(0),
       term("groupBy", "string"),
-      term("window", SessionGroupWindow(WindowReference("w"), 'ts, 30.minutes)),
+      term("window", SessionGroupWindow(PlannerWindowReference("w"), 'ts, 30.minutes)),
       term("select", "string", "COUNT(int) AS TMP_0",
         "start('w) AS TMP_1", "end('w) AS TMP_2", "rowtime('w) AS TMP_3")
     )
@@ -450,7 +450,7 @@ class GroupWindowTest extends TableTestBase {
       "DataSetWindowAggregate",
       batchTableNode(0),
       term("groupBy", "string"),
-      term("window", SessionGroupWindow(WindowReference("w"), 'ts, 30.minutes)),
+      term("window", SessionGroupWindow(PlannerWindowReference("w"), 'ts, 30.minutes)),
       term("select", "string", "COUNT(int) AS TMP_0",
         "start('w) AS TMP_1", "end('w) AS TMP_2", "rowtime('w) AS TMP_3")
     )
