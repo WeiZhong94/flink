@@ -24,12 +24,12 @@ import org.apache.flink.api.scala._
 import org.apache.flink.api.scala.DataSet
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.table.api.{InnerTable, Table}
-import org.apache.flink.table.api.scala.{ApiImplicitExpressionConversions, DataSetConversions, DataStreamConversions, TableConversions, TableFunctionConversions, BatchTableEnvironment => ScalaBatchTableEnv, StreamTableEnvironment => ScalaStreamTableEnv}
+import org.apache.flink.table.api.scala.{ImplicitExpressionConversions, DataSetConversions, DataStreamConversions, TableConversions, TableFunctionConversions, BatchTableEnvironment => ScalaBatchTableEnv, StreamTableEnvironment => ScalaStreamTableEnv}
 import org.apache.flink.table.functions.TableFunction
 
 import _root_.scala.language.implicitConversions
 
-package object expressions extends ApiImplicitExpressionConversions {
+package object expressions extends ImplicitExpressionConversions {
 
   implicit def table2TableConversions(table: Table): TableConversions = {
     new TableConversions(table)

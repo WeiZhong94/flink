@@ -554,11 +554,11 @@ case class LogicalRelNode(
 }
 
 case class WindowAggregate(
-                            groupingExpressions: Seq[PlannerExpression],
-                            window: LogicalWindow,
-                            propertyExpressions: Seq[NamedExpression],
-                            aggregateExpressions: Seq[NamedExpression],
-                            child: LogicalNode)
+    groupingExpressions: Seq[PlannerExpression],
+    window: LogicalWindow,
+    propertyExpressions: Seq[NamedExpression],
+    aggregateExpressions: Seq[NamedExpression],
+    child: LogicalNode)
   extends UnaryNode {
 
   override def output: Seq[Attribute] = {
@@ -690,9 +690,9 @@ case class WindowAggregate(
 }
 
 case class TemporalTable(
-                          timeAttribute: PlannerExpression,
-                          primaryKey: PlannerExpression,
-                          child: LogicalNode)
+    timeAttribute: PlannerExpression,
+    primaryKey: PlannerExpression,
+    child: LogicalNode)
   extends UnaryNode {
 
   override def output: Seq[Attribute] = child.output
@@ -713,12 +713,12 @@ case class TemporalTable(
   * @param child child logical node
   */
 case class LogicalTableFunctionCall(
-                                     functionName: String,
-                                     tableFunction: TableFunction[_],
-                                     parameters: Seq[PlannerExpression],
-                                     resultType: TypeInformation[_],
-                                     fieldNames: Array[String],
-                                     child: LogicalNode)
+    functionName: String,
+    tableFunction: TableFunction[_],
+    parameters: Seq[PlannerExpression],
+    resultType: TypeInformation[_],
+    fieldNames: Array[String],
+    child: LogicalNode)
   extends UnaryNode {
 
   private val (generatedNames, fieldIndexes, fieldTypes) = getFieldInfo(resultType)

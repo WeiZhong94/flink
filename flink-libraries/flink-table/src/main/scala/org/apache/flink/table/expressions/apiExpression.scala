@@ -47,10 +47,11 @@ abstract class LeafExpression extends Expression {
 
 case class DistinctAgg(child: Expression) extends UnaryExpression
 
-case class AggFunctionCall(aggregateFunction: AggregateFunction[_, _],
-                           resultTypeInfo: TypeInformation[_],
-                           accTypeInfo: TypeInformation[_],
-                           args: Seq[Expression])
+case class AggFunctionCall(
+    aggregateFunction: AggregateFunction[_, _],
+    resultTypeInfo: TypeInformation[_],
+    accTypeInfo: TypeInformation[_],
+    args: Seq[Expression])
   extends Expression {
   override def children: Seq[Expression] = args
 }
@@ -72,10 +73,10 @@ case class ScalarFunctionCall(
 }
 
 case class TableFunctionCall(
-                              functionName: String,
-                              tableFunction: TableFunction[_],
-                              parameters: Seq[Expression],
-                              resultType: TypeInformation[_])
+    functionName: String,
+    tableFunction: TableFunction[_],
+    parameters: Seq[Expression],
+    resultType: TypeInformation[_])
   extends Expression {
   override private[flink] def children: Seq[Expression] = parameters
 }

@@ -29,8 +29,8 @@ import org.apache.flink.table.validate.{ValidationFailure, ValidationResult, Val
   * @param timeAttribute time field indicating event-time or processing-time
   */
 abstract class LogicalWindow(
-                              val aliasAttribute: PlannerExpression,
-                              val timeAttribute: PlannerExpression)
+    val aliasAttribute: PlannerExpression,
+    val timeAttribute: PlannerExpression)
   extends Resolvable[LogicalWindow] {
 
   def resolveExpressions(resolver: (PlannerExpression) => PlannerExpression): LogicalWindow = this

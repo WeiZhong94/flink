@@ -20,9 +20,10 @@ package org.apache.flink.table.api
 import org.apache.calcite.rel.RelNode
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.operators.join.JoinType
-import org.apache.flink.table.expressions.{Expression, ApiOverWindow, ApiOverWindowWithPreceding, ApiSessionWithGapOnTimeWithAlias, ApiSlideWithSizeAndSlideOnTimeWithAlias, ApiTumbleWithSizeOnTimeWithAlias, ApiWindow}
+import org.apache.flink.table.api.scala.{ApiOverWindow, ApiSessionWithGapOnTimeWithAlias, ApiSlideWithSizeAndSlideOnTimeWithAlias, ApiTumbleWithSizeOnTimeWithAlias, ApiWindow}
 import org.apache.flink.table.calcite.{FlinkRelBuilder, FlinkTypeFactory}
-import org.apache.flink.table.plan.expressions.{PlannerAlias, ApiExpressionParser, Asc, PlannerCall, Desc, PlannerExpression, ExpressionParser, Ordering, PlannerResolvedFieldReference, PlannerUnresolvedAlias, PlannerUnresolvedFieldReference, WindowProperty}
+import org.apache.flink.table.expressions.Expression
+import org.apache.flink.table.plan.expressions.{ApiExpressionParser, Asc, Desc, ExpressionParser, Ordering, PlannerAlias, PlannerCall, PlannerExpression, PlannerResolvedFieldReference, PlannerUnresolvedAlias, PlannerUnresolvedFieldReference, WindowProperty}
 import org.apache.flink.table.functions.{TableFunction, TemporalTableFunction}
 import org.apache.flink.table.functions.utils.UserDefinedFunctionUtils
 import org.apache.flink.table.plan.ProjectionTranslator._
@@ -196,8 +197,8 @@ private[flink] class TableImpl(
   }
 
   def createTemporalTableFunction(
-                                   timeAttribute: Expression,
-                                   primaryKey: Expression): TableFunction[Row] = {
+      timeAttribute: Expression,
+      primaryKey: Expression): TableFunction[Row] = {
     createTemporalTableFunctionApi(
       ApiExpressionParser.parse(timeAttribute),
       ApiExpressionParser.parse(primaryKey))
@@ -223,8 +224,8 @@ private[flink] class TableImpl(
     *        [[TemporalTableFunction]] was created.
     */
   def createTemporalTableFunctionApi(
-                                      timeAttribute: PlannerExpression,
-                                      primaryKey: PlannerExpression): TableFunction[Row] = {
+      timeAttribute: PlannerExpression,
+      primaryKey: PlannerExpression): TableFunction[Row] = {
     val temporalTable = TemporalTable(timeAttribute, primaryKey, logicalPlan)
                         .validate(tableEnv)
                         .asInstanceOf[TemporalTable]
@@ -632,9 +633,9 @@ private[flink] class TableImpl(
   }
 
   private def joinApi(
-                       right: Table,
-                       joinPredicate: Option[PlannerExpression],
-                       joinType: JoinType): Table = {
+      right: Table,
+      joinPredicate: Option[PlannerExpression],
+      joinType: JoinType): Table = {
     val innerRight = toInnerTable(right)
     // check if we join with a table or a table function
     if (!containsUnboundedUDTFCall(innerRight.logicalPlan)) {

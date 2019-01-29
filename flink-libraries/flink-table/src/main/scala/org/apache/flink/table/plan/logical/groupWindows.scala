@@ -29,9 +29,9 @@ import org.apache.flink.table.validate.{ValidationFailure, ValidationResult, Val
 // ------------------------------------------------------------------------------------------------
 
 case class TumblingGroupWindow(
-                                alias: PlannerExpression,
-                                timeField: PlannerExpression,
-                                size: PlannerExpression)
+    alias: PlannerExpression,
+    timeField: PlannerExpression,
+    size: PlannerExpression)
   extends LogicalWindow(
     alias,
     timeField) {
@@ -82,10 +82,10 @@ case class TumblingGroupWindow(
 // ------------------------------------------------------------------------------------------------
 
 case class SlidingGroupWindow(
-                               alias: PlannerExpression,
-                               timeField: PlannerExpression,
-                               size: PlannerExpression,
-                               slide: PlannerExpression)
+    alias: PlannerExpression,
+    timeField: PlannerExpression,
+    size: PlannerExpression,
+    slide: PlannerExpression)
   extends LogicalWindow(
     alias,
     timeField) {
@@ -147,9 +147,9 @@ case class SlidingGroupWindow(
 // ------------------------------------------------------------------------------------------------
 
 case class SessionGroupWindow(
-                               alias: PlannerExpression,
-                               timeField: PlannerExpression,
-                               gap: PlannerExpression)
+    alias: PlannerExpression,
+    timeField: PlannerExpression,
+    gap: PlannerExpression)
   extends LogicalWindow(
     alias,
     timeField) {

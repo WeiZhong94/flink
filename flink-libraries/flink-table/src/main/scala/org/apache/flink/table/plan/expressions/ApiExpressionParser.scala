@@ -19,6 +19,7 @@
 package org.apache.flink.table.plan.expressions
 
 import org.apache.flink.table.api._
+import org.apache.flink.table.api.scala.{CurrentRange, CurrentRow, UnboundedRange, UnboundedRow}
 import org.apache.flink.table.expressions._
 
 object ApiExpressionParser {

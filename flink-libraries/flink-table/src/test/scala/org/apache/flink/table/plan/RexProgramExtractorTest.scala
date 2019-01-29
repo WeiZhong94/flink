@@ -619,8 +619,8 @@ class RexProgramExtractorTest extends RexProgramTestBase {
   }
 
   private def assertExpressionArrayEquals(
-                                           expected: Array[PlannerExpression],
-                                           actual: Array[PlannerExpression]) = {
+      expected: Array[PlannerExpression],
+      actual: Array[PlannerExpression]) = {
     val sortedExpected = expected.sortBy(e => e.toString)
     val sortedActual = actual.sortBy(e => e.toString)
 

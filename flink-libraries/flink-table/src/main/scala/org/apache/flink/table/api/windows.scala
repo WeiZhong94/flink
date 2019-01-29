@@ -67,6 +67,51 @@ case class PlannerUnboundedRange() extends PlannerExpression {
   override def toString = "UNBOUNDED RANGE"
 }
 
+case class PartitionedOver(partitionBy: Array[PlannerExpression]) {
+
+  /**
+    * Specifies the time attribute on which rows are grouped.
+    *
+    * For streaming tables call [[orderBy 'rowtime or orderBy 'proctime]] to specify time mode.
+    *
+    * For batch tables, refer to a timestamp or long attribute.
+    */
+  def orderBy(orderBy: PlannerExpression): OverWindowWithOrderBy = {
+    OverWindowWithOrderBy(partitionBy, orderBy)
+  }
+}
+
+case class OverWindowWithOrderBy(partitionBy: Seq[PlannerExpression], orderBy: PlannerExpression) {
+
+  /**
+    * Set the preceding offset (based on time or row-count intervals) for over window.
+    *
+    * @param preceding preceding offset relative to the current row.
+    * @return this over window
+    */
+  def preceding(preceding: PlannerExpression): OverWindowWithPreceding = {
+    new OverWindowWithPreceding(partitionBy, orderBy, preceding)
+  }
+
+  /**
+    * Assigns an alias for this window that the following `select()` clause can refer to.
+    *
+    * @param alias alias for this over window
+    * @return over window
+    */
+  def as(alias: String): OverWindow = as(ExpressionParser.parseExpression(alias))
+
+  /**
+    * Assigns an alias for this window that the following `select()` clause can refer to.
+    *
+    * @param alias alias for this over window
+    * @return over window
+    */
+  def as(alias: PlannerExpression): OverWindow = {
+    OverWindow(alias, partitionBy, orderBy, PlannerUnboundedRange(), PlannerCurrentRange())
+  }
+}
+
 /**
   * A partially defined over window.
   */

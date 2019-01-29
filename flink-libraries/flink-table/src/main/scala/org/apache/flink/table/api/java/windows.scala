@@ -130,8 +130,8 @@ class PartitionedOver(private val partitionByExpr: Array[PlannerExpression]) {
 
 
 class OverWindowWithOrderBy(
-                             private val partitionByExpr: Array[PlannerExpression],
-                             private val orderByExpr: PlannerExpression) {
+    private val partitionByExpr: Array[PlannerExpression],
+    private val orderByExpr: PlannerExpression) {
 
   /**
     * Set the preceding offset (based on time or row-count intervals) for over window.

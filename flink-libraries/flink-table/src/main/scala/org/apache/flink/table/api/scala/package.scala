@@ -17,14 +17,11 @@
  */
 package org.apache.flink.table.api
 
-import org.apache.flink.api.common.typeutils.CompositeType
 import org.apache.flink.types.Row
 import org.apache.flink.api.scala._
 import org.apache.flink.api.scala.DataSet
 import org.apache.flink.streaming.api.scala.DataStream
-import org.apache.flink.table.api.scala.{ApiImplicitExpressionConversions, BatchTableEnvironment => ScalaBatchTableEnv, StreamTableEnvironment => ScalaStreamTableEnv}
-import org.apache.flink.table.expressions.Expression
-import org.apache.flink.table.plan.expressions.{ApiExpressionParser, PlannerExpression}
+import org.apache.flink.table.api.scala.{BatchTableEnvironment => ScalaBatchTableEnv, StreamTableEnvironment => ScalaStreamTableEnv}
 import org.apache.flink.table.functions.TableFunction
 
 import _root_.scala.language.implicitConversions
@@ -41,7 +38,7 @@ import _root_.scala.language.implicitConversions
   * imports implicit conversions for converting a [[DataSet]] and a [[DataStream]] to a
   * [[Table]]. This can be used to perform SQL-like queries on data. Please have
   * a look at [[Table]] to see which operations are supported and
-  * [[org.apache.flink.table.api.scala.ApiImplicitExpressionOperations]] to see how an
+  * [[org.apache.flink.table.api.scala.ImplicitExpressionOperations]] to see how an
   * expression can be specified.
   *
   * When writing a query you can use Scala Symbols to refer to field names. One would
@@ -67,7 +64,7 @@ import _root_.scala.language.implicitConversions
   * }}}
   *
   */
-package object scala extends ApiImplicitExpressionConversions {
+package object scala extends ImplicitExpressionConversions {
 
   implicit def table2TableConversions(table: Table): TableConversions = {
     new TableConversions(table)

@@ -37,7 +37,7 @@ import _root_.scala.language.implicitConversions
   * These operations must be kept in sync with the parser in
   * [[org.apache.flink.table.plan.expressions.ExpressionParser]].
   */
-trait ApiImplicitExpressionOperations {
+trait ImplicitExpressionOperations {
   private[flink] def expr: Expression
 
   /**
@@ -946,9 +946,9 @@ trait ApiImplicitExpressionOperations {
 
 /**
   * Implicit conversions from Scala Literals to ApiExpression [[Literal]] and from
-  * [[Expression]] to [[ApiImplicitExpressionOperations]].
+  * [[Expression]] to [[ImplicitExpressionOperations]].
   */
-trait ApiImplicitExpressionConversions {
+trait ImplicitExpressionConversions {
 
   implicit val UNBOUNDED_ROW = UnboundedRow()
   implicit val UNBOUNDED_RANGE = UnboundedRange()
@@ -956,69 +956,69 @@ trait ApiImplicitExpressionConversions {
   implicit val CURRENT_ROW = CurrentRow()
   implicit val CURRENT_RANGE = CurrentRange()
 
-  implicit class ApiWithOperations(e: Expression) extends ApiImplicitExpressionOperations {
+  implicit class WithOperations(e: Expression) extends ImplicitExpressionOperations {
     def expr = e
   }
 
-  implicit class ApiUnresolvedFieldExpression(s: Symbol) extends ApiImplicitExpressionOperations {
+  implicit class UnresolvedFieldExpression(s: Symbol) extends ImplicitExpressionOperations {
     def expr = UnresolvedFieldReference(s.name)
   }
 
-  implicit class ApiLiteralLongExpression(l: Long) extends ApiImplicitExpressionOperations {
+  implicit class LiteralLongExpression(l: Long) extends ImplicitExpressionOperations {
     def expr = Literal(l)
   }
 
-  implicit class ApiLiteralByteExpression(b: Byte) extends ApiImplicitExpressionOperations {
+  implicit class LiteralByteExpression(b: Byte) extends ImplicitExpressionOperations {
     def expr = Literal(b)
   }
 
-  implicit class ApiLiteralShortExpression(s: Short) extends ApiImplicitExpressionOperations {
+  implicit class LiteralShortExpression(s: Short) extends ImplicitExpressionOperations {
     def expr = Literal(s)
   }
 
-  implicit class ApiLiteralIntExpression(i: Int) extends ApiImplicitExpressionOperations {
+  implicit class LiteralIntExpression(i: Int) extends ImplicitExpressionOperations {
     def expr = Literal(i)
   }
 
-  implicit class ApiLiteralFloatExpression(f: Float) extends ApiImplicitExpressionOperations {
+  implicit class LiteralFloatExpression(f: Float) extends ImplicitExpressionOperations {
     def expr = Literal(f)
   }
 
-  implicit class ApiLiteralDoubleExpression(d: Double) extends ApiImplicitExpressionOperations {
+  implicit class LiteralDoubleExpression(d: Double) extends ImplicitExpressionOperations {
     def expr = Literal(d)
   }
 
-  implicit class ApiLiteralStringExpression(str: String) extends ApiImplicitExpressionOperations {
+  implicit class LiteralStringExpression(str: String) extends ImplicitExpressionOperations {
     def expr = Literal(str)
   }
 
-  implicit class ApiLiteralBooleanExpression(bool: Boolean)
-    extends ApiImplicitExpressionOperations {
+  implicit class LiteralBooleanExpression(bool: Boolean)
+    extends ImplicitExpressionOperations {
     def expr = Literal(bool)
   }
 
-  implicit class ApiLiteralJavaDecimalExpression(javaDecimal: JBigDecimal)
-    extends ApiImplicitExpressionOperations {
+  implicit class LiteralJavaDecimalExpression(javaDecimal: JBigDecimal)
+    extends ImplicitExpressionOperations {
     def expr = Literal(javaDecimal)
   }
 
-  implicit class ApiLiteralScalaDecimalExpression(scalaDecimal: BigDecimal)
-    extends ApiImplicitExpressionOperations {
+  implicit class LiteralScalaDecimalExpression(scalaDecimal: BigDecimal)
+    extends ImplicitExpressionOperations {
     def expr = Literal(scalaDecimal.bigDecimal)
   }
 
-  implicit class ApiLiteralSqlDateExpression(sqlDate: Date)
-    extends ApiImplicitExpressionOperations {
+  implicit class LiteralSqlDateExpression(sqlDate: Date)
+    extends ImplicitExpressionOperations {
     def expr = Literal(sqlDate)
   }
 
-  implicit class ApiLiteralSqlTimeExpression(sqlTime: Time)
-    extends ApiImplicitExpressionOperations {
+  implicit class LiteralSqlTimeExpression(sqlTime: Time)
+    extends ImplicitExpressionOperations {
     def expr = Literal(sqlTime)
   }
 
-  implicit class ApiLiteralSqlTimestampExpression(sqlTimestamp: Timestamp)
-    extends ApiImplicitExpressionOperations {
+  implicit class LiteralSqlTimestampExpression(sqlTimestamp: Timestamp)
+    extends ImplicitExpressionOperations {
     def expr = Literal(sqlTimestamp)
   }
 

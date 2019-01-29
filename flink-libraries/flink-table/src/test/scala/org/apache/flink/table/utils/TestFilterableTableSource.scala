@@ -91,11 +91,11 @@ object TestFilterableTableSource {
   * @param filterPushedDown Whether predicates have been pushed down yet.
   */
 class TestFilterableTableSource(
-                                 rowTypeInfo: RowTypeInfo,
-                                 data: Seq[Row],
-                                 filterableFields: Set[String] = Set(),
-                                 filterPredicates: Seq[PlannerExpression] = Seq(),
-                                 val filterPushedDown: Boolean = false)
+    rowTypeInfo: RowTypeInfo,
+    data: Seq[Row],
+    filterableFields: Set[String] = Set(),
+    filterPredicates: Seq[PlannerExpression] = Seq(),
+    val filterPushedDown: Boolean = false)
   extends BatchTableSource[Row]
     with StreamTableSource[Row]
     with FilterableTableSource[Row] {
