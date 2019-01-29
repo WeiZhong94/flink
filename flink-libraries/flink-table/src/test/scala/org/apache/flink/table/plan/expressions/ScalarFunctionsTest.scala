@@ -20,7 +20,7 @@ package org.apache.flink.table.plan.expressions
 
 import org.apache.flink.table.api.Types
 import org.apache.flink.table.api.scala._
-import org.apache.flink.table.expressions.{Expression, Null, ApiTimeIntervalUnit, ApiTimePointUnit}
+import org.apache.flink.table.expressions.{Expression, Null, TimeIntervalUnit, TimePointUnit}
 import org.apache.flink.table.plan.expressions.utils.ScalarTypesTestBase
 import org.junit.Test
 
@@ -1969,145 +1969,145 @@ class ScalarFunctionsTest extends ScalarTypesTestBase {
   @Test
   def testExtract(): Unit = {
     testAllApis(
-      'f16.extract(ApiTimeIntervalUnit.YEAR),
+      'f16.extract(TimeIntervalUnit.YEAR),
       "f16.extract(YEAR)",
       "EXTRACT(YEAR FROM f16)",
       "1996")
 
     testAllApis(
-      'f16.extract(ApiTimeIntervalUnit.QUARTER),
+      'f16.extract(TimeIntervalUnit.QUARTER),
       "f16.extract(QUARTER)",
       "EXTRACT(QUARTER FROM f16)",
       "4")
 
     testAllApis(
-      'f16.extract(ApiTimeIntervalUnit.MONTH),
+      'f16.extract(TimeIntervalUnit.MONTH),
       "extract(f16, MONTH)",
       "EXTRACT(MONTH FROM f16)",
       "11")
 
     testAllApis(
-      'f16.extract(ApiTimeIntervalUnit.WEEK),
+      'f16.extract(TimeIntervalUnit.WEEK),
       "extract(f16, WEEK)",
       "EXTRACT(WEEK FROM f16)",
       "45")
 
     testAllApis(
-      'f16.extract(ApiTimeIntervalUnit.DAY),
+      'f16.extract(TimeIntervalUnit.DAY),
       "f16.extract(DAY)",
       "EXTRACT(DAY FROM f16)",
       "10")
 
     testAllApis(
-      'f18.extract(ApiTimeIntervalUnit.YEAR),
+      'f18.extract(TimeIntervalUnit.YEAR),
       "f18.extract(YEAR)",
       "EXTRACT(YEAR FROM f18)",
       "1996")
 
     testAllApis(
-      'f18.extract(ApiTimeIntervalUnit.QUARTER),
+      'f18.extract(TimeIntervalUnit.QUARTER),
       "f18.extract(QUARTER)",
       "EXTRACT(QUARTER FROM f18)",
       "4")
 
     testAllApis(
-      'f16.extract(ApiTimeIntervalUnit.QUARTER),
+      'f16.extract(TimeIntervalUnit.QUARTER),
       "f16.extract(QUARTER)",
       "EXTRACT(QUARTER FROM f16)",
       "4")
 
     testAllApis(
-      'f18.extract(ApiTimeIntervalUnit.MONTH),
+      'f18.extract(TimeIntervalUnit.MONTH),
       "f18.extract(MONTH)",
       "EXTRACT(MONTH FROM f18)",
       "11")
 
     testAllApis(
-      'f18.extract(ApiTimeIntervalUnit.WEEK),
+      'f18.extract(TimeIntervalUnit.WEEK),
       "f18.extract(WEEK)",
       "EXTRACT(WEEK FROM f18)",
       "45")
 
     testAllApis(
-      'f18.extract(ApiTimeIntervalUnit.DAY),
+      'f18.extract(TimeIntervalUnit.DAY),
       "f18.extract(DAY)",
       "EXTRACT(DAY FROM f18)",
       "10")
 
     testAllApis(
-      'f18.extract(ApiTimeIntervalUnit.HOUR),
+      'f18.extract(TimeIntervalUnit.HOUR),
       "f18.extract(HOUR)",
       "EXTRACT(HOUR FROM f18)",
       "6")
 
     testAllApis(
-      'f17.extract(ApiTimeIntervalUnit.HOUR),
+      'f17.extract(TimeIntervalUnit.HOUR),
       "f17.extract(HOUR)",
       "EXTRACT(HOUR FROM f17)",
       "6")
 
     testAllApis(
-      'f18.extract(ApiTimeIntervalUnit.MINUTE),
+      'f18.extract(TimeIntervalUnit.MINUTE),
       "f18.extract(MINUTE)",
       "EXTRACT(MINUTE FROM f18)",
       "55")
 
     testAllApis(
-      'f17.extract(ApiTimeIntervalUnit.MINUTE),
+      'f17.extract(TimeIntervalUnit.MINUTE),
       "f17.extract(MINUTE)",
       "EXTRACT(MINUTE FROM f17)",
       "55")
 
     testAllApis(
-      'f18.extract(ApiTimeIntervalUnit.SECOND),
+      'f18.extract(TimeIntervalUnit.SECOND),
       "f18.extract(SECOND)",
       "EXTRACT(SECOND FROM f18)",
       "44")
 
     testAllApis(
-      'f17.extract(ApiTimeIntervalUnit.SECOND),
+      'f17.extract(TimeIntervalUnit.SECOND),
       "f17.extract(SECOND)",
       "EXTRACT(SECOND FROM f17)",
       "44")
 
     testAllApis(
-      'f19.extract(ApiTimeIntervalUnit.DAY),
+      'f19.extract(TimeIntervalUnit.DAY),
       "f19.extract(DAY)",
       "EXTRACT(DAY FROM f19)",
       "16979")
 
     testAllApis(
-      'f19.extract(ApiTimeIntervalUnit.HOUR),
+      'f19.extract(TimeIntervalUnit.HOUR),
       "f19.extract(HOUR)",
       "EXTRACT(HOUR FROM f19)",
       "7")
 
     testAllApis(
-      'f19.extract(ApiTimeIntervalUnit.MINUTE),
+      'f19.extract(TimeIntervalUnit.MINUTE),
       "f19.extract(MINUTE)",
       "EXTRACT(MINUTE FROM f19)",
       "23")
 
     testAllApis(
-      'f19.extract(ApiTimeIntervalUnit.SECOND),
+      'f19.extract(TimeIntervalUnit.SECOND),
       "f19.extract(SECOND)",
       "EXTRACT(SECOND FROM f19)",
       "33")
 
     testAllApis(
-      'f20.extract(ApiTimeIntervalUnit.MONTH),
+      'f20.extract(TimeIntervalUnit.MONTH),
       "f20.extract(MONTH)",
       "EXTRACT(MONTH FROM f20)",
       "1")
 
     testAllApis(
-      'f20.extract(ApiTimeIntervalUnit.QUARTER),
+      'f20.extract(TimeIntervalUnit.QUARTER),
       "f20.extract(QUARTER)",
       "EXTRACT(QUARTER FROM f20)",
       "1")
 
     testAllApis(
-      'f20.extract(ApiTimeIntervalUnit.YEAR),
+      'f20.extract(TimeIntervalUnit.YEAR),
       "f20.extract(YEAR)",
       "EXTRACT(YEAR FROM f20)",
       "2")
@@ -2237,121 +2237,121 @@ class ScalarFunctionsTest extends ScalarTypesTestBase {
   @Test
   def testTemporalFloor(): Unit = {
     testAllApis(
-      'f18.floor(ApiTimeIntervalUnit.YEAR),
+      'f18.floor(TimeIntervalUnit.YEAR),
       "f18.floor(YEAR)",
       "FLOOR(f18 TO YEAR)",
       "1996-01-01 00:00:00.0")
 
     testAllApis(
-      'f18.floor(ApiTimeIntervalUnit.MONTH),
+      'f18.floor(TimeIntervalUnit.MONTH),
       "f18.floor(MONTH)",
       "FLOOR(f18 TO MONTH)",
       "1996-11-01 00:00:00.0")
 
     testAllApis(
-      'f18.floor(ApiTimeIntervalUnit.DAY),
+      'f18.floor(TimeIntervalUnit.DAY),
       "f18.floor(DAY)",
       "FLOOR(f18 TO DAY)",
       "1996-11-10 00:00:00.0")
 
     testAllApis(
-      'f18.floor(ApiTimeIntervalUnit.MINUTE),
+      'f18.floor(TimeIntervalUnit.MINUTE),
       "f18.floor(MINUTE)",
       "FLOOR(f18 TO MINUTE)",
       "1996-11-10 06:55:00.0")
 
     testAllApis(
-      'f18.floor(ApiTimeIntervalUnit.SECOND),
+      'f18.floor(TimeIntervalUnit.SECOND),
       "f18.floor(SECOND)",
       "FLOOR(f18 TO SECOND)",
       "1996-11-10 06:55:44.0")
 
     testAllApis(
-      'f17.floor(ApiTimeIntervalUnit.HOUR),
+      'f17.floor(TimeIntervalUnit.HOUR),
       "f17.floor(HOUR)",
       "FLOOR(f17 TO HOUR)",
       "06:00:00")
 
     testAllApis(
-      'f17.floor(ApiTimeIntervalUnit.MINUTE),
+      'f17.floor(TimeIntervalUnit.MINUTE),
       "f17.floor(MINUTE)",
       "FLOOR(f17 TO MINUTE)",
       "06:55:00")
 
     testAllApis(
-      'f17.floor(ApiTimeIntervalUnit.SECOND),
+      'f17.floor(TimeIntervalUnit.SECOND),
       "f17.floor(SECOND)",
       "FLOOR(f17 TO SECOND)",
       "06:55:44")
 
     testAllApis(
-      'f16.floor(ApiTimeIntervalUnit.YEAR),
+      'f16.floor(TimeIntervalUnit.YEAR),
       "f16.floor(YEAR)",
       "FLOOR(f16 TO YEAR)",
       "1996-01-01")
 
     testAllApis(
-      'f16.floor(ApiTimeIntervalUnit.MONTH),
+      'f16.floor(TimeIntervalUnit.MONTH),
       "f16.floor(MONTH)",
       "FLOOR(f16 TO MONTH)",
       "1996-11-01")
 
     testAllApis(
-      'f18.ceil(ApiTimeIntervalUnit.YEAR),
+      'f18.ceil(TimeIntervalUnit.YEAR),
       "f18.ceil(YEAR)",
       "CEIL(f18 TO YEAR)",
       "1997-01-01 00:00:00.0")
 
     testAllApis(
-      'f18.ceil(ApiTimeIntervalUnit.MONTH),
+      'f18.ceil(TimeIntervalUnit.MONTH),
       "f18.ceil(MONTH)",
       "CEIL(f18 TO MONTH)",
       "1996-12-01 00:00:00.0")
 
     testAllApis(
-      'f18.ceil(ApiTimeIntervalUnit.DAY),
+      'f18.ceil(TimeIntervalUnit.DAY),
       "f18.ceil(DAY)",
       "CEIL(f18 TO DAY)",
       "1996-11-11 00:00:00.0")
 
     testAllApis(
-      'f18.ceil(ApiTimeIntervalUnit.MINUTE),
+      'f18.ceil(TimeIntervalUnit.MINUTE),
       "f18.ceil(MINUTE)",
       "CEIL(f18 TO MINUTE)",
       "1996-11-10 06:56:00.0")
 
     testAllApis(
-      'f18.ceil(ApiTimeIntervalUnit.SECOND),
+      'f18.ceil(TimeIntervalUnit.SECOND),
       "f18.ceil(SECOND)",
       "CEIL(f18 TO SECOND)",
       "1996-11-10 06:55:45.0")
 
     testAllApis(
-      'f17.ceil(ApiTimeIntervalUnit.HOUR),
+      'f17.ceil(TimeIntervalUnit.HOUR),
       "f17.ceil(HOUR)",
       "CEIL(f17 TO HOUR)",
       "07:00:00")
 
     testAllApis(
-      'f17.ceil(ApiTimeIntervalUnit.MINUTE),
+      'f17.ceil(TimeIntervalUnit.MINUTE),
       "f17.ceil(MINUTE)",
       "CEIL(f17 TO MINUTE)",
       "06:56:00")
 
     testAllApis(
-      'f17.ceil(ApiTimeIntervalUnit.SECOND),
+      'f17.ceil(TimeIntervalUnit.SECOND),
       "f17.ceil(SECOND)",
       "CEIL(f17 TO SECOND)",
       "06:55:44")
 
     testAllApis(
-      'f16.ceil(ApiTimeIntervalUnit.YEAR),
+      'f16.ceil(TimeIntervalUnit.YEAR),
       "f16.ceil(YEAR)",
       "CEIL(f16 TO YEAR)",
       "1996-01-01")
 
     testAllApis(
-      'f16.ceil(ApiTimeIntervalUnit.MONTH),
+      'f16.ceil(TimeIntervalUnit.MONTH),
       "f16.ceil(MONTH)",
       "CEIL(f16 TO MONTH)",
       "1996-11-01")
@@ -2450,43 +2450,43 @@ class ScalarFunctionsTest extends ScalarTypesTestBase {
   @Test
   def testTimestampDiff(): Unit = {
     val dataMap = Map(
-      ("DAY", ApiTimePointUnit.DAY, "SQL_TSI_DAY") -> Seq(
+      ("DAY", TimePointUnit.DAY, "SQL_TSI_DAY") -> Seq(
         ("2018-07-03 11:11:11", "2018-07-05 11:11:11", "2"), // timestamp, timestamp
         ("2016-06-15", "2016-06-16 11:11:11", "1"), // date, timestamp
         ("2016-06-15 11:00:00", "2016-06-19", "3"), // timestamp, date
         ("2016-06-15", "2016-06-18", "3") // date, date
       ),
-      ("HOUR", ApiTimePointUnit.HOUR, "SQL_TSI_HOUR") -> Seq(
+      ("HOUR", TimePointUnit.HOUR, "SQL_TSI_HOUR") -> Seq(
         ("2018-07-03 11:11:11", "2018-07-04 12:12:11", "25"),
         ("2016-06-15", "2016-06-16 11:11:11", "35"),
         ("2016-06-15 11:00:00", "2016-06-19", "85"),
         ("2016-06-15", "2016-06-12", "-72")
       ),
-      ("MINUTE", ApiTimePointUnit.MINUTE, "SQL_TSI_MINUTE") -> Seq(
+      ("MINUTE", TimePointUnit.MINUTE, "SQL_TSI_MINUTE") -> Seq(
         ("2018-07-03 11:11:11", "2018-07-03 12:10:11", "59"),
         ("2016-06-15", "2016-06-16 11:11:11", "2111"),
         ("2016-06-15 11:00:00", "2016-06-19", "5100"),
         ("2016-06-15", "2016-06-18", "4320")
       ),
-      ("SECOND", ApiTimePointUnit.SECOND, "SQL_TSI_SECOND") -> Seq(
+      ("SECOND", TimePointUnit.SECOND, "SQL_TSI_SECOND") -> Seq(
         ("2018-07-03 11:11:11", "2018-07-03 11:12:12", "61"),
         ("2016-06-15", "2016-06-16 11:11:11", "126671"),
         ("2016-06-15 11:00:00", "2016-06-19", "306000"),
         ("2016-06-15", "2016-06-18", "259200")
       ),
-      ("WEEK", ApiTimePointUnit.WEEK, "SQL_TSI_WEEK") -> Seq(
+      ("WEEK", TimePointUnit.WEEK, "SQL_TSI_WEEK") -> Seq(
         ("2018-05-03 11:11:11", "2018-07-03 11:12:12", "8"),
         ("2016-04-15", "2016-07-16 11:11:11", "13"),
         ("2016-04-15 11:00:00", "2016-09-19", "22"),
         ("2016-08-15", "2016-06-18", "-8")
       ),
-      ("MONTH", ApiTimePointUnit.MONTH, "SQL_TSI_MONTH") -> Seq(
+      ("MONTH", TimePointUnit.MONTH, "SQL_TSI_MONTH") -> Seq(
         ("2018-07-03 11:11:11", "2018-09-05 11:11:11", "2"),
         ("2016-06-15", "2018-06-16 11:11:11", "24"),
         ("2016-06-15 11:00:00", "2018-05-19", "23"),
         ("2016-06-15", "2018-03-18", "21")
       ),
-      ("QUARTER", ApiTimePointUnit.QUARTER, "SQL_TSI_QUARTER") -> Seq(
+      ("QUARTER", TimePointUnit.QUARTER, "SQL_TSI_QUARTER") -> Seq(
         ("2018-01-03 11:11:11", "2018-09-05 11:11:11", "2"),
         ("2016-06-15", "2018-06-16 11:11:11", "8"),
         ("2016-06-15 11:00:00", "2018-05-19", "7"),
@@ -2546,7 +2546,7 @@ class ScalarFunctionsTest extends ScalarTypesTestBase {
     }
 
     testAllApis(
-      timestampDiff(ApiTimePointUnit.DAY, Null(Types.SQL_TIMESTAMP),
+      timestampDiff(TimePointUnit.DAY, Null(Types.SQL_TIMESTAMP),
         "2016-02-24 12:42:25".toTimestamp),
       "timestampDiff(DAY, Null(SQL_TIMESTAMP), '2016-02-24 12:42:25'.toTimestamp)",
       "TIMESTAMPDIFF(DAY, CAST(NULL AS TIMESTAMP), TIMESTAMP '2016-02-24 12:42:25')",
@@ -2554,7 +2554,7 @@ class ScalarFunctionsTest extends ScalarTypesTestBase {
     )
 
     testAllApis(
-      timestampDiff(ApiTimePointUnit.DAY, "2016-02-24 12:42:25".toTimestamp,
+      timestampDiff(TimePointUnit.DAY, "2016-02-24 12:42:25".toTimestamp,
         Null(Types.SQL_TIMESTAMP)),
       "timestampDiff(DAY, '2016-02-24 12:42:25'.toTimestamp,  Null(SQL_TIMESTAMP))",
       "TIMESTAMPDIFF(DAY, TIMESTAMP '2016-02-24 12:42:25',  CAST(NULL AS TIMESTAMP))",

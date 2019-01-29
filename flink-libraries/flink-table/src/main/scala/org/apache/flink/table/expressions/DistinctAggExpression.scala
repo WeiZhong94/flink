@@ -17,7 +17,7 @@
  */
 package org.apache.flink.table.expressions
 
-case class ApiDistinctAggExpression(apiCall: Call) {
+case class DistinctAggExpression(apiCall: Call) {
   def distinct: DistinctAgg = {
     DistinctAgg(apiCall)
   }

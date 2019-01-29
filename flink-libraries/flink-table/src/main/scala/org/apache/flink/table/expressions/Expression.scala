@@ -112,47 +112,47 @@ case class In(expression: Expression, elements: Seq[Expression]) extends Express
   override private[flink] def children: Seq[Expression] = expression +: elements.distinct
 }
 
-case class SymbolExpression(symbol: ApiTableSymbol) extends LeafExpression
+case class SymbolExpression(symbol: TableSymbol) extends LeafExpression
 
-trait ApiTableSymbol
+trait TableSymbol
 
-abstract class ApiTableSymbols extends Enumeration {
-  class ApiTableSymbolValue extends Val() with ApiTableSymbol
+abstract class TableSymbols extends Enumeration {
+  class TableSymbolValue extends Val() with TableSymbol
 
-  protected final def ApiValue = new ApiTableSymbolValue
+  protected final def SymbolValue = new TableSymbolValue
 
-  implicit def symbolToExpression(symbol: ApiTableSymbolValue): SymbolExpression =
+  implicit def symbolToExpression(symbol: TableSymbolValue): SymbolExpression =
     SymbolExpression(symbol)
 }
 
-object ApiTimeIntervalUnit extends ApiTableSymbols {
-  type ApiTimeIntervalUnit = ApiTableSymbolValue
+object TimeIntervalUnit extends TableSymbols {
+  type TimeIntervalUnit = TableSymbolValue
 
   val YEAR, YEAR_TO_MONTH, QUARTER, MONTH,
   WEEK, DAY, DAY_TO_HOUR, DAY_TO_MINUTE, DAY_TO_SECOND,
-  HOUR, HOUR_TO_MINUTE, HOUR_TO_SECOND, MINUTE, MINUTE_TO_SECOND, SECOND = ApiValue
+  HOUR, HOUR_TO_MINUTE, HOUR_TO_SECOND, MINUTE, MINUTE_TO_SECOND, SECOND = SymbolValue
 
 }
 
-object ApiTimePointUnit extends ApiTableSymbols {
-  type ApiTimePointUnit= ApiTableSymbolValue
+object TimePointUnit extends TableSymbols {
+  type TimePointUnit= TableSymbolValue
 
   val YEAR, MONTH, DAY,
     HOUR, MINUTE, SECOND,
-    QUARTER, WEEK, MILLISECOND, MICROSECOND = ApiValue
+    QUARTER, WEEK, MILLISECOND, MICROSECOND = SymbolValue
 }
 
-object ApiTrimMode extends ApiTableSymbols {
-  type ApiTrimMode = ApiTableSymbolValue
+object TrimMode extends TableSymbols {
+  type TrimMode = TableSymbolValue
 
-  val BOTH, LEADING, TRAILING = ApiValue
+  val BOTH, LEADING, TRAILING = SymbolValue
 }
 
-object ApiTrimConstants {
+object TrimConstants {
   val TRIM_DEFAULT_CHAR = Literal(" ")
 }
 
-object ApiExpressionUtils {
+object ExpressionUtils {
   private[flink] def toMonthInterval(expr: Expression, multiplier: Int): Expression =
     expr match {
       case Literal(value: Int, None) =>

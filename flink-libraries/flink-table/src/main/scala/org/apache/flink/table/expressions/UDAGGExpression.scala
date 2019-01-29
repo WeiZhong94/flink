@@ -22,7 +22,7 @@ import org.apache.flink.table.functions.AggregateFunction
 import org.apache.flink.table.functions.utils.UserDefinedFunctionUtils.{getAccumulatorTypeOfAggregateFunction, getResultTypeOfAggregateFunction}
 
 
-case class ApiUDAGGExpression[T: TypeInformation, ACC: TypeInformation](
+case class UDAGGExpression[T: TypeInformation, ACC: TypeInformation](
     aggregateFunction: AggregateFunction[T, ACC]) {
 
   /**

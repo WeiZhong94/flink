@@ -22,8 +22,8 @@ import java.sql.Timestamp
 
 import org.apache.flink.api.scala._
 import org.apache.flink.table.api.scala._
-import org.apache.flink.table.expressions.{Expression, ApiTimeIntervalUnit}
-import org.apache.flink.table.plan.expressions.{ApiExpressionParser, PlannerExpression, PlannerTimeIntervalUnit, PlannerWindowReference}
+import org.apache.flink.table.expressions.{Expression, TimeIntervalUnit}
+import org.apache.flink.table.plan.expressions.{ScalaExpressionParser, PlannerExpression, PlannerTimeIntervalUnit, PlannerWindowReference}
 import org.apache.flink.table.functions.TableFunction
 import org.apache.flink.table.plan.TimeIndicatorConversionTest.TableFunc
 import org.apache.flink.table.plan.logical.TumblingGroupWindow
@@ -36,11 +36,11 @@ import org.junit.Test
   */
 class TimeIndicatorConversionTest extends TableTestBase {
   implicit def apiExpression2Expression(apiExpression: Expression): PlannerExpression = {
-    ApiExpressionParser.parse(apiExpression)
+    ScalaExpressionParser.parse(apiExpression)
   }
 
   implicit def symbol2Expression(apiExpression: Symbol): PlannerExpression = {
-    ApiExpressionParser.parse(apiExpression)
+    ScalaExpressionParser.parse(apiExpression)
   }
 
   @Test
@@ -49,7 +49,7 @@ class TimeIndicatorConversionTest extends TableTestBase {
     val t = util.addTable[(Long, Long, Int)]('rowtime.rowtime, 'long, 'int, 'proctime.proctime)
 
     val result = t
-      .select('rowtime.floor(ApiTimeIntervalUnit.DAY) as 'rowtime, 'long)
+      .select('rowtime.floor(TimeIntervalUnit.DAY) as 'rowtime, 'long)
       .filter('long > 0)
       .select('rowtime)
 

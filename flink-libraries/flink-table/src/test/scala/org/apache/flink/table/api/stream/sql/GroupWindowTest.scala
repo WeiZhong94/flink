@@ -21,7 +21,7 @@ package org.apache.flink.table.api.stream.sql
 import org.apache.flink.api.scala._
 import org.apache.flink.table.api.scala._
 import org.apache.flink.table.expressions.Expression
-import org.apache.flink.table.plan.expressions.{ApiExpressionParser, PlannerExpression}
+import org.apache.flink.table.plan.expressions.{ScalaExpressionParser, PlannerExpression}
 import org.apache.flink.table.plan.logical._
 import org.apache.flink.table.runtime.utils.JavaUserDefinedAggFunctions.WeightedAvgWithMerge
 import org.apache.flink.table.utils.TableTestUtil._
@@ -30,11 +30,11 @@ import org.junit.Test
 
 class GroupWindowTest extends TableTestBase {
   implicit def apiExpression2Expression(apiExpression: Expression): PlannerExpression = {
-    ApiExpressionParser.parse(apiExpression)
+    ScalaExpressionParser.parse(apiExpression)
   }
 
   implicit def symbol2Expression(apiExpression: Symbol): PlannerExpression = {
-    ApiExpressionParser.parse(apiExpression)
+    ScalaExpressionParser.parse(apiExpression)
   }
 
   private val streamUtil: StreamTableTestUtil = streamTestUtil()

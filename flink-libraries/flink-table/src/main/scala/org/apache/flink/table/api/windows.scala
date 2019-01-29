@@ -21,9 +21,10 @@ package org.apache.flink.table.api
 import org.apache.flink.table.plan.expressions._
 import org.apache.flink.table.plan.logical._
 import org.apache.flink.table.typeutils.{RowIntervalTypeInfo, TimeIntervalTypeInfo}
-import org.apache.flink.table.api.scala.{CURRENT_RANGE, CURRENT_ROW}
 
 trait UnresolvedOverWindow
+
+abstract class Window
 
 /**
   * Over window is similar to the traditional OVER SQL.
@@ -184,7 +185,7 @@ class OverWindowWithPreceding(
   * For finite batch tables, window provides shortcuts for time-based groupBy.
   *
   */
-abstract class Window(val alias: PlannerExpression, val timeField: PlannerExpression) {
+abstract class PlannerWindow(val alias: PlannerExpression, val timeField: PlannerExpression) {
 
   /**
     * Converts an API class to a logical window for planning.
@@ -281,7 +282,7 @@ class TumbleWithSizeOnTimeWithAlias(
     alias: PlannerExpression,
     timeField: PlannerExpression,
     size: PlannerExpression)
-  extends Window(
+  extends PlannerWindow(
     alias,
     timeField) {
 
@@ -420,7 +421,7 @@ class SlideWithSizeAndSlideOnTimeWithAlias(
     timeField: PlannerExpression,
     size: PlannerExpression,
     slide: PlannerExpression)
-  extends Window(
+  extends PlannerWindow(
     alias,
     timeField) {
 
@@ -520,7 +521,7 @@ class SessionWithGapOnTimeWithAlias(
     alias: PlannerExpression,
     timeField: PlannerExpression,
     gap: PlannerExpression)
-  extends Window(
+  extends PlannerWindow(
     alias,
     timeField) {
 

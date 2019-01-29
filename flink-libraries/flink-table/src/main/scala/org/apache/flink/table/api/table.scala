@@ -20,10 +20,11 @@ package org.apache.flink.table.api
 import org.apache.calcite.rel.RelNode
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.operators.join.JoinType
-import org.apache.flink.table.api.scala.{ApiOverWindow, ApiSessionWithGapOnTimeWithAlias, ApiSlideWithSizeAndSlideOnTimeWithAlias, ApiTumbleWithSizeOnTimeWithAlias, ApiWindow}
+import org.apache.flink.table.api.java.{JavaOverWindow, JavaSessionWithGapOnTimeWithAlias, JavaSlideWithSizeAndSlideOnTimeWithAlias, JavaTumbleWithSizeOnTimeWithAlias}
+import org.apache.flink.table.api.scala.{ScalaOverWindow, ScalaSessionWithGapOnTimeWithAlias, ScalaSlideWithSizeAndSlideOnTimeWithAlias, ScalaTumbleWithSizeOnTimeWithAlias}
 import org.apache.flink.table.calcite.{FlinkRelBuilder, FlinkTypeFactory}
 import org.apache.flink.table.expressions.Expression
-import org.apache.flink.table.plan.expressions.{ApiExpressionParser, Asc, Desc, ExpressionParser, Ordering, PlannerAlias, PlannerCall, PlannerExpression, PlannerResolvedFieldReference, PlannerUnresolvedAlias, PlannerUnresolvedFieldReference, WindowProperty}
+import org.apache.flink.table.plan.expressions.{ScalaExpressionParser, Asc, Desc, ExpressionParser, Ordering, PlannerAlias, PlannerCall, PlannerExpression, PlannerResolvedFieldReference, PlannerUnresolvedAlias, PlannerUnresolvedFieldReference, WindowProperty}
 import org.apache.flink.table.functions.{TableFunction, TemporalTableFunction}
 import org.apache.flink.table.functions.utils.UserDefinedFunctionUtils
 import org.apache.flink.table.plan.ProjectionTranslator._
@@ -147,7 +148,7 @@ private[flink] class TableImpl(
   }
 
   def select(fields: Expression*): Table = {
-    val fieldExprs = fields.map(ApiExpressionParser.parse)
+    val fieldExprs = fields.map(ScalaExpressionParser.parse)
     val withResolvedAggFunctionCall = fieldExprs.map(replaceAggFunctionCall(_, tableEnv))
     selectApi(withResolvedAggFunctionCall: _*)
   }
@@ -200,8 +201,8 @@ private[flink] class TableImpl(
       timeAttribute: Expression,
       primaryKey: Expression): TableFunction[Row] = {
     createTemporalTableFunctionApi(
-      ApiExpressionParser.parse(timeAttribute),
-      ApiExpressionParser.parse(primaryKey))
+      ScalaExpressionParser.parse(timeAttribute),
+      ScalaExpressionParser.parse(primaryKey))
   }
 
   /**
@@ -303,7 +304,7 @@ private[flink] class TableImpl(
   }
 
   def as(fields: Expression*): Table = {
-    val fieldExprs = fields.map(ApiExpressionParser.parse)
+    val fieldExprs = fields.map(ScalaExpressionParser.parse)
     asApi(fieldExprs: _*)
   }
 
@@ -337,7 +338,7 @@ private[flink] class TableImpl(
   }
 
   def filter(predicate: Expression): Table = {
-    val predicateExpr = ApiExpressionParser.parse(predicate)
+    val predicateExpr = ScalaExpressionParser.parse(predicate)
     filterApi(predicateExpr)
   }
 
@@ -403,7 +404,7 @@ private[flink] class TableImpl(
   }
 
   def groupBy(fields: Expression*): GroupedTable = {
-    val fieldsExpr = fields.map(ApiExpressionParser.parse)
+    val fieldsExpr = fields.map(ScalaExpressionParser.parse)
     groupByApi(fieldsExpr: _*)
   }
 
@@ -628,7 +629,7 @@ private[flink] class TableImpl(
   }
 
   private def join(right: Table, joinPredicate: Expression, joinType: JoinType): Table = {
-    val joinPredicateExpr = ApiExpressionParser.parse(joinPredicate)
+    val joinPredicateExpr = ScalaExpressionParser.parse(joinPredicate)
     joinApi(right, Some(joinPredicateExpr), joinType)
   }
 
@@ -861,7 +862,7 @@ private[flink] class TableImpl(
   }
 
   def orderBy(fields: Expression*): Table = {
-    val parsedFields = fields.map(ApiExpressionParser.parse)
+    val parsedFields = fields.map(ScalaExpressionParser.parse)
     orderByApi(parsedFields: _*)
   }
 
@@ -1041,30 +1042,49 @@ private[flink] class TableImpl(
     * @param window window that specifies how elements are grouped.
     * @return A windowed table.
     */
-  def window(window: Window): WindowedTable = {
+  def window(window: PlannerWindow): WindowedTable = {
     new WindowedTableImpl(this, window)
   }
 
-  def window(window: ApiWindow): WindowedTable = {
-    val windowImpl: Window = window match {
-      case ApiTumbleWithSizeOnTimeWithAlias(alias, timeField, size) =>
+  def window(window: Window): WindowedTable = {
+    val windowImpl: PlannerWindow = window match {
+      case ScalaTumbleWithSizeOnTimeWithAlias(alias, timeField, size) =>
         new TumbleWithSizeOnTimeWithAlias(
-          ApiExpressionParser.parse(alias),
-          ApiExpressionParser.parse(timeField),
-          ApiExpressionParser.parse(size))
+          ScalaExpressionParser.parse(alias),
+          ScalaExpressionParser.parse(timeField),
+          ScalaExpressionParser.parse(size))
 
-      case ApiSlideWithSizeAndSlideOnTimeWithAlias(alias, timeField, size, slide) =>
+      case ScalaSlideWithSizeAndSlideOnTimeWithAlias(alias, timeField, size, slide) =>
         new SlideWithSizeAndSlideOnTimeWithAlias(
-          ApiExpressionParser.parse(alias),
-          ApiExpressionParser.parse(timeField),
-          ApiExpressionParser.parse(size),
-          ApiExpressionParser.parse(slide))
+          ScalaExpressionParser.parse(alias),
+          ScalaExpressionParser.parse(timeField),
+          ScalaExpressionParser.parse(size),
+          ScalaExpressionParser.parse(slide))
 
-      case ApiSessionWithGapOnTimeWithAlias(alias, timeField, gap) =>
+      case ScalaSessionWithGapOnTimeWithAlias(alias, timeField, gap) =>
         new SessionWithGapOnTimeWithAlias(
-          ApiExpressionParser.parse(alias),
-          ApiExpressionParser.parse(timeField),
-          ApiExpressionParser.parse(gap))
+          ScalaExpressionParser.parse(alias),
+          ScalaExpressionParser.parse(timeField),
+          ScalaExpressionParser.parse(gap))
+
+      case JavaTumbleWithSizeOnTimeWithAlias(alias, timeField, size) =>
+        new TumbleWithSizeOnTimeWithAlias(
+          ExpressionParser.parseExpression(alias),
+          ExpressionParser.parseExpression(timeField),
+          ExpressionParser.parseExpression(size))
+
+      case JavaSlideWithSizeAndSlideOnTimeWithAlias(alias, timeField, size, slide) =>
+        new SlideWithSizeAndSlideOnTimeWithAlias(
+          ExpressionParser.parseExpression(alias),
+          ExpressionParser.parseExpression(timeField),
+          ExpressionParser.parseExpression(size),
+          ExpressionParser.parseExpression(slide))
+
+      case JavaSessionWithGapOnTimeWithAlias(alias, timeField, gap) =>
+        new SessionWithGapOnTimeWithAlias(
+          ExpressionParser.parseExpression(alias),
+          ExpressionParser.parseExpression(timeField),
+          ExpressionParser.parseExpression(gap))
     }
     this.window(windowImpl)
   }
@@ -1105,13 +1125,30 @@ private[flink] class TableImpl(
     }
 
     val overWindowImpls: Seq[OverWindow] = overWindows.map {
-      case w: ApiOverWindow =>
+      case w: ScalaOverWindow =>
         new OverWindowWithPreceding(
-          w.partitionBy.map(ApiExpressionParser.parse),
-          ApiExpressionParser.parse(w.orderBy),
-          ApiExpressionParser.parse(w.preceding)
-        ).following(ApiExpressionParser.parse(w.following))
-          .as(ApiExpressionParser.parse(w.alias))
+          w.partitionBy.map(ScalaExpressionParser.parse),
+          ScalaExpressionParser.parse(w.orderBy),
+          ScalaExpressionParser.parse(w.preceding)
+        ).following(ScalaExpressionParser.parse(w.following))
+          .as(ScalaExpressionParser.parse(w.alias))
+      case w: JavaOverWindow =>
+        val paritionBy = if ("" != w.partitionBy) {
+          ExpressionParser.parseExpressionList(w.partitionBy).toSeq
+        } else {
+          Seq()
+        }
+        val following = if (w.following != null) {
+          ExpressionParser.parseExpression(w.following)
+        } else {
+          null
+        }
+        new OverWindowWithPreceding(
+          paritionBy,
+          ExpressionParser.parseExpression(w.orderBy),
+          ExpressionParser.parseExpression(w.preceding)
+        ).following(following)
+          .as(ExpressionParser.parseExpression(w.alias))
       case _ =>
         overWindows.head.asInstanceOf[OverWindow]
     }
@@ -1202,7 +1239,7 @@ class GroupedTableImpl(
   }
 
   def select(fields: Expression*): Table = {
-    val fieldExprs = fields.map(ApiExpressionParser.parse)
+    val fieldExprs = fields.map(ScalaExpressionParser.parse)
     //get the correct expression for AggFunctionCall
     val withResolvedAggFunctionCall = fieldExprs.map(replaceAggFunctionCall(_, innerable.tableEnv))
     selectApi(withResolvedAggFunctionCall: _*)
@@ -1211,7 +1248,7 @@ class GroupedTableImpl(
 
 class WindowedTableImpl(
     private[flink] val table: InnerTable,
-    private[flink] val window: Window) extends WindowedTable {
+    private[flink] val window: PlannerWindow) extends WindowedTable {
 
   /**
     * Groups the elements by a mandatory window and one or more optional grouping attributes.
@@ -1260,7 +1297,7 @@ class WindowedTableImpl(
   }
 
   def groupBy(fields: Expression*): WindowGroupedTable = {
-    val fieldsExpr = fields.map(ApiExpressionParser.parse)
+    val fieldsExpr = fields.map(ScalaExpressionParser.parse)
     groupByApi(fieldsExpr: _*)
   }
 
@@ -1302,7 +1339,7 @@ class OverWindowedTableImpl(
   }
 
   def select(fields: Expression*): Table = {
-    val fieldExprs = fields.map(ApiExpressionParser.parse)
+    val fieldExprs = fields.map(ScalaExpressionParser.parse)
     //get the correct expression for AggFunctionCall
     val withResolvedAggFunctionCall = fieldExprs.map(replaceAggFunctionCall(_, innerTable.tableEnv))
     selectApi(withResolvedAggFunctionCall: _*)
@@ -1312,7 +1349,7 @@ class OverWindowedTableImpl(
 class WindowGroupedTableImpl(
     private[flink] val table: InnerTable,
     private[flink] val groupKeys: Seq[PlannerExpression],
-    private[flink] val window: Window) extends WindowGroupedTable {
+    private[flink] val window: PlannerWindow) extends WindowGroupedTable {
 
   /**
     * Performs a selection operation on a window grouped table. Similar to an SQL SELECT statement.
@@ -1366,7 +1403,7 @@ class WindowGroupedTableImpl(
   }
 
   def select(fields: Expression*): Table = {
-    val fieldExprs = fields.map(ApiExpressionParser.parse)
+    val fieldExprs = fields.map(ScalaExpressionParser.parse)
     //get the correct expression for AggFunctionCall
     val withResolvedAggFunctionCall = fieldExprs.map(replaceAggFunctionCall(_, table.tableEnv))
     selectApi(withResolvedAggFunctionCall: _*)

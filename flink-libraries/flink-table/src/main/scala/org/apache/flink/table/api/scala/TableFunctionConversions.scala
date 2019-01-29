@@ -21,7 +21,7 @@ package org.apache.flink.table.api.scala
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.table.api.{Table, TableImpl}
 import org.apache.flink.table.expressions.Expression
-import org.apache.flink.table.plan.expressions.ApiExpressionParser
+import org.apache.flink.table.plan.expressions.ScalaExpressionParser
 import org.apache.flink.table.functions.TableFunction
 import org.apache.flink.table.plan.logical.LogicalTableFunctionCall
 
@@ -47,7 +47,7 @@ class TableFunctionConversions[T](tf: TableFunction[T]) {
       LogicalTableFunctionCall(
         tf.getClass.getCanonicalName,
         tf,
-        args.map(ApiExpressionParser.parse).toList,
+        args.map(ScalaExpressionParser.parse).toList,
         resultType,
         Array.empty,
         child = null // Child will be set later.

@@ -31,7 +31,7 @@ import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.streaming.api.watermark.Watermark
 import org.apache.flink.table.api.scala._
 import org.apache.flink.table.api.{TableEnvironment, TableSchema, Types}
-import org.apache.flink.table.expressions.ApiTimeIntervalUnit
+import org.apache.flink.table.expressions.TimeIntervalUnit
 import org.apache.flink.table.plan.expressions.{ExpressionParser, PlannerTimeIntervalUnit}
 import org.apache.flink.table.plan.TimeIndicatorConversionTest.TableFunc
 import org.apache.flink.table.runtime.stream.TimeAttributesITCase.{AtomicTimestampWithEqualWatermark, TestPojo, TimestampWithEqualWatermark, TimestampWithEqualWatermarkPojo}
@@ -167,8 +167,8 @@ class TimeAttributesITCase extends AbstractTestBase {
 
     val t = table
       .filter('rowtime.cast(Types.LONG) > 4)
-      .select('rowtime, 'rowtime.floor(ApiTimeIntervalUnit.DAY),
-        'rowtime.ceil(ApiTimeIntervalUnit.DAY))
+      .select('rowtime, 'rowtime.floor(TimeIntervalUnit.DAY),
+        'rowtime.ceil(TimeIntervalUnit.DAY))
 
     val results = t.toAppendStream[Row]
     results.addSink(new StreamITCase.StringSink[Row])
@@ -202,8 +202,8 @@ class TimeAttributesITCase extends AbstractTestBase {
       .filter('rowtime.cast(Types.LONG) > 4)
       .select(
         'rowtime,
-        'rowtime.floor(ApiTimeIntervalUnit.DAY).as('floorDay),
-        'rowtime.ceil(ApiTimeIntervalUnit.DAY).as('ceilDay))
+        'rowtime.floor(TimeIntervalUnit.DAY).as('floorDay),
+        'rowtime.ceil(TimeIntervalUnit.DAY).as('ceilDay))
       .insertInto("testSink")
 
     env.execute()

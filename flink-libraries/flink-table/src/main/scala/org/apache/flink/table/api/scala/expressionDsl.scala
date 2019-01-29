@@ -23,9 +23,9 @@ import java.sql.{Date, Time, Timestamp}
 import org.apache.calcite.avatica.util.DateTimeUtils._
 import org.apache.flink.api.common.typeinfo.{SqlTimeTypeInfo, TypeInformation}
 import org.apache.flink.table.api._
-import org.apache.flink.table.expressions.ApiTimeIntervalUnit.ApiTimeIntervalUnit
-import org.apache.flink.table.expressions.ApiTimePointUnit.ApiTimePointUnit
-import org.apache.flink.table.expressions.{Alias, Call, Cast, CurrentRange, CurrentRow, DistinctAgg, ApiDistinctAggExpression, Expression, ApiExpressionUtils, Flattening, GetCompositeField, In, Literal, ProctimeAttribute, RowtimeAttribute, ScalarFunctionCall, TableReference, ApiTimePointUnit, ApiTrimConstants, ApiTrimMode, ApiUDAGGExpression, UnboundedRange, UnboundedRow, UnresolvedFieldReference, UnresolvedOverCall}
+import org.apache.flink.table.expressions.TimeIntervalUnit.TimeIntervalUnit
+import org.apache.flink.table.expressions.TimePointUnit.TimePointUnit
+import org.apache.flink.table.expressions.{Alias, Call, Cast, DistinctAggExpression, Expression, ExpressionUtils, Flattening, GetCompositeField, In, Literal, ProctimeAttribute, RowtimeAttribute, ScalarFunctionCall, TableReference, TimePointUnit, TrimConstants, TrimMode, UDAGGExpression, UnresolvedFieldReference, UnresolvedOverCall}
 import org.apache.flink.table.functions.{AggregateFunction, DistinctAggregateFunction, ScalarFunction}
 
 import _root_.scala.language.implicitConversions
@@ -472,13 +472,13 @@ trait ImplicitExpressionOperations {
   def trim(
       removeLeading: Boolean = true,
       removeTrailing: Boolean = true,
-      character: Expression = ApiTrimConstants.TRIM_DEFAULT_CHAR) = {
+      character: Expression = TrimConstants.TRIM_DEFAULT_CHAR) = {
     if (removeLeading && removeTrailing) {
-      Call("trim", Seq(ApiTrimMode.BOTH, character, expr))
+      Call("trim", Seq(TrimMode.BOTH, character, expr))
     } else if (removeLeading) {
-      Call("trim", Seq(ApiTrimMode.LEADING, character, expr))
+      Call("trim", Seq(TrimMode.LEADING, character, expr))
     } else if (removeTrailing) {
-      Call("trim", Seq(ApiTrimMode.TRAILING, character, expr))
+      Call("trim", Seq(TrimMode.TRAILING, character, expr))
     } else {
       expr
     }
@@ -647,7 +647,7 @@ trait ImplicitExpressionOperations {
     *
     * e.g. "2006-06-05".toDate.extract(DAY) leads to 5
     */
-  def extract(timeIntervalUnit: ApiTimeIntervalUnit) =
+  def extract(timeIntervalUnit: TimeIntervalUnit) =
     Call("extract", Seq(timeIntervalUnit, expr))
 
   /**
@@ -655,7 +655,7 @@ trait ImplicitExpressionOperations {
     *
     * e.g. "12:44:31".toDate.floor(MINUTE) leads to 12:44:00
     */
-  def floor(timeIntervalUnit: ApiTimeIntervalUnit) =
+  def floor(timeIntervalUnit: TimeIntervalUnit) =
     Call("temporalFloor", Seq(timeIntervalUnit, expr))
 
   /**
@@ -663,7 +663,7 @@ trait ImplicitExpressionOperations {
     *
     * e.g. "12:44:31".toDate.ceil(MINUTE) leads to 12:45:00
     */
-  def ceil(timeIntervalUnit: ApiTimeIntervalUnit) =
+  def ceil(timeIntervalUnit: TimeIntervalUnit) =
     Call("temporalCeil", Seq(timeIntervalUnit, expr))
 
   // Interval types
@@ -673,7 +673,7 @@ trait ImplicitExpressionOperations {
     *
     * @return interval of months
     */
-  def year: Expression = ApiExpressionUtils.toMonthInterval(expr, 12)
+  def year: Expression = ExpressionUtils.toMonthInterval(expr, 12)
 
   /**
     * Creates an interval of the given number of years.
@@ -687,7 +687,7 @@ trait ImplicitExpressionOperations {
     *
     * @return interval of months
     */
-  def quarter: Expression = ApiExpressionUtils.toMonthInterval(expr, 3)
+  def quarter: Expression = ExpressionUtils.toMonthInterval(expr, 3)
 
   /**
     * Creates an interval of the given number of quarters.
@@ -701,7 +701,7 @@ trait ImplicitExpressionOperations {
     *
     * @return interval of months
     */
-  def month: Expression = ApiExpressionUtils.toMonthInterval(expr, 1)
+  def month: Expression = ExpressionUtils.toMonthInterval(expr, 1)
 
   /**
     * Creates an interval of the given number of months.
@@ -715,7 +715,7 @@ trait ImplicitExpressionOperations {
     *
     * @return interval of milliseconds
     */
-  def week: Expression = ApiExpressionUtils.toMilliInterval(expr, 7 * MILLIS_PER_DAY)
+  def week: Expression = ExpressionUtils.toMilliInterval(expr, 7 * MILLIS_PER_DAY)
 
   /**
     * Creates an interval of the given number of weeks.
@@ -729,7 +729,7 @@ trait ImplicitExpressionOperations {
     *
     * @return interval of milliseconds
     */
-  def day: Expression = ApiExpressionUtils.toMilliInterval(expr, MILLIS_PER_DAY)
+  def day: Expression = ExpressionUtils.toMilliInterval(expr, MILLIS_PER_DAY)
 
   /**
     * Creates an interval of the given number of days.
@@ -743,7 +743,7 @@ trait ImplicitExpressionOperations {
     *
     * @return interval of milliseconds
     */
-  def hour: Expression = ApiExpressionUtils.toMilliInterval(expr, MILLIS_PER_HOUR)
+  def hour: Expression = ExpressionUtils.toMilliInterval(expr, MILLIS_PER_HOUR)
 
   /**
     * Creates an interval of the given number of hours.
@@ -757,7 +757,7 @@ trait ImplicitExpressionOperations {
     *
     * @return interval of milliseconds
     */
-  def minute: Expression = ApiExpressionUtils.toMilliInterval(expr, MILLIS_PER_MINUTE)
+  def minute: Expression = ExpressionUtils.toMilliInterval(expr, MILLIS_PER_MINUTE)
 
   /**
     * Creates an interval of the given number of minutes.
@@ -771,7 +771,7 @@ trait ImplicitExpressionOperations {
     *
     * @return interval of milliseconds
     */
-  def second: Expression = ApiExpressionUtils.toMilliInterval(expr, MILLIS_PER_SECOND)
+  def second: Expression = ExpressionUtils.toMilliInterval(expr, MILLIS_PER_SECOND)
 
   /**
     * Creates an interval of the given number of seconds.
@@ -785,7 +785,7 @@ trait ImplicitExpressionOperations {
     *
     * @return interval of milliseconds
     */
-  def milli: Expression = ApiExpressionUtils.toMilliInterval(expr, 1)
+  def milli: Expression = ExpressionUtils.toMilliInterval(expr, 1)
 
   /**
     * Creates an interval of the given number of milliseconds.
@@ -801,7 +801,7 @@ trait ImplicitExpressionOperations {
     *
     * @return interval of rows
     */
-  def rows: Expression = ApiExpressionUtils.toRowInterval(expr)
+  def rows: Expression = ExpressionUtils.toRowInterval(expr)
 
   // Advanced type helper functions
 
@@ -1046,11 +1046,11 @@ trait ImplicitExpressionConversions {
   implicit def apiSqlTimestamp2Literal(sqlTimestamp: Timestamp): Expression =
     Literal(sqlTimestamp)
   implicit def apiArray2ArrayConstructor(array: Array[_]): Expression =
-    ApiExpressionUtils.convertArray(array)
+    ExpressionUtils.convertArray(array)
   implicit def apiUserDefinedAggFunctionConstructor[T: TypeInformation, ACC: TypeInformation]
-  (udagg: AggregateFunction[T, ACC]): ApiUDAGGExpression[T, ACC] = ApiUDAGGExpression(udagg)
-  implicit def apiToDistinct(agg: Call): ApiDistinctAggExpression =
-    ApiDistinctAggExpression(agg)
+  (udagg: AggregateFunction[T, ACC]): UDAGGExpression[T, ACC] = UDAGGExpression(udagg)
+  implicit def apiToDistinct(agg: Call): DistinctAggExpression =
+    DistinctAggExpression(agg)
   implicit def apiToDistinct[T: TypeInformation, ACC: TypeInformation]
   (agg: AggregateFunction[T, ACC]): DistinctAggregateFunction[T, ACC] =
     DistinctAggregateFunction(agg)
@@ -1189,7 +1189,7 @@ object dateFormat {
 }
 
 /**
-  * Returns the (signed) number of [[ApiTimePointUnit]] between timePoint1 and timePoint2.
+  * Returns the (signed) number of [[TimePointUnit]] between timePoint1 and timePoint2.
   *
   * For example, timestampDiff(TimePointUnit.DAY, '2016-06-15'.toDate, '2016-06-18'.toDate leads
   * to 3.
@@ -1197,7 +1197,7 @@ object dateFormat {
 object timestampDiff {
 
   /**
-    * Returns the (signed) number of [[ApiTimePointUnit]] between timePoint1 and timePoint2.
+    * Returns the (signed) number of [[TimePointUnit]] between timePoint1 and timePoint2.
     *
     * For example, timestampDiff(TimePointUnit.DAY, '2016-06-15'.toDate, '2016-06-18'.toDate leads
     * to 3.
@@ -1208,7 +1208,7 @@ object timestampDiff {
     * @return The number of intervals as integer value.
     */
   def apply(
-             timePointUnit: ApiTimePointUnit,
+             timePointUnit: TimePointUnit,
              timePoint1: Expression,
              timePoint2: Expression)
   : Expression = {

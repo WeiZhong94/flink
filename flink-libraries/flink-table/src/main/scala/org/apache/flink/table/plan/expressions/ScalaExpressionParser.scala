@@ -22,7 +22,7 @@ import org.apache.flink.table.api._
 import org.apache.flink.table.api.scala.{CurrentRange, CurrentRow, UnboundedRange, UnboundedRow}
 import org.apache.flink.table.expressions._
 
-object ApiExpressionParser {
+object ScalaExpressionParser {
   def parse(expr: Expression): PlannerExpression = {
     if (expr == null) {
       return null
@@ -99,36 +99,36 @@ object ApiExpressionParser {
 
       case SymbolExpression(symbol) =>
         val tableSymbol = symbol match {
-          case ApiTimeIntervalUnit.YEAR => PlannerTimeIntervalUnit.YEAR
-          case ApiTimeIntervalUnit.YEAR_TO_MONTH => PlannerTimeIntervalUnit.YEAR_TO_MONTH
-          case ApiTimeIntervalUnit.QUARTER => PlannerTimeIntervalUnit.QUARTER
-          case ApiTimeIntervalUnit.MONTH => PlannerTimeIntervalUnit.MONTH
-          case ApiTimeIntervalUnit.WEEK => PlannerTimeIntervalUnit.WEEK
-          case ApiTimeIntervalUnit.DAY => PlannerTimeIntervalUnit.DAY
-          case ApiTimeIntervalUnit.DAY_TO_HOUR => PlannerTimeIntervalUnit.DAY_TO_HOUR
-          case ApiTimeIntervalUnit.DAY_TO_MINUTE => PlannerTimeIntervalUnit.DAY_TO_MINUTE
-          case ApiTimeIntervalUnit.DAY_TO_SECOND => PlannerTimeIntervalUnit.DAY_TO_SECOND
-          case ApiTimeIntervalUnit.HOUR => PlannerTimeIntervalUnit.HOUR
-          case ApiTimeIntervalUnit.HOUR_TO_MINUTE => PlannerTimeIntervalUnit.HOUR_TO_MINUTE
-          case ApiTimeIntervalUnit.HOUR_TO_SECOND => PlannerTimeIntervalUnit.HOUR_TO_SECOND
-          case ApiTimeIntervalUnit.MINUTE => PlannerTimeIntervalUnit.MINUTE
-          case ApiTimeIntervalUnit.MINUTE_TO_SECOND => PlannerTimeIntervalUnit.MINUTE_TO_SECOND
-          case ApiTimeIntervalUnit.SECOND => PlannerTimeIntervalUnit.SECOND
+          case TimeIntervalUnit.YEAR => PlannerTimeIntervalUnit.YEAR
+          case TimeIntervalUnit.YEAR_TO_MONTH => PlannerTimeIntervalUnit.YEAR_TO_MONTH
+          case TimeIntervalUnit.QUARTER => PlannerTimeIntervalUnit.QUARTER
+          case TimeIntervalUnit.MONTH => PlannerTimeIntervalUnit.MONTH
+          case TimeIntervalUnit.WEEK => PlannerTimeIntervalUnit.WEEK
+          case TimeIntervalUnit.DAY => PlannerTimeIntervalUnit.DAY
+          case TimeIntervalUnit.DAY_TO_HOUR => PlannerTimeIntervalUnit.DAY_TO_HOUR
+          case TimeIntervalUnit.DAY_TO_MINUTE => PlannerTimeIntervalUnit.DAY_TO_MINUTE
+          case TimeIntervalUnit.DAY_TO_SECOND => PlannerTimeIntervalUnit.DAY_TO_SECOND
+          case TimeIntervalUnit.HOUR => PlannerTimeIntervalUnit.HOUR
+          case TimeIntervalUnit.HOUR_TO_MINUTE => PlannerTimeIntervalUnit.HOUR_TO_MINUTE
+          case TimeIntervalUnit.HOUR_TO_SECOND => PlannerTimeIntervalUnit.HOUR_TO_SECOND
+          case TimeIntervalUnit.MINUTE => PlannerTimeIntervalUnit.MINUTE
+          case TimeIntervalUnit.MINUTE_TO_SECOND => PlannerTimeIntervalUnit.MINUTE_TO_SECOND
+          case TimeIntervalUnit.SECOND => PlannerTimeIntervalUnit.SECOND
 
-          case ApiTimePointUnit.YEAR => PlannerTimePointUnit.YEAR
-          case ApiTimePointUnit.MONTH => PlannerTimePointUnit.MONTH
-          case ApiTimePointUnit.DAY => PlannerTimePointUnit.DAY
-          case ApiTimePointUnit.HOUR => PlannerTimePointUnit.HOUR
-          case ApiTimePointUnit.MINUTE => PlannerTimePointUnit.MINUTE
-          case ApiTimePointUnit.SECOND => PlannerTimePointUnit.SECOND
-          case ApiTimePointUnit.QUARTER => PlannerTimePointUnit.QUARTER
-          case ApiTimePointUnit.WEEK => PlannerTimePointUnit.WEEK
-          case ApiTimePointUnit.MILLISECOND => PlannerTimePointUnit.MILLISECOND
-          case ApiTimePointUnit.MICROSECOND => PlannerTimePointUnit.MICROSECOND
+          case TimePointUnit.YEAR => PlannerTimePointUnit.YEAR
+          case TimePointUnit.MONTH => PlannerTimePointUnit.MONTH
+          case TimePointUnit.DAY => PlannerTimePointUnit.DAY
+          case TimePointUnit.HOUR => PlannerTimePointUnit.HOUR
+          case TimePointUnit.MINUTE => PlannerTimePointUnit.MINUTE
+          case TimePointUnit.SECOND => PlannerTimePointUnit.SECOND
+          case TimePointUnit.QUARTER => PlannerTimePointUnit.QUARTER
+          case TimePointUnit.WEEK => PlannerTimePointUnit.WEEK
+          case TimePointUnit.MILLISECOND => PlannerTimePointUnit.MILLISECOND
+          case TimePointUnit.MICROSECOND => PlannerTimePointUnit.MICROSECOND
 
-          case ApiTrimMode.BOTH => PlannerTrimMode.BOTH
-          case ApiTrimMode.LEADING => PlannerTrimMode.LEADING
-          case ApiTrimMode.TRAILING => PlannerTrimMode.TRAILING
+          case TrimMode.BOTH => PlannerTrimMode.BOTH
+          case TrimMode.LEADING => PlannerTrimMode.LEADING
+          case TrimMode.TRAILING => PlannerTrimMode.TRAILING
 
           case _ =>
             throw new TableException("unsupported TableSymbolValue: " + symbol)

@@ -17,7 +17,7 @@
  */
 package org.apache.flink.table.api
 
-import org.apache.flink.table.expressions.{Expression, ApiWindow}
+import org.apache.flink.table.expressions.Expression
 import org.apache.flink.table.functions.TableFunction
 import org.apache.flink.table.sinks.TableSink
 import org.apache.flink.types.Row
@@ -93,7 +93,6 @@ trait Table {
   def insertInto(tableName: String): Unit
   def insertInto(tableName: String, conf: QueryConfig): Unit
 
-  def window(window: ApiWindow): WindowedTable
   def window(window: Window): WindowedTable
 
   @varargs

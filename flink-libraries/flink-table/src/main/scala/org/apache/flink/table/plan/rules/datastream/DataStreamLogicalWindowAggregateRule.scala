@@ -64,7 +64,7 @@ class DataStreamLogicalWindowAggregateRule
 
   override private[table] def translateWindowExpression(
       windowExpr: RexCall,
-      rowType: RelDataType): Window = {
+      rowType: RelDataType): PlannerWindow = {
 
     def getOperandAsLong(call: RexCall, idx: Int): Long =
       call.getOperands.get(idx) match {
