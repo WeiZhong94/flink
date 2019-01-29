@@ -21,7 +21,7 @@ package org.apache.flink.table.api.stream.table.stringexpr
 import org.apache.flink.api.scala._
 import org.apache.flink.table.api.scala._
 import org.apache.flink.table.apiexpressions.ApiLiteral
-import org.apache.flink.table.expressions.PlannerLiteral
+import org.apache.flink.table.plan.expressions.PlannerLiteral
 import org.apache.flink.table.utils.TableTestBase
 import org.junit.Test
 

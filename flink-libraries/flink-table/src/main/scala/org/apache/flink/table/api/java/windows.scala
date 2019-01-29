@@ -19,7 +19,7 @@
 package org.apache.flink.table.api.java
 
 import org.apache.flink.table.api._
-import org.apache.flink.table.expressions.{PlannerExpression, ExpressionParser}
+import org.apache.flink.table.plan.expressions.{PlannerExpression, ExpressionParser}
 
 /**
   * Helper class for creating a tumbling window. Tumbling windows are consecutive, non-overlapping

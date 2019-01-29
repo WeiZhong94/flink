@@ -24,7 +24,7 @@ import org.apache.flink.api.scala.DataSet
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.table.api.scala.{ApiImplicitExpressionConversions, BatchTableEnvironment => ScalaBatchTableEnv, StreamTableEnvironment => ScalaStreamTableEnv}
 import org.apache.flink.table.apiexpressions.ApiExpression
-import org.apache.flink.table.expressions.{ApiExpressionParser, PlannerExpression}
+import org.apache.flink.table.plan.expressions.{ApiExpressionParser, PlannerExpression}
 import org.apache.flink.table.functions.TableFunction
 
 import _root_.scala.language.implicitConversions

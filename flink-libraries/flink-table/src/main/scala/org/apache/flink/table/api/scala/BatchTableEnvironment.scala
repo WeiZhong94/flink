@@ -21,7 +21,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.scala._
 import org.apache.flink.table.api._
 import org.apache.flink.table.apiexpressions.ApiExpression
-import org.apache.flink.table.expressions.ApiExpressionParser
+import org.apache.flink.table.plan.expressions.ApiExpressionParser
 import org.apache.flink.table.functions.{AggregateFunction, TableFunction}
 
 import _root_.scala.reflect.ClassTag

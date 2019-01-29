@@ -20,7 +20,7 @@ package org.apache.flink.table.api.scala
 import org.apache.flink.api.scala._
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.table.api.{StreamQueryConfig, Table, TableConfig, TableEnvironment}
-import org.apache.flink.table.expressions.{ApiExpressionParser, ExpressionParser}
+import org.apache.flink.table.plan.expressions.{ApiExpressionParser, ExpressionParser}
 import org.apache.flink.table.functions.{AggregateFunction, TableFunction}
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.apache.flink.streaming.api.scala.asScalaStream

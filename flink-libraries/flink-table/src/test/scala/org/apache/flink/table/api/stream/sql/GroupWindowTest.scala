@@ -21,7 +21,7 @@ package org.apache.flink.table.api.stream.sql
 import org.apache.flink.api.scala._
 import org.apache.flink.table.api.scala._
 import org.apache.flink.table.apiexpressions.ApiExpression
-import org.apache.flink.table.expressions.{ApiExpressionParser, PlannerExpression}
+import org.apache.flink.table.plan.expressions.{ApiExpressionParser, PlannerExpression}
 import org.apache.flink.table.plan.logical._
 import org.apache.flink.table.runtime.utils.JavaUserDefinedAggFunctions.WeightedAvgWithMerge
 import org.apache.flink.table.utils.TableTestUtil._

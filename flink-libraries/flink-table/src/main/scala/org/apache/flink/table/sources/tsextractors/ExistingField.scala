@@ -20,7 +20,7 @@ package org.apache.flink.table.sources.tsextractors
 
 import org.apache.flink.api.common.typeinfo.{SqlTimeTypeInfo, TypeInformation}
 import org.apache.flink.table.api.{Types, ValidationException}
-import org.apache.flink.table.expressions.{PlannerCast, PlannerExpression, PlannerResolvedFieldReference}
+import org.apache.flink.table.plan.expressions.{PlannerCast, PlannerExpression, PlannerResolvedFieldReference}
 
 /**
   * Converts an existing [[Long]], [[java.sql.Timestamp]], or

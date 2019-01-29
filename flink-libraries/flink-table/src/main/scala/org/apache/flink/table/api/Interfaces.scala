@@ -18,7 +18,7 @@
 package org.apache.flink.table.api
 
 import org.apache.flink.table.apiexpressions.{ApiExpression, ApiOverWindow, ApiWindow}
-import org.apache.flink.table.expressions.PlannerExpression
+import org.apache.flink.table.plan.expressions.PlannerExpression
 import org.apache.flink.table.functions.TableFunction
 import org.apache.flink.table.sinks.TableSink
 import org.apache.flink.types.Row

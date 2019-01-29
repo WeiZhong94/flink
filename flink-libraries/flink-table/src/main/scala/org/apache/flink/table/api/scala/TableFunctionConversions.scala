@@ -21,7 +21,7 @@ package org.apache.flink.table.api.scala
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.table.api.{Table, TableImpl}
 import org.apache.flink.table.apiexpressions.ApiExpression
-import org.apache.flink.table.expressions.ApiExpressionParser
+import org.apache.flink.table.plan.expressions.ApiExpressionParser
 import org.apache.flink.table.functions.TableFunction
 import org.apache.flink.table.plan.logical.LogicalTableFunctionCall
 

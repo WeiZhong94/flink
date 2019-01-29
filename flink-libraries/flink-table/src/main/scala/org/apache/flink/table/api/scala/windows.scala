@@ -20,7 +20,7 @@ package org.apache.flink.table.api.scala
 
 import org.apache.flink.table.api._
 import org.apache.flink.table.apiexpressions.{ApiExpression, ApiOverWindowWithOrderBy, ApiPartitionedOver, ApiSessionWithGap, ApiSlideWithSize, ApiTumbleWithSize}
-import org.apache.flink.table.expressions.{PlannerExpression, ExpressionParser}
+import org.apache.flink.table.plan.expressions.{PlannerExpression, ExpressionParser}
 
 /**
   * Helper object for creating a tumbling window. Tumbling windows are consecutive, non-overlapping

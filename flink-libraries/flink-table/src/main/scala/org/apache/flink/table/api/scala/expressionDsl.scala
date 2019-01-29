@@ -35,7 +35,7 @@ import _root_.scala.language.implicitConversions
   * ApiExpression operations.
   *
   * These operations must be kept in sync with the parser in
-  * [[org.apache.flink.table.expressions.ExpressionParser]].
+  * [[org.apache.flink.table.plan.expressions.ExpressionParser]].
   */
 trait ApiImplicitExpressionOperations {
   private[flink] def expr: ApiExpression

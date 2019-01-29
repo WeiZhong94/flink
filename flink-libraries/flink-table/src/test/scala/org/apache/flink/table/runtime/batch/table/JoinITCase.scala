@@ -26,8 +26,8 @@ import org.apache.flink.api.scala.util.CollectionDataSets
 import org.apache.flink.table.api.TableEnvironment
 import org.apache.flink.table.api.scala._
 import org.apache.flink.table.apiexpressions.ApiLiteral
-import org.apache.flink.table.expressions.PlannerLiteral
-import org.apache.flink.table.expressions.utils.Func20
+import org.apache.flink.table.plan.expressions.PlannerLiteral
+import org.apache.flink.table.plan.expressions.utils.Func20
 import org.apache.flink.table.runtime.utils.TableProgramsClusterTestBase
 import org.apache.flink.table.runtime.utils.TableProgramsTestBase.TableConfigMode
 import org.apache.flink.table.utils.TableFunc2

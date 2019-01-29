@@ -24,7 +24,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.streaming.api.watermark.Watermark
 import org.apache.flink.table.api.{Types, ValidationException}
 import org.apache.flink.table.descriptors.RowtimeTest.{CustomAssigner, CustomExtractor}
-import org.apache.flink.table.expressions.{PlannerCast, PlannerExpression, PlannerResolvedFieldReference}
+import org.apache.flink.table.plan.expressions.{PlannerCast, PlannerExpression, PlannerResolvedFieldReference}
 import org.apache.flink.table.sources.tsextractors.TimestampExtractor
 import org.apache.flink.table.sources.wmstrategies.PunctuatedWatermarkAssigner
 import org.apache.flink.types.Row
@@ -94,7 +94,7 @@ class RowtimeTest extends DescriptorTestBase {
       "rowtime.timestamps.class" -> ("org.apache.flink.table.descriptors." +
         "RowtimeTest$CustomExtractor"),
       "rowtime.timestamps.serialized" -> ("rO0ABXNyAD5vcmcuYXBhY2hlLmZsaW5rLnRhYmxlLmRlc2NyaXB0b3" +
-        "JzLlJvd3RpbWVUZXN0JEN1c3RvbUV4dHJhY3Rvct_uZxyboAttAgABTAAFZmllbGR0ABJMamF2YS9sYW5nL1N0cm" +
+        "JzLlJvd3RpbWVUZXN0JEN1c3RvbUV4dHJhY3RvcjePiefiehFzAgABTAAFZmllbGR0ABJMamF2YS9sYW5nL1N0cm" +
         "luZzt4cgA-b3JnLmFwYWNoZS5mbGluay50YWJsZS5zb3VyY2VzLnRzZXh0cmFjdG9ycy5UaW1lc3RhbXBFeHRyYW" +
         "N0b3LU8E2thK4wMQIAAHhwdAAHdHNGaWVsZA"),
       "rowtime.watermarks.delay" -> "1000",

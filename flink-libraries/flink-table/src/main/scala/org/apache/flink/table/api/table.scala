@@ -22,7 +22,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.operators.join.JoinType
 import org.apache.flink.table.apiexpressions.{ApiExpression, ApiOverWindow, ApiOverWindowWithPreceding, ApiSessionWithGapOnTimeWithAlias, ApiSlideWithSizeAndSlideOnTimeWithAlias, ApiTumbleWithSizeOnTimeWithAlias, ApiWindow}
 import org.apache.flink.table.calcite.{FlinkRelBuilder, FlinkTypeFactory}
-import org.apache.flink.table.expressions.{PlannerAlias, ApiExpressionParser, Asc, PlannerCall, Desc, PlannerExpression, ExpressionParser, Ordering, PlannerResolvedFieldReference, PlannerUnresolvedAlias, UnresolvedFieldReference, WindowProperty}
+import org.apache.flink.table.plan.expressions.{PlannerAlias, ApiExpressionParser, Asc, PlannerCall, Desc, PlannerExpression, ExpressionParser, Ordering, PlannerResolvedFieldReference, PlannerUnresolvedAlias, UnresolvedFieldReference, WindowProperty}
 import org.apache.flink.table.functions.{TableFunction, TemporalTableFunction}
 import org.apache.flink.table.functions.utils.UserDefinedFunctionUtils
 import org.apache.flink.table.plan.ProjectionTranslator._

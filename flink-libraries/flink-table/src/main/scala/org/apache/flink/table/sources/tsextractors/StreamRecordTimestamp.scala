@@ -20,7 +20,7 @@ package org.apache.flink.table.sources.tsextractors
 
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.table.api.ValidationException
-import org.apache.flink.table.expressions.{PlannerExpression, PlannerResolvedFieldReference}
+import org.apache.flink.table.plan.expressions.{PlannerExpression, PlannerResolvedFieldReference}
 
 /**
   * Extracts the timestamp of a StreamRecord into a rowtime attribute.
@@ -41,7 +41,7 @@ final class StreamRecordTimestamp extends TimestampExtractor {
     */
   override def getExpression(
       fieldAccesses: Array[PlannerResolvedFieldReference]): PlannerExpression = {
-    org.apache.flink.table.expressions.PlannerStreamRecordTimestamp()
+    org.apache.flink.table.plan.expressions.PlannerStreamRecordTimestamp()
   }
 
   override def equals(obj: Any): Boolean = obj match {

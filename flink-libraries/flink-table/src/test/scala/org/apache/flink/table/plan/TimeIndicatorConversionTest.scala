@@ -23,7 +23,7 @@ import java.sql.Timestamp
 import org.apache.flink.api.scala._
 import org.apache.flink.table.api.scala._
 import org.apache.flink.table.apiexpressions.{ApiExpression, ApiTimeIntervalUnit}
-import org.apache.flink.table.expressions.{ApiExpressionParser, PlannerExpression, PlannerTimeIntervalUnit, PlannerWindowReference}
+import org.apache.flink.table.plan.expressions.{ApiExpressionParser, PlannerExpression, PlannerTimeIntervalUnit, PlannerWindowReference}
 import org.apache.flink.table.functions.TableFunction
 import org.apache.flink.table.plan.TimeIndicatorConversionTest.TableFunc
 import org.apache.flink.table.plan.logical.TumblingGroupWindow

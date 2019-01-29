@@ -26,7 +26,7 @@ import org.apache.calcite.util.{DateString, TimeString, TimestampString}
 import org.apache.flink.api.common.typeinfo.{BasicTypeInfo, SqlTimeTypeInfo}
 import org.apache.flink.table.api.TableException
 import org.apache.flink.table.calcite.FlinkTypeFactory
-import org.apache.flink.table.expressions.{And, PlannerExpression, PlannerLiteral, Or, PlannerResolvedFieldReference}
+import org.apache.flink.table.plan.expressions.{And, PlannerExpression, PlannerLiteral, Or, PlannerResolvedFieldReference}
 import org.apache.flink.table.validate.FunctionCatalog
 import org.apache.flink.util.Preconditions
 import java.sql.{Date, Time, Timestamp}
