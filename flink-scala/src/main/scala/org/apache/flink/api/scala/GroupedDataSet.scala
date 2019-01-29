@@ -434,7 +434,7 @@ class GroupedDataSet[T: ClassTag](
    *  arbitrary output type.
    */
   def combineGroup[R: TypeInformation: ClassTag](
-      fun: (Iterator[T], Collector[R]) => Unit): DataSet[R] = {
+                                          fun: (Iterator[T], Collector[R]) => Unit): DataSet[R] = {
     require(fun != null, "GroupCombine function must not be null.")
     val combiner = new GroupCombineFunction[T, R] {
       val cleanFun = set.clean(fun)
