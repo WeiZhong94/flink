@@ -29,7 +29,7 @@ import org.apache.flink.table.functions.TableFunction
 
 import _root_.scala.language.implicitConversions
 
-package object apiexpressions extends ApiImplicitExpressionConversions {
+package object expressions extends ApiImplicitExpressionConversions {
 
   implicit def table2TableConversions(table: Table): TableConversions = {
     new TableConversions(table)

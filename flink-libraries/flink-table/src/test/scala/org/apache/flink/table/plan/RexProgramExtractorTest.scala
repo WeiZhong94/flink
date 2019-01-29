@@ -233,15 +233,15 @@ class RexProgramExtractorTest extends RexProgramTestBase {
 
     val expected = Array[PlannerExpression](
       EqualTo(
-        UnresolvedFieldReference("timestamp_col"),
+        PlannerUnresolvedFieldReference("timestamp_col"),
         PlannerLiteral(Timestamp.valueOf("2017-09-10 14:23:01.245"))
       ),
       EqualTo(
-        UnresolvedFieldReference("date_col"),
+        PlannerUnresolvedFieldReference("date_col"),
         PlannerLiteral(Date.valueOf("2017-09-12"))
       ),
       EqualTo(
-        UnresolvedFieldReference("time_col"),
+        PlannerUnresolvedFieldReference("time_col"),
         PlannerLiteral(Time.valueOf("14:23:01"))
       )
     )
@@ -362,8 +362,8 @@ class RexProgramExtractorTest extends RexProgramTestBase {
         functionCatalog)
 
     val expected: Array[PlannerExpression] = Array(
-      GreaterThan(Sum(UnresolvedFieldReference("amount")), PlannerLiteral(100)),
-      EqualTo(Min(UnresolvedFieldReference("id")), PlannerLiteral(100))
+      GreaterThan(Sum(PlannerUnresolvedFieldReference("amount")), PlannerLiteral(100)),
+      EqualTo(Min(PlannerUnresolvedFieldReference("id")), PlannerLiteral(100))
     )
     assertExpressionArrayEquals(expected, convertedExpressions)
     assertEquals(0, unconvertedRexNodes.length)

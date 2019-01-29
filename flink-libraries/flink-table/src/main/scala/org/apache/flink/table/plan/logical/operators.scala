@@ -124,12 +124,12 @@ case class AliasNode(aliasList: Seq[PlannerExpression], child: LogicalNode) exte
   override def resolveExpressions(tableEnv: TableEnvironment): LogicalNode = {
     if (aliasList.length > child.output.length) {
       failValidation("Aliasing more fields than we actually have")
-    } else if (!aliasList.forall(_.isInstanceOf[UnresolvedFieldReference])) {
+    } else if (!aliasList.forall(_.isInstanceOf[PlannerUnresolvedFieldReference])) {
       failValidation("Alias only accept name expressions as arguments")
-    } else if (!aliasList.forall(_.asInstanceOf[UnresolvedFieldReference].name != "*")) {
+    } else if (!aliasList.forall(_.asInstanceOf[PlannerUnresolvedFieldReference].name != "*")) {
       failValidation("Alias can not accept '*' as name")
     } else {
-      val names = aliasList.map(_.asInstanceOf[UnresolvedFieldReference].name)
+      val names = aliasList.map(_.asInstanceOf[PlannerUnresolvedFieldReference].name)
       val input = child.output
       Project(
         names.zip(input).map { case (name, attr) =>
@@ -582,7 +582,7 @@ case class WindowAggregate(
       } else {
         // resolve type of window reference
         val resolvedType = window.timeAttribute match {
-          case UnresolvedFieldReference(n) =>
+          case PlannerUnresolvedFieldReference(n) =>
             super.resolveReference(tableEnv, n) match {
               case Some(PlannerResolvedFieldReference(_, tpe)) => Some(tpe)
               case _ => None
@@ -596,7 +596,7 @@ case class WindowAggregate(
 
     window.aliasAttribute match {
       // resolve reference to this window's name
-      case UnresolvedFieldReference(alias) if name == alias =>
+      case PlannerUnresolvedFieldReference(alias) if name == alias =>
         resolveAlias(alias)
 
       case _ =>

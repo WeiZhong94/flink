@@ -21,7 +21,7 @@ package org.apache.flink.table.plan.expressions.validation
 import org.apache.calcite.avatica.util.TimeUnit
 import org.apache.flink.table.api.scala._
 import org.apache.flink.table.api.{SqlParserException, ValidationException}
-import org.apache.flink.table.apiexpressions.ApiTimePointUnit
+import org.apache.flink.table.expressions.ApiTimePointUnit
 import org.apache.flink.table.plan.expressions.PlannerTimePointUnit
 import org.apache.flink.table.plan.expressions.utils.ScalarTypesTestBase
 import org.junit.Test

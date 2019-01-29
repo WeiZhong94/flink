@@ -22,7 +22,7 @@ import java.sql.Timestamp
 
 import org.apache.flink.api.scala._
 import org.apache.flink.table.api.scala._
-import org.apache.flink.table.apiexpressions.{ApiExpression, ApiTimeIntervalUnit}
+import org.apache.flink.table.expressions.{Expression, ApiTimeIntervalUnit}
 import org.apache.flink.table.plan.expressions.{ApiExpressionParser, PlannerExpression, PlannerTimeIntervalUnit, PlannerWindowReference}
 import org.apache.flink.table.functions.TableFunction
 import org.apache.flink.table.plan.TimeIndicatorConversionTest.TableFunc
@@ -35,7 +35,7 @@ import org.junit.Test
   * Tests for [[org.apache.flink.table.calcite.RelTimeIndicatorConverter]].
   */
 class TimeIndicatorConversionTest extends TableTestBase {
-  implicit def apiExpression2Expression(apiExpression: ApiExpression): PlannerExpression = {
+  implicit def apiExpression2Expression(apiExpression: Expression): PlannerExpression = {
     ApiExpressionParser.parse(apiExpression)
   }
 

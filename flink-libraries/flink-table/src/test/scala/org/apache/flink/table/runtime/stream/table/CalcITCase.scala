@@ -22,7 +22,7 @@ import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.table.api.TableEnvironment
 import org.apache.flink.table.api.scala._
-import org.apache.flink.table.apiexpressions.ApiLiteral
+import org.apache.flink.table.expressions.Literal
 import org.apache.flink.table.plan.expressions.PlannerLiteral
 import org.apache.flink.table.plan.expressions.utils._
 import org.apache.flink.table.runtime.utils.{StreamITCase, StreamTestData, UserDefinedFunctionTestUtils}
@@ -159,7 +159,7 @@ class CalcITCase extends AbstractTestBase {
     StreamITCase.testResults = mutable.MutableList()
     val ds = StreamTestData.getSmall3TupleDataStream(env).toTable(tEnv, 'a, 'b, 'c)
 
-    val filterDs = ds.filter( ApiLiteral(false) )
+    val filterDs = ds.filter( Literal(false) )
     val results = filterDs.toAppendStream[Row]
     results.addSink(new StreamITCase.StringSink[Row])
     env.execute()
@@ -178,7 +178,7 @@ class CalcITCase extends AbstractTestBase {
     StreamITCase.testResults = mutable.MutableList()
     val ds = StreamTestData.getSmall3TupleDataStream(env).toTable(tEnv, 'a, 'b, 'c)
 
-    val filterDs = ds.filter( ApiLiteral(true) )
+    val filterDs = ds.filter( Literal(true) )
     val results = filterDs.toAppendStream[Row]
     results.addSink(new StreamITCase.StringSink[Row])
     env.execute()

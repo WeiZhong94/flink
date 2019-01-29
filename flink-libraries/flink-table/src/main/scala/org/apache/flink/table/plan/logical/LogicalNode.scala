@@ -32,7 +32,7 @@ import org.apache.flink.table.validate._
   *
   * Expressions' resolution and transformation ([[resolveExpressions]]):
   *
-  * - translate [[UnresolvedFieldReference]] into [[PlannerResolvedFieldReference]]
+  * - translate [[PlannerUnresolvedFieldReference]] into [[PlannerResolvedFieldReference]]
   *     using child operator's output
   * - translate [[PlannerCall]](UnresolvedFunction) into solid Expression
   * - generate alias names for query output
@@ -40,7 +40,7 @@ import org.apache.flink.table.validate._
   *
   * LogicalNode validation ([[validate]]):
   *
-  * - check no [[UnresolvedFieldReference]] exists any more
+  * - check no [[PlannerUnresolvedFieldReference]] exists any more
   * - check if all expressions have children of needed type
   * - check each logical operator have desired input
   *
@@ -52,7 +52,7 @@ abstract class LogicalNode extends TreeNode[LogicalNode] {
   def resolveExpressions(tableEnv: TableEnvironment): LogicalNode = {
     // resolve references and function calls
     val exprResolved = expressionPostOrderTransform {
-      case u @ UnresolvedFieldReference(name) =>
+      case u @ PlannerUnresolvedFieldReference(name) =>
         // try resolve a field
         resolveReference(tableEnv, name).getOrElse(u)
       case c @ PlannerCall(name, children) if c.childrenValid =>

@@ -20,7 +20,7 @@ package org.apache.flink.table.api.scala
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.scala._
 import org.apache.flink.table.api._
-import org.apache.flink.table.apiexpressions.ApiExpression
+import org.apache.flink.table.expressions.Expression
 import org.apache.flink.table.plan.expressions.ApiExpressionParser
 import org.apache.flink.table.functions.{AggregateFunction, TableFunction}
 
@@ -78,7 +78,7 @@ class BatchTableEnvironment(
     * @tparam T The type of the [[DataSet]].
     * @return The converted [[Table]].
     */
-  def fromDataSet[T](dataSet: DataSet[T], fields: ApiExpression*): Table = {
+  def fromDataSet[T](dataSet: DataSet[T], fields: Expression*): Table = {
     val name = createUniqueTableName()
     registerDataSetInternal(name, dataSet.javaSet, fields.map(ApiExpressionParser.parse).toArray)
     scan(name)
@@ -118,7 +118,7 @@ class BatchTableEnvironment(
     * @param fields The field names of the registered table.
     * @tparam T The type of the [[DataSet]] to register.
     */
-  def registerDataSet[T](name: String, dataSet: DataSet[T], fields: ApiExpression*): Unit = {
+  def registerDataSet[T](name: String, dataSet: DataSet[T], fields: Expression*): Unit = {
 
     checkValidTableName(name)
     registerDataSetInternal(name, dataSet.javaSet,

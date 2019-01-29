@@ -33,10 +33,10 @@ class KeywordParseTest extends ExpressionTestBase {
   def testKeyword(): Unit = {
     Assert.assertEquals(
       ExpressionParser.parseExpression("f0.asc"),
-      Asc(UnresolvedFieldReference("f0")))
+      Asc(PlannerUnresolvedFieldReference("f0")))
     Assert.assertEquals(
       ExpressionParser.parseExpression("f0.asc()"),
-      Asc(UnresolvedFieldReference("f0")))
+      Asc(PlannerUnresolvedFieldReference("f0")))
   }
 
   @Test

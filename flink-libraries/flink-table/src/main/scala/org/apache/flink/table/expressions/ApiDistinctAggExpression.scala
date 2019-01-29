@@ -15,10 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flink.table.apiexpressions
+package org.apache.flink.table.expressions
 
-case class ApiDistinctAggExpression(apiCall: ApiCall) {
-  def distinct: ApiDistinctAgg = {
-    ApiDistinctAgg(apiCall)
+case class ApiDistinctAggExpression(apiCall: Call) {
+  def distinct: DistinctAgg = {
+    DistinctAgg(apiCall)
   }
 }

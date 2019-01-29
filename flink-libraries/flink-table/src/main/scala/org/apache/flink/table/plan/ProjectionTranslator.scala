@@ -133,23 +133,23 @@ object ProjectionTranslator {
       case agg: Aggregation =>
         val name = aggNames(agg)
         if (projectedNames.add(name)) {
-          UnresolvedFieldReference(name)
+          PlannerUnresolvedFieldReference(name)
         } else {
-          PlannerAlias(UnresolvedFieldReference(name), tableEnv.createUniqueAttributeName())
+          PlannerAlias(PlannerUnresolvedFieldReference(name), tableEnv.createUniqueAttributeName())
         }
       case prop: WindowProperty =>
         val name = propNames(prop)
         if (projectedNames.add(name)) {
-          UnresolvedFieldReference(name)
+          PlannerUnresolvedFieldReference(name)
         } else {
-          PlannerAlias(UnresolvedFieldReference(name), tableEnv.createUniqueAttributeName())
+          PlannerAlias(PlannerUnresolvedFieldReference(name), tableEnv.createUniqueAttributeName())
         }
       case n @ PlannerAlias(agg: Aggregation, name, _) =>
         val aName = aggNames(agg)
-        PlannerAlias(UnresolvedFieldReference(aName), name)
+        PlannerAlias(PlannerUnresolvedFieldReference(aName), name)
       case n @ PlannerAlias(prop: WindowProperty, name, _) =>
         val pName = propNames(prop)
-        PlannerAlias(UnresolvedFieldReference(pName), name)
+        PlannerAlias(PlannerUnresolvedFieldReference(pName), name)
       case l: PlannerLeafExpression => l
       case u: PlannerUnaryExpression =>
         val c = replaceAggregationsAndProperties(u.child, tableEnv,
@@ -210,8 +210,8 @@ object ProjectionTranslator {
     val projectList = new ListBuffer[PlannerExpression]
 
     exprs.foreach {
-      case n: UnresolvedFieldReference if n.name == "*" =>
-        projectList ++= parent.output.map(a => UnresolvedFieldReference(a.name))
+      case n: PlannerUnresolvedFieldReference if n.name == "*" =>
+        projectList ++= parent.output.map(a => PlannerUnresolvedFieldReference(a.name))
 
       case PlannerFlattening(unresolved) =>
         // simulate a simple project to resolve fields using current parent
@@ -322,7 +322,7 @@ object ProjectionTranslator {
       expr: PlannerExpression,
       fieldReferences: Set[NamedExpression]): Set[NamedExpression] = expr match {
 
-    case f: UnresolvedFieldReference =>
+    case f: PlannerUnresolvedFieldReference =>
       fieldReferences + PlannerUnresolvedAlias(f)
 
     case b: PlannerBinaryExpression =>

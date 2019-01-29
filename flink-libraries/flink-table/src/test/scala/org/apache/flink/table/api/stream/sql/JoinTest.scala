@@ -21,7 +21,7 @@ import org.apache.calcite.rel.logical.LogicalJoin
 import org.apache.flink.api.scala._
 import org.apache.flink.table.api.Types
 import org.apache.flink.table.api.scala._
-import org.apache.flink.table.apiexpressions.ApiNull
+import org.apache.flink.table.expressions.Null
 import org.apache.flink.table.calcite.RelTimeIndicatorConverter
 import org.apache.flink.table.plan.expressions.{ApiExpressionParser, PlannerNull}
 import org.apache.flink.table.plan.logical.TumblingGroupWindow
@@ -257,7 +257,7 @@ class JoinTest extends TableTestBase {
     val streamUtil: StreamTableTestUtil = streamTestUtil()
 
     val t1 = streamUtil.addTable[(Int, Long, String)]("Table1", 'a, 'b, 'c, 'proctime.proctime)
-      .select('a, 'b, 'c, 'proctime, ApiNull(Types.LONG) as 'nullField)
+      .select('a, 'b, 'c, 'proctime, Null(Types.LONG) as 'nullField)
 
     val t2 = streamUtil.addTable[(Int, Long, String)]("Table2", 'a, 'b, 'c, 'proctime.proctime)
       .select('a, 'b, 'c, 'proctime, 12L as 'nullField)

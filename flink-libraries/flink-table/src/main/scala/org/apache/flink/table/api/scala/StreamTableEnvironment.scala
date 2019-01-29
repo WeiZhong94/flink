@@ -24,7 +24,7 @@ import org.apache.flink.table.plan.expressions.{ApiExpressionParser, ExpressionP
 import org.apache.flink.table.functions.{AggregateFunction, TableFunction}
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
 import org.apache.flink.streaming.api.scala.asScalaStream
-import org.apache.flink.table.apiexpressions.ApiExpression
+import org.apache.flink.table.expressions.Expression
 
 /**
   * The [[TableEnvironment]] for a Scala [[StreamExecutionEnvironment]].
@@ -80,7 +80,7 @@ class StreamTableEnvironment(
     * @tparam T The type of the [[DataStream]].
     * @return The converted [[Table]].
     */
-  def fromDataStream[T](dataStream: DataStream[T], fields: ApiExpression*): Table = {
+  def fromDataStream[T](dataStream: DataStream[T], fields: Expression*): Table = {
 
     val name = createUniqueTableName()
     registerDataStreamInternal(name, dataStream.javaStream,
@@ -134,7 +134,7 @@ class StreamTableEnvironment(
   def registerDataStream[T](
       name: String,
       dataStream: DataStream[T],
-      fields: ApiExpression*): Unit = {
+      fields: Expression*): Unit = {
 
     checkValidTableName(name)
     registerDataStreamInternal(name, dataStream.javaStream,

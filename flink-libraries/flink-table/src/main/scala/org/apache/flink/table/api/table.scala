@@ -20,9 +20,9 @@ package org.apache.flink.table.api
 import org.apache.calcite.rel.RelNode
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.operators.join.JoinType
-import org.apache.flink.table.apiexpressions.{ApiExpression, ApiOverWindow, ApiOverWindowWithPreceding, ApiSessionWithGapOnTimeWithAlias, ApiSlideWithSizeAndSlideOnTimeWithAlias, ApiTumbleWithSizeOnTimeWithAlias, ApiWindow}
+import org.apache.flink.table.expressions.{Expression, ApiOverWindow, ApiOverWindowWithPreceding, ApiSessionWithGapOnTimeWithAlias, ApiSlideWithSizeAndSlideOnTimeWithAlias, ApiTumbleWithSizeOnTimeWithAlias, ApiWindow}
 import org.apache.flink.table.calcite.{FlinkRelBuilder, FlinkTypeFactory}
-import org.apache.flink.table.plan.expressions.{PlannerAlias, ApiExpressionParser, Asc, PlannerCall, Desc, PlannerExpression, ExpressionParser, Ordering, PlannerResolvedFieldReference, PlannerUnresolvedAlias, UnresolvedFieldReference, WindowProperty}
+import org.apache.flink.table.plan.expressions.{PlannerAlias, ApiExpressionParser, Asc, PlannerCall, Desc, PlannerExpression, ExpressionParser, Ordering, PlannerResolvedFieldReference, PlannerUnresolvedAlias, PlannerUnresolvedFieldReference, WindowProperty}
 import org.apache.flink.table.functions.{TableFunction, TemporalTableFunction}
 import org.apache.flink.table.functions.utils.UserDefinedFunctionUtils
 import org.apache.flink.table.plan.ProjectionTranslator._
@@ -145,7 +145,7 @@ private[flink] class TableImpl(
     }
   }
 
-  def select(fields: ApiExpression*): Table = {
+  def select(fields: Expression*): Table = {
     val fieldExprs = fields.map(ApiExpressionParser.parse)
     val withResolvedAggFunctionCall = fieldExprs.map(replaceAggFunctionCall(_, tableEnv))
     selectApi(withResolvedAggFunctionCall: _*)
@@ -196,8 +196,8 @@ private[flink] class TableImpl(
   }
 
   def createTemporalTableFunction(
-      timeAttribute: ApiExpression,
-      primaryKey: ApiExpression): TableFunction[Row] = {
+                                   timeAttribute: Expression,
+                                   primaryKey: Expression): TableFunction[Row] = {
     createTemporalTableFunctionApi(
       ApiExpressionParser.parse(timeAttribute),
       ApiExpressionParser.parse(primaryKey))
@@ -265,7 +265,7 @@ private[flink] class TableImpl(
           throw new ValidationException(
             "List of column aliases must have same degree as TableFunction's output")
         }
-        if (!fields.forall(_.isInstanceOf[UnresolvedFieldReference])) {
+        if (!fields.forall(_.isInstanceOf[PlannerUnresolvedFieldReference])) {
           throw new ValidationException(
             "Alias field must be an instance of UnresolvedFieldReference"
           )
@@ -277,7 +277,7 @@ private[flink] class TableImpl(
             functionCall.tableFunction,
             functionCall.parameters,
             functionCall.resultType,
-            fields.map(_.asInstanceOf[UnresolvedFieldReference].name).toArray,
+            fields.map(_.asInstanceOf[PlannerUnresolvedFieldReference].name).toArray,
             functionCall.child)
         )
       case _ =>
@@ -301,7 +301,7 @@ private[flink] class TableImpl(
     asApi(fieldExprs: _*)
   }
 
-  def as(fields: ApiExpression*): Table = {
+  def as(fields: Expression*): Table = {
     val fieldExprs = fields.map(ApiExpressionParser.parse)
     asApi(fieldExprs: _*)
   }
@@ -335,7 +335,7 @@ private[flink] class TableImpl(
     filterApi(predicateExpr)
   }
 
-  def filter(predicate: ApiExpression): Table = {
+  def filter(predicate: Expression): Table = {
     val predicateExpr = ApiExpressionParser.parse(predicate)
     filterApi(predicateExpr)
   }
@@ -368,7 +368,7 @@ private[flink] class TableImpl(
     filter(predicate)
   }
 
-  def where(predicate: ApiExpression): Table = {
+  def where(predicate: Expression): Table = {
     filter(predicate)
   }
 
@@ -401,7 +401,7 @@ private[flink] class TableImpl(
     groupByApi(fieldsExpr: _*)
   }
 
-  def groupBy(fields: ApiExpression*): GroupedTable = {
+  def groupBy(fields: Expression*): GroupedTable = {
     val fieldsExpr = fields.map(ApiExpressionParser.parse)
     groupByApi(fieldsExpr: _*)
   }
@@ -452,7 +452,7 @@ private[flink] class TableImpl(
     join(right, joinPredicate, JoinType.INNER)
   }
 
-  def join(right: Table, joinPredicate: ApiExpression): Table = {
+  def join(right: Table, joinPredicate: Expression): Table = {
     join(right, joinPredicate, JoinType.INNER)
   }
 
@@ -524,7 +524,7 @@ private[flink] class TableImpl(
     join(right, joinPredicate, JoinType.LEFT_OUTER)
   }
 
-  def leftOuterJoin(right: Table, joinPredicate: ApiExpression): Table = {
+  def leftOuterJoin(right: Table, joinPredicate: Expression): Table = {
     join(right, joinPredicate, JoinType.LEFT_OUTER)
   }
 
@@ -562,7 +562,7 @@ private[flink] class TableImpl(
     join(right, joinPredicate, JoinType.RIGHT_OUTER)
   }
 
-  def rightOuterJoin(right: Table, joinPredicate: ApiExpression): Table = {
+  def rightOuterJoin(right: Table, joinPredicate: Expression): Table = {
     join(right, joinPredicate, JoinType.RIGHT_OUTER)
   }
 
@@ -600,7 +600,7 @@ private[flink] class TableImpl(
     join(right, joinPredicate, JoinType.FULL_OUTER)
   }
 
-  def fullOuterJoin(right: Table, joinPredicate: ApiExpression): Table = {
+  def fullOuterJoin(right: Table, joinPredicate: Expression): Table = {
     join(right, joinPredicate, JoinType.FULL_OUTER)
   }
 
@@ -626,7 +626,7 @@ private[flink] class TableImpl(
     joinApi(right, Some(joinPredicateExpr), joinType)
   }
 
-  private def join(right: Table, joinPredicate: ApiExpression, joinType: JoinType): Table = {
+  private def join(right: Table, joinPredicate: Expression, joinType: JoinType): Table = {
     val joinPredicateExpr = ApiExpressionParser.parse(joinPredicate)
     joinApi(right, Some(joinPredicateExpr), joinType)
   }
@@ -859,7 +859,7 @@ private[flink] class TableImpl(
     orderByApi(parsedFields: _*)
   }
 
-  def orderBy(fields: ApiExpression*): Table = {
+  def orderBy(fields: Expression*): Table = {
     val parsedFields = fields.map(ApiExpressionParser.parse)
     orderByApi(parsedFields: _*)
   }
@@ -1200,7 +1200,7 @@ class GroupedTableImpl(
     selectApi(withResolvedAggFunctionCall: _*)
   }
 
-  def select(fields: ApiExpression*): Table = {
+  def select(fields: Expression*): Table = {
     val fieldExprs = fields.map(ApiExpressionParser.parse)
     //get the correct expression for AggFunctionCall
     val withResolvedAggFunctionCall = fieldExprs.map(replaceAggFunctionCall(_, innerable.tableEnv))
@@ -1258,7 +1258,7 @@ class WindowedTableImpl(
     groupByApi(fieldsExpr: _*)
   }
 
-  def groupBy(fields: ApiExpression*): WindowGroupedTable = {
+  def groupBy(fields: Expression*): WindowGroupedTable = {
     val fieldsExpr = fields.map(ApiExpressionParser.parse)
     groupByApi(fieldsExpr: _*)
   }
@@ -1300,7 +1300,7 @@ class OverWindowedTableImpl(
     selectApi(withResolvedAggFunctionCall: _*)
   }
 
-  def select(fields: ApiExpression*): Table = {
+  def select(fields: Expression*): Table = {
     val fieldExprs = fields.map(ApiExpressionParser.parse)
     //get the correct expression for AggFunctionCall
     val withResolvedAggFunctionCall = fieldExprs.map(replaceAggFunctionCall(_, innerTable.tableEnv))
@@ -1364,7 +1364,7 @@ class WindowGroupedTableImpl(
     selectApi(withResolvedAggFunctionCall: _*)
   }
 
-  def select(fields: ApiExpression*): Table = {
+  def select(fields: Expression*): Table = {
     val fieldExprs = fields.map(ApiExpressionParser.parse)
     //get the correct expression for AggFunctionCall
     val withResolvedAggFunctionCall = fieldExprs.map(replaceAggFunctionCall(_, table.tableEnv))

@@ -16,11 +16,11 @@
  * limitations under the License.
  */
 
-package org.apache.flink.table.apiexpressions
+package org.apache.flink.table.expressions
 
 import org.apache.flink.table.api.UnresolvedOverWindow
 
-case class ApiPartitionedOver(partitionBy: Array[ApiExpression]) {
+case class ApiPartitionedOver(partitionBy: Array[Expression]) {
 
   /**
     * Specifies the time attribute on which rows are grouped.
@@ -29,13 +29,13 @@ case class ApiPartitionedOver(partitionBy: Array[ApiExpression]) {
     *
     * For batch tables, refer to a timestamp or long attribute.
     */
-  def orderBy(orderBy: ApiExpression): ApiOverWindowWithOrderBy = {
+  def orderBy(orderBy: Expression): ApiOverWindowWithOrderBy = {
     ApiOverWindowWithOrderBy(partitionBy, orderBy)
   }
 }
 
 
-case class ApiOverWindowWithOrderBy(partitionBy: Seq[ApiExpression], orderBy: ApiExpression) {
+case class ApiOverWindowWithOrderBy(partitionBy: Seq[Expression], orderBy: Expression) {
 
   /**
     * Set the preceding offset (based on time or row-count intervals) for over window.
@@ -43,7 +43,7 @@ case class ApiOverWindowWithOrderBy(partitionBy: Seq[ApiExpression], orderBy: Ap
     * @param preceding preceding offset relative to the current row.
     * @return this over window
     */
-  def preceding(preceding: ApiExpression): ApiOverWindowWithPreceding = {
+  def preceding(preceding: Expression): ApiOverWindowWithPreceding = {
     new ApiOverWindowWithPreceding(partitionBy, orderBy, preceding)
   }
 
@@ -53,7 +53,7 @@ case class ApiOverWindowWithOrderBy(partitionBy: Seq[ApiExpression], orderBy: Ap
     * @param alias alias for this over window
     * @return over window
     */
-  def as(alias: ApiExpression): ApiOverWindow = {
+  def as(alias: Expression): ApiOverWindow = {
     ApiOverWindow(alias, partitionBy, orderBy, UNBOUNDED_RANGE, CURRENT_RANGE)
   }
 }
@@ -62,29 +62,29 @@ case class ApiOverWindowWithOrderBy(partitionBy: Seq[ApiExpression], orderBy: Ap
   * Over window is similar to the traditional OVER SQL.
   */
 case class ApiOverWindow(
-    private[flink] val alias: ApiExpression,
-    private[flink] val partitionBy: Seq[ApiExpression],
-    private[flink] val orderBy: ApiExpression,
-    private[flink] val preceding: ApiExpression,
-    private[flink] val following: ApiExpression) extends UnresolvedOverWindow
+                          private[flink] val alias: Expression,
+                          private[flink] val partitionBy: Seq[Expression],
+                          private[flink] val orderBy: Expression,
+                          private[flink] val preceding: Expression,
+                          private[flink] val following: Expression) extends UnresolvedOverWindow
 
-case class ApiCurrentRow() extends ApiLeafExpression
+case class CurrentRow() extends LeafExpression
 
-case class ApiCurrentRange() extends ApiLeafExpression
+case class CurrentRange() extends LeafExpression
 
-case class ApiUnboundedRow() extends ApiLeafExpression
+case class UnboundedRow() extends LeafExpression
 
-case class ApiUnboundedRange() extends ApiLeafExpression
+case class UnboundedRange() extends LeafExpression
 
 /**
   * A partially defined over window.
   */
 class ApiOverWindowWithPreceding(
-    private val partitionBy: Seq[ApiExpression],
-    private val orderBy: ApiExpression,
-    private val preceding: ApiExpression) {
+                                  private val partitionBy: Seq[Expression],
+                                  private val orderBy: Expression,
+                                  private val preceding: Expression) {
 
-  private[flink] var following: ApiExpression = _
+  private[flink] var following: Expression = _
 
   /**
     * Assigns an alias for this window that the following `select()` clause can refer to.
@@ -92,7 +92,7 @@ class ApiOverWindowWithPreceding(
     * @param alias alias for this over window
     * @return over window
     */
-  def as(alias: ApiExpression): ApiOverWindow = {
+  def as(alias: Expression): ApiOverWindow = {
     ApiOverWindow(alias, partitionBy, orderBy, preceding, following)
   }
 
@@ -102,7 +102,7 @@ class ApiOverWindowWithPreceding(
     * @param following following offset that relative to the current row.
     * @return this over window
     */
-  def following(following: ApiExpression): ApiOverWindowWithPreceding = {
+  def following(following: Expression): ApiOverWindowWithPreceding = {
     this.following = following
     this
   }
@@ -123,7 +123,7 @@ abstract class ApiWindow
   *
   * @param size the size of the window either as time or row-count interval.
   */
-class ApiTumbleWithSize(size: ApiExpression) {
+class ApiTumbleWithSize(size: Expression) {
 
   /**
     * Specifies the time attribute on which rows are grouped.
@@ -135,14 +135,14 @@ class ApiTumbleWithSize(size: ApiExpression) {
     * @param timeField time attribute for streaming and batch tables
     * @return a tumbling window on event-time
     */
-  def on(timeField: ApiExpression): ApiTumbleWithSizeOnTime =
+  def on(timeField: Expression): ApiTumbleWithSizeOnTime =
     new ApiTumbleWithSizeOnTime(timeField, size)
 }
 
 /**
   * Tumbling window on time.
   */
-class ApiTumbleWithSizeOnTime(time: ApiExpression, size: ApiExpression) {
+class ApiTumbleWithSizeOnTime(time: Expression, size: Expression) {
 
   /**
     * Assigns an alias for this window that the following `groupBy()` and `select()` clause can
@@ -151,7 +151,7 @@ class ApiTumbleWithSizeOnTime(time: ApiExpression, size: ApiExpression) {
     * @param alias alias for this window
     * @return this window
     */
-  def as(alias: ApiExpression): ApiTumbleWithSizeOnTimeWithAlias = {
+  def as(alias: Expression): ApiTumbleWithSizeOnTimeWithAlias = {
     new ApiTumbleWithSizeOnTimeWithAlias(alias, time, size)
   }
 }
@@ -160,9 +160,9 @@ class ApiTumbleWithSizeOnTime(time: ApiExpression, size: ApiExpression) {
   * Tumbling window on time with alias. Fully specifies a window.
   */
 case class ApiTumbleWithSizeOnTimeWithAlias(
-    alias: ApiExpression,
-    timeField: ApiExpression,
-    size: ApiExpression) extends ApiWindow
+                                             alias: Expression,
+                                             timeField: Expression,
+                                             size: Expression) extends ApiWindow
 
 // ------------------------------------------------------------------------------------------------
 // Sliding windows
@@ -174,7 +174,7 @@ case class ApiTumbleWithSizeOnTimeWithAlias(
   *
   * @param size the size of the window either as time or row-count interval.
   */
-class ApiSlideWithSize(size: ApiExpression) {
+class ApiSlideWithSize(size: Expression) {
 
   /**
     * Specifies the window's slide as time or row-count interval.
@@ -189,7 +189,7 @@ class ApiSlideWithSize(size: ApiExpression) {
     * @param slide the slide of the window either as time or row-count interval.
     * @return a sliding window
     */
-  def every(slide: ApiExpression): ApiSlideWithSizeAndSlide =
+  def every(slide: Expression): ApiSlideWithSizeAndSlide =
     new ApiSlideWithSizeAndSlide(size, slide)
 }
 
@@ -202,7 +202,7 @@ class ApiSlideWithSize(size: ApiExpression) {
   *
   * @param size the size of the window either as time or row-count interval.
   */
-class ApiSlideWithSizeAndSlide(size: ApiExpression, slide: ApiExpression) {
+class ApiSlideWithSizeAndSlide(size: Expression, slide: Expression) {
 
   /**
     * Specifies the time attribute on which rows are grouped.
@@ -214,7 +214,7 @@ class ApiSlideWithSizeAndSlide(size: ApiExpression, slide: ApiExpression) {
     * @param timeField time attribute for streaming and batch tables
     * @return a tumbling window on event-time
     */
-  def on(timeField: ApiExpression): ApiSlideWithSizeAndSlideOnTime =
+  def on(timeField: Expression): ApiSlideWithSizeAndSlideOnTime =
     new ApiSlideWithSizeAndSlideOnTime(timeField, size, slide)
 }
 
@@ -222,9 +222,9 @@ class ApiSlideWithSizeAndSlide(size: ApiExpression, slide: ApiExpression) {
   * Sliding window on time.
   */
 class ApiSlideWithSizeAndSlideOnTime(
-    timeField: ApiExpression,
-    size: ApiExpression,
-    slide: ApiExpression) {
+                                      timeField: Expression,
+                                      size: Expression,
+                                      slide: Expression) {
 
   /**
     * Assigns an alias for this window that the following `groupBy()` and `select()` clause can
@@ -233,7 +233,7 @@ class ApiSlideWithSizeAndSlideOnTime(
     * @param alias alias for this window
     * @return this window
     */
-  def as(alias: ApiExpression): ApiSlideWithSizeAndSlideOnTimeWithAlias = {
+  def as(alias: Expression): ApiSlideWithSizeAndSlideOnTimeWithAlias = {
     new ApiSlideWithSizeAndSlideOnTimeWithAlias(alias, timeField, size, slide)
   }
 }
@@ -242,10 +242,10 @@ class ApiSlideWithSizeAndSlideOnTime(
   * Sliding window on time with alias. Fully specifies a window.
   */
 case class ApiSlideWithSizeAndSlideOnTimeWithAlias(
-    alias: ApiExpression,
-    timeField: ApiExpression,
-    size: ApiExpression,
-    slide: ApiExpression) extends ApiWindow
+                                                    alias: Expression,
+                                                    timeField: Expression,
+                                                    size: Expression,
+                                                    slide: Expression) extends ApiWindow
 
 // ------------------------------------------------------------------------------------------------
 // Session windows
@@ -261,7 +261,7 @@ case class ApiSlideWithSizeAndSlideOnTimeWithAlias(
   *
   * @param gap the time interval of inactivity before a window is closed.
   */
-class ApiSessionWithGap(gap: ApiExpression) {
+class ApiSessionWithGap(gap: Expression) {
 
   /**
     * Specifies the time attribute on which rows are grouped.
@@ -273,14 +273,14 @@ class ApiSessionWithGap(gap: ApiExpression) {
     * @param timeField time attribute for streaming and batch tables
     * @return a tumbling window on event-time
     */
-  def on(timeField: ApiExpression): ApiSessionWithGapOnTime =
+  def on(timeField: Expression): ApiSessionWithGapOnTime =
     new ApiSessionWithGapOnTime(timeField, gap)
 }
 
 /**
   * Session window on time.
   */
-class ApiSessionWithGapOnTime(timeField: ApiExpression, gap: ApiExpression) {
+class ApiSessionWithGapOnTime(timeField: Expression, gap: Expression) {
 
   /**
     * Assigns an alias for this window that the following `groupBy()` and `select()` clause can
@@ -289,7 +289,7 @@ class ApiSessionWithGapOnTime(timeField: ApiExpression, gap: ApiExpression) {
     * @param alias alias for this window
     * @return this window
     */
-  def as(alias: ApiExpression): ApiSessionWithGapOnTimeWithAlias = {
+  def as(alias: Expression): ApiSessionWithGapOnTimeWithAlias = {
     new ApiSessionWithGapOnTimeWithAlias(alias, timeField, gap)
   }
 }
@@ -298,6 +298,6 @@ class ApiSessionWithGapOnTime(timeField: ApiExpression, gap: ApiExpression) {
   * Session window on time with alias. Fully specifies a window.
   */
 case class ApiSessionWithGapOnTimeWithAlias(
-    alias: ApiExpression,
-    timeField: ApiExpression,
-    gap: ApiExpression) extends ApiWindow
+                                             alias: Expression,
+                                             timeField: Expression,
+                                             gap: Expression) extends ApiWindow

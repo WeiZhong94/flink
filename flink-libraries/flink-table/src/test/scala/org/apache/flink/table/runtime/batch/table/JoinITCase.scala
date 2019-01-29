@@ -25,7 +25,7 @@ import org.apache.flink.api.scala._
 import org.apache.flink.api.scala.util.CollectionDataSets
 import org.apache.flink.table.api.TableEnvironment
 import org.apache.flink.table.api.scala._
-import org.apache.flink.table.apiexpressions.ApiLiteral
+import org.apache.flink.table.expressions.Literal
 import org.apache.flink.table.plan.expressions.PlannerLiteral
 import org.apache.flink.table.plan.expressions.utils.Func20
 import org.apache.flink.table.runtime.utils.TableProgramsClusterTestBase
@@ -177,7 +177,7 @@ class JoinITCase(
     val ds3 = CollectionDataSets.getSmall3TupleDataSet(env).toTable(tEnv, 'j, 'k, 'l)
 
     val joinT = ds1.join(ds2)
-      .where(ApiLiteral(true))
+      .where(Literal(true))
       .join(ds3)
       .where('a === 'd && 'e === 'k)
       .select('a, 'f, 'l)

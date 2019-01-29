@@ -19,84 +19,84 @@
 package org.apache.flink.table.plan.expressions
 
 import org.apache.flink.table.api._
-import org.apache.flink.table.apiexpressions._
+import org.apache.flink.table.expressions._
 
 object ApiExpressionParser {
-  def parse(expr: ApiExpression): PlannerExpression = {
+  def parse(expr: Expression): PlannerExpression = {
     if (expr == null) {
       return null
     }
     expr match {
-      case ApiDistinctAgg(child) =>
+      case DistinctAgg(child) =>
         PlannerDistinctAgg(parse(child))
 
-      case ApiAggFunctionCall(function, resultTypeInfo, accTypeInfo, args) =>
+      case AggFunctionCall(function, resultTypeInfo, accTypeInfo, args) =>
         PlannerAggFunctionCall(function, resultTypeInfo, accTypeInfo, args.map(parse))
 
-      case ApiCall(functionName, args) =>
+      case Call(functionName, args) =>
         PlannerCall(functionName, args.map(parse))
 
-      case ApiUnresolvedOverCall(agg, alias) =>
+      case UnresolvedOverCall(agg, alias) =>
         PlannerUnresolvedOverCall(parse(agg), parse(alias))
 
-      case ApiScalarFunctionCall(scalarFunction, parameters) =>
+      case ScalarFunctionCall(scalarFunction, parameters) =>
         PlannerScalarFunctionCall(scalarFunction, parameters.map(parse))
 
-      case ApiTableFunctionCall(functionName, tableFunction, parameters, resultType) =>
+      case TableFunctionCall(functionName, tableFunction, parameters, resultType) =>
         PlannerTableFunctionCall(functionName, tableFunction, parameters.map(parse), resultType)
 
-      case ApiCast(child, resultType) =>
+      case Cast(child, resultType) =>
         PlannerCast(parse(child), resultType)
 
-      case ApiFlattening(child) =>
+      case Flattening(child) =>
         PlannerFlattening(parse(child))
 
-      case ApiGetCompositeField(child, key) =>
+      case GetCompositeField(child, key) =>
         PlannerGetCompositeField(parse(child), key)
 
-      case ApiUnresolvedFieldReference(name) =>
-        UnresolvedFieldReference(name)
+      case UnresolvedFieldReference(name) =>
+        PlannerUnresolvedFieldReference(name)
 
-      case ApiAlias(child, name, extraNames) =>
+      case Alias(child, name, extraNames) =>
         PlannerAlias(parse(child), name, extraNames)
 
-      case ApiTableReference(name, table) =>
+      case TableReference(name, table) =>
         PlannerTableReference(name, table)
 
-      case ApiRowtimeAttribute(expression) =>
+      case RowtimeAttribute(expression) =>
         PlannerRowtimeAttribute(parse(expression))
 
-      case ApiProctimeAttribute(expression) =>
+      case ProctimeAttribute(expression) =>
         PlannerProctimeAttribute(parse(expression))
 
-      case ApiStreamRecordTimestamp() =>
+      case StreamRecordTimestamp() =>
         PlannerStreamRecordTimestamp()
 
-      case ApiLiteral(l, None) =>
+      case Literal(l, None) =>
         PlannerLiteral(l)
 
-      case ApiLiteral(l, Some(t)) =>
+      case Literal(l, Some(t)) =>
         PlannerLiteral(l, t)
 
-      case ApiNull(resultType) =>
+      case Null(resultType) =>
         PlannerNull(resultType)
 
-      case ApiIn(expression, elements) =>
+      case In(expression, elements) =>
         PlannerIn(parse(expression), elements.map(parse))
 
-      case ApiCurrentRow() =>
+      case CurrentRow() =>
         PlannerCurrentRow()
 
-      case ApiCurrentRange() =>
+      case CurrentRange() =>
         PlannerCurrentRange()
 
-      case ApiUnboundedRow() =>
+      case UnboundedRow() =>
         PlannerUnboundedRow()
 
-      case ApiUnboundedRange() =>
+      case UnboundedRange() =>
         PlannerUnboundedRange()
 
-      case ApiSymbolExpression(symbol) =>
+      case SymbolExpression(symbol) =>
         val tableSymbol = symbol match {
           case ApiTimeIntervalUnit.YEAR => PlannerTimeIntervalUnit.YEAR
           case ApiTimeIntervalUnit.YEAR_TO_MONTH => PlannerTimeIntervalUnit.YEAR_TO_MONTH

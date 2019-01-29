@@ -18,17 +18,17 @@
 package org.apache.flink.table.functions
 
 import org.apache.flink.api.common.typeinfo.TypeInformation
-import org.apache.flink.table.apiexpressions.{ApiAggFunctionCall, ApiDistinctAgg, ApiExpression}
+import org.apache.flink.table.expressions.{AggFunctionCall, DistinctAgg, Expression}
 import org.apache.flink.table.functions.utils.UserDefinedFunctionUtils.{getAccumulatorTypeOfAggregateFunction, getResultTypeOfAggregateFunction}
 
 /**
   * Defines an implicit conversion method (distinct) that converts [[AggregateFunction]]s into
-  * [[ApiDistinctAgg]] Expressions.
+  * [[DistinctAgg]] Expressions.
   */
 private[flink] case class DistinctAggregateFunction[T: TypeInformation, ACC: TypeInformation]
     (aggFunction: AggregateFunction[T, ACC]) {
 
-  def distinct(params: ApiExpression*): ApiExpression = {
+  def distinct(params: Expression*): Expression = {
     val resultTypeInfo: TypeInformation[_] = getResultTypeOfAggregateFunction(
       aggFunction,
       implicitly[TypeInformation[T]])
@@ -37,7 +37,7 @@ private[flink] case class DistinctAggregateFunction[T: TypeInformation, ACC: Typ
       aggFunction,
       implicitly[TypeInformation[ACC]])
 
-    ApiDistinctAgg(
-      ApiAggFunctionCall(aggFunction, resultTypeInfo, accTypeInfo, params))
+    DistinctAgg(
+      AggFunctionCall(aggFunction, resultTypeInfo, accTypeInfo, params))
   }
 }

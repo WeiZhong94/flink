@@ -19,7 +19,7 @@
 package org.apache.flink.table.api.scala
 
 import org.apache.flink.table.api._
-import org.apache.flink.table.apiexpressions.{ApiExpression, ApiOverWindowWithOrderBy, ApiPartitionedOver, ApiSessionWithGap, ApiSlideWithSize, ApiTumbleWithSize}
+import org.apache.flink.table.expressions.{Expression, ApiOverWindowWithOrderBy, ApiPartitionedOver, ApiSessionWithGap, ApiSlideWithSize, ApiTumbleWithSize}
 import org.apache.flink.table.plan.expressions.{PlannerExpression, ExpressionParser}
 
 /**
@@ -37,7 +37,7 @@ object Tumble {
     * @param size the size of the window as time or row-count interval.
     * @return a partially defined tumbling window
     */
-  def over(size: ApiExpression): ApiTumbleWithSize = new ApiTumbleWithSize(size)
+  def over(size: Expression): ApiTumbleWithSize = new ApiTumbleWithSize(size)
 }
 
 
@@ -64,7 +64,7 @@ object Slide {
     * @param size the size of the window as time or row-count interval
     * @return a partially specified sliding window
     */
-  def over(size: ApiExpression): ApiSlideWithSize = new ApiSlideWithSize(size)
+  def over(size: Expression): ApiSlideWithSize = new ApiSlideWithSize(size)
 }
 
 /**
@@ -83,7 +83,7 @@ object Session {
     *            closing the session window.
     * @return a partially defined session window
     */
-  def withGap(gap: ApiExpression): ApiSessionWithGap = new ApiSessionWithGap(gap)
+  def withGap(gap: Expression): ApiSessionWithGap = new ApiSessionWithGap(gap)
 }
 
 /**
@@ -98,8 +98,8 @@ object Over {
     *
     * For batch tables, refer to a timestamp or long attribute.
     */
-  def orderBy(orderBy: ApiExpression): ApiOverWindowWithOrderBy = {
-    new ApiOverWindowWithOrderBy(Seq[ApiExpression](), orderBy)
+  def orderBy(orderBy: Expression): ApiOverWindowWithOrderBy = {
+    new ApiOverWindowWithOrderBy(Seq[Expression](), orderBy)
   }
 
   /**
@@ -108,7 +108,7 @@ object Over {
     * @param partitionBy some partition keys.
     * @return A partitionedOver instance that only contains the orderBy method.
     */
-  def partitionBy(partitionBy: ApiExpression*): ApiPartitionedOver = {
+  def partitionBy(partitionBy: Expression*): ApiPartitionedOver = {
     ApiPartitionedOver(partitionBy.toArray)
   }
 }

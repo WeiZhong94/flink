@@ -23,22 +23,22 @@ import java.sql.{Date, Time, Timestamp}
 import org.apache.calcite.avatica.util.DateTimeUtils._
 import org.apache.flink.api.common.typeinfo.{SqlTimeTypeInfo, TypeInformation}
 import org.apache.flink.table.api._
-import org.apache.flink.table.apiexpressions.ApiTimeIntervalUnit.ApiTimeIntervalUnit
-import org.apache.flink.table.apiexpressions.ApiTimePointUnit.ApiTimePointUnit
-import org.apache.flink.table.apiexpressions.{ApiAlias, ApiCall, ApiCast, ApiCurrentRange, ApiCurrentRow, ApiDistinctAgg, ApiDistinctAggExpression, ApiExpression, ApiExpressionUtils, ApiFlattening, ApiGetCompositeField, ApiIn, ApiLiteral, ApiProctimeAttribute, ApiRowtimeAttribute, ApiScalarFunctionCall, ApiTableReference, ApiTimePointUnit, ApiTrimConstants, ApiTrimMode, ApiUDAGGExpression, ApiUnboundedRange, ApiUnboundedRow, ApiUnresolvedFieldReference, ApiUnresolvedOverCall}
+import org.apache.flink.table.expressions.ApiTimeIntervalUnit.ApiTimeIntervalUnit
+import org.apache.flink.table.expressions.ApiTimePointUnit.ApiTimePointUnit
+import org.apache.flink.table.expressions.{Alias, Call, Cast, CurrentRange, CurrentRow, DistinctAgg, ApiDistinctAggExpression, Expression, ApiExpressionUtils, Flattening, GetCompositeField, In, Literal, ProctimeAttribute, RowtimeAttribute, ScalarFunctionCall, TableReference, ApiTimePointUnit, ApiTrimConstants, ApiTrimMode, ApiUDAGGExpression, UnboundedRange, UnboundedRow, UnresolvedFieldReference, UnresolvedOverCall}
 import org.apache.flink.table.functions.{AggregateFunction, DistinctAggregateFunction, ScalarFunction}
 
 import _root_.scala.language.implicitConversions
 
 /**
-  * These are all the operations that can be used to construct an [[ApiExpression]] AST for
+  * These are all the operations that can be used to construct an [[Expression]] AST for
   * ApiExpression operations.
   *
   * These operations must be kept in sync with the parser in
   * [[org.apache.flink.table.plan.expressions.ExpressionParser]].
   */
 trait ApiImplicitExpressionOperations {
-  private[flink] def expr: ApiExpression
+  private[flink] def expr: Expression
 
   /**
     * Enables literals on left side of binary ApiExpressions.
@@ -47,175 +47,175 @@ trait ApiImplicitExpressionOperations {
     *
     * @return ApiExpression
     */
-  def toExpr: ApiExpression = expr
+  def toExpr: Expression = expr
 
   /**
     * Boolean AND in three-valued logic.
     */
-  def && (other: ApiExpression) = ApiCall("and", Seq(expr, other))
+  def && (other: Expression) = Call("and", Seq(expr, other))
 
   /**
     * Boolean OR in three-valued logic.
     */
-  def || (other: ApiExpression) = ApiCall("or", Seq(expr, other))
+  def || (other: Expression) = Call("or", Seq(expr, other))
 
   /**
     * Greater than.
     */
-  def > (other: ApiExpression) = ApiCall("greaterThan", Seq(expr, other))
+  def > (other: Expression) = Call("greaterThan", Seq(expr, other))
 
   /**
     * Greater than or equal.
     */
-  def >= (other: ApiExpression) = ApiCall("greaterThanOrEqual", Seq(expr, other))
+  def >= (other: Expression) = Call("greaterThanOrEqual", Seq(expr, other))
 
   /**
     * Less than.
     */
-  def < (other: ApiExpression) = ApiCall("lessThan", Seq(expr, other))
+  def < (other: Expression) = Call("lessThan", Seq(expr, other))
 
   /**
     * Less than or equal.
     */
-  def <= (other: ApiExpression) = ApiCall("lessThanOrEqual", Seq(expr, other))
+  def <= (other: Expression) = Call("lessThanOrEqual", Seq(expr, other))
 
   /**
     * Equals.
     */
-  def === (other: ApiExpression) = ApiCall("equals", Seq(expr, other))
+  def === (other: Expression) = Call("equals", Seq(expr, other))
 
   /**
     * Not equal.
     */
-  def !== (other: ApiExpression) = ApiCall("notEquals", Seq(expr, other))
+  def !== (other: Expression) = Call("notEquals", Seq(expr, other))
 
   /**
     * Whether boolean ApiExpression is not true; returns null if boolean is null.
     */
-  def unary_! = ApiCall("not", Seq(expr))
+  def unary_! = Call("not", Seq(expr))
 
   /**
     * Returns negative numeric.
     */
-  def unary_- = ApiCall("minusPrefix", Seq(expr))
+  def unary_- = Call("minusPrefix", Seq(expr))
 
   /**
     * Returns numeric.
     */
-  def unary_+ : ApiExpression = expr
+  def unary_+ : Expression = expr
 
   /**
     * Returns true if the given ApiExpression is null.
     */
-  def isNull = ApiCall("isNull", Seq(expr))
+  def isNull = Call("isNull", Seq(expr))
 
   /**
     * Returns true if the given ApiExpression is not null.
     */
-  def isNotNull = ApiCall("isNotNull", Seq(expr))
+  def isNotNull = Call("isNotNull", Seq(expr))
 
   /**
     * Returns true if given boolean ApiExpression is true. False otherwise (for null and false).
     */
-  def isTrue = ApiCall("isTrue", Seq(expr))
+  def isTrue = Call("isTrue", Seq(expr))
 
   /**
     * Returns true if given boolean ApiExpression is false. False otherwise (for null and true).
     */
-  def isFalse = ApiCall("isFalse", Seq(expr))
+  def isFalse = Call("isFalse", Seq(expr))
 
   /**
     * Returns true if given boolean ApiExpression is not true (for null and false). False otherwise.
     */
-  def isNotTrue = ApiCall("isNotTrue", Seq(expr))
+  def isNotTrue = Call("isNotTrue", Seq(expr))
 
   /**
     * Returns true if given boolean ApiExpression is not false (for null and true). False otherwise.
     */
-  def isNotFalse = ApiCall("isNotFalse", Seq(expr))
+  def isNotFalse = Call("isNotFalse", Seq(expr))
 
   /**
     * Returns left plus right.
     */
-  def + (other: ApiExpression) = ApiCall("plus", Seq(expr, other))
+  def + (other: Expression) = Call("plus", Seq(expr, other))
 
   /**
     * Returns left minus right.
     */
-  def - (other: ApiExpression) = ApiCall("minus", Seq(expr, other))
+  def - (other: Expression) = Call("minus", Seq(expr, other))
 
   /**
     * Returns left divided by right.
     */
-  def / (other: ApiExpression) = ApiCall("divide", Seq(expr, other))
+  def / (other: Expression) = Call("divide", Seq(expr, other))
 
   /**
     * Returns left multiplied by right.
     */
-  def * (other: ApiExpression) = ApiCall("times", Seq(expr, other))
+  def * (other: Expression) = Call("times", Seq(expr, other))
 
   /**
     * Returns the remainder (modulus) of left divided by right.
     * The result is negative only if left is negative.
     */
-  def % (other: ApiExpression) = mod(other)
+  def % (other: Expression) = mod(other)
 
   /**
     * Returns the sum of the numeric field across all input values.
     * If all values are null, null is returned.
     */
-  def sum = ApiCall("sum", Seq(expr))
+  def sum = Call("sum", Seq(expr))
 
   /**
     * Returns the sum of the numeric field across all input values.
     * If all values are null, 0 is returned.
     */
-  def sum0 = ApiCall("sum0", Seq(expr))
+  def sum0 = Call("sum0", Seq(expr))
 
   /**
     * Returns the minimum value of field across all input values.
     */
-  def min =ApiCall("min", Seq(expr))
+  def min =Call("min", Seq(expr))
 
   /**
     * Returns the maximum value of field across all input values.
     */
-  def max = ApiCall("max", Seq(expr))
+  def max = Call("max", Seq(expr))
 
   /**
     * Returns the number of input rows for which the field is not null.
     */
-  def count = ApiCall("count", Seq(expr))
+  def count = Call("count", Seq(expr))
 
   /**
     * Returns the average (arithmetic mean) of the numeric field across all input values.
     */
-  def avg = ApiCall("avg", Seq(expr))
+  def avg = Call("avg", Seq(expr))
 
   /**
     * Returns the population standard deviation of an ApiExpression (the square root of varPop()).
     */
-  def stddevPop = ApiCall("stddevPop", Seq(expr))
+  def stddevPop = Call("stddevPop", Seq(expr))
 
   /**
     * Returns the sample standard deviation of an ApiExpression (the square root of varSamp()).
     */
-  def stddevSamp = ApiCall("stddevSamp", Seq(expr))
+  def stddevSamp = Call("stddevSamp", Seq(expr))
 
   /**
     * Returns the population standard variance of an ApiExpression.
     */
-  def varPop = ApiCall("varPop", Seq(expr))
+  def varPop = Call("varPop", Seq(expr))
 
   /**
     *  Returns the sample variance of a given ApiExpression.
     */
-  def varSamp = ApiCall("varSamp", Seq(expr))
+  def varSamp = Call("varSamp", Seq(expr))
 
   /**
     * Returns multiset aggregate of a given ApiExpression.
     */
-  def collect = ApiCall("collect", Seq(expr))
+  def collect = Call("collect", Seq(expr))
 
   /**
     * Converts a value to a given type.
@@ -224,7 +224,7 @@ trait ApiImplicitExpressionOperations {
     *
     * @return casted ApiExpression
     */
-  def cast(toType: TypeInformation[_]) = ApiCast(expr, toType)
+  def cast(toType: TypeInformation[_]) = Cast(expr, toType)
 
   /**
     * Specifies a name for an ApiExpression i.e. a field.
@@ -233,21 +233,21 @@ trait ApiImplicitExpressionOperations {
     * @param extraNames additional names if the ApiExpression expands to multiple fields
     * @return field with an alias
     */
-  def as(name: Symbol, extraNames: Symbol*) = ApiAlias(expr, name.name, extraNames.map(_.name))
+  def as(name: Symbol, extraNames: Symbol*) = Alias(expr, name.name, extraNames.map(_.name))
 
   /**
     * Specifies ascending order of an ApiExpression i.e. a field for orderBy call.
     *
     * @return ascend ApiExpression
     */
-  def asc = ApiCall("asc", Seq(expr))
+  def asc = Call("asc", Seq(expr))
 
   /**
     * Specifies descending order of an ApiExpression i.e. a field for orderBy call.
     *
     * @return descend ApiExpression
     */
-  def desc = ApiCall("desc", Seq(expr))
+  def desc = Call("desc", Seq(expr))
 
   /**
     * Returns true if an ApiExpression exists in a given list of ApiExpressions. This is a shorthand
@@ -258,7 +258,7 @@ trait ApiImplicitExpressionOperations {
     *
     * e.g. "42".in(1, 2, 3) leads to false.
     */
-  def in(elements: ApiExpression*) = ApiIn(expr, elements)
+  def in(elements: Expression*) = In(expr, elements)
 
   /**
     * Returns true if an ApiExpression exists in a given table sub-query. The sub-query table
@@ -266,19 +266,19 @@ trait ApiImplicitExpressionOperations {
     *
     * Note: This operation is not supported in a streaming environment yet.
     */
-  def in(table: Table) = ApiIn(expr, Seq(ApiTableReference(table.toString, table)))
+  def in(table: Table) = In(expr, Seq(TableReference(table.toString, table)))
 
   /**
     * Returns the start time (inclusive) of a window when applied on a window reference.
     */
-  def start = ApiCall("start", Seq(expr))
+  def start = Call("start", Seq(expr))
 
   /**
     * Returns the end time (exclusive) of a window when applied on a window reference.
     *
     * e.g. if a window ends at 10:59:59.999 this property will return 11:00:00.000.
     */
-  def end = ApiCall("end", Seq(expr))
+  def end = Call("end", Seq(expr))
 
   /**
     * Ternary conditional operator that decides which of two other ApiExpressions should be
@@ -289,8 +289,8 @@ trait ApiImplicitExpressionOperations {
     * @param ifTrue ApiExpression to be evaluated if condition holds
     * @param ifFalse ApiExpression to be evaluated if condition does not hold
     */
-  def ?(ifTrue: ApiExpression, ifFalse: ApiExpression) = {
-    ApiCall("if", Seq(expr, ifTrue, ifFalse))
+  def ?(ifTrue: Expression, ifFalse: Expression) = {
+    Call("if", Seq(expr, ifTrue, ifFalse))
   }
 
   // scalar functions
@@ -298,138 +298,138 @@ trait ApiImplicitExpressionOperations {
   /**
     * Calculates the remainder of division the given number by another one.
     */
-  def mod(other: ApiExpression) = ApiCall("mod", Seq(expr, other))
+  def mod(other: Expression) = Call("mod", Seq(expr, other))
 
   /**
     * Calculates the Euler's number raised to the given power.
     */
-  def exp() = ApiCall("exp", Seq(expr))
+  def exp() = Call("exp", Seq(expr))
 
   /**
     * Calculates the base 10 logarithm of the given value.
     */
-  def log10() = ApiCall("log10", Seq(expr))
+  def log10() = Call("log10", Seq(expr))
 
   /**
     * Calculates the base 2 logarithm of the given value.
     */
-  def log2() = ApiCall("log2", Seq(expr))
+  def log2() = Call("log2", Seq(expr))
 
   /**
     * Calculates the natural logarithm of the given value.
     */
-  def ln() = ApiCall("ln", Seq(expr))
+  def ln() = Call("ln", Seq(expr))
 
   /**
     * Calculates the natural logarithm of the given value.
     */
-  def log() = ApiCall("log", Seq(expr))
+  def log() = Call("log", Seq(expr))
 
   /**
     * Calculates the logarithm of the given value to the given base.
     */
-  def log(base: ApiExpression) = ApiCall("log", Seq(base, expr))
+  def log(base: Expression) = Call("log", Seq(base, expr))
 
   /**
     * Calculates the given number raised to the power of the other value.
     */
-  def power(other: ApiExpression) = ApiCall("power", Seq(expr, other))
+  def power(other: Expression) = Call("power", Seq(expr, other))
 
   /**
     * Calculates the hyperbolic cosine of a given value.
     */
-  def cosh() = ApiCall("cosh", Seq(expr))
+  def cosh() = Call("cosh", Seq(expr))
 
   /**
     * Calculates the square root of a given value.
     */
-  def sqrt() = ApiCall("sqrt", Seq(expr))
+  def sqrt() = Call("sqrt", Seq(expr))
 
   /**
     * Calculates the absolute value of given value.
     */
-  def abs() = ApiCall("abs", Seq(expr))
+  def abs() = Call("abs", Seq(expr))
 
   /**
     * Calculates the largest integer less than or equal to a given number.
     */
-  def floor() = ApiCall("floor", Seq(expr))
+  def floor() = Call("floor", Seq(expr))
 
   /**
     * Calculates the hyperbolic sine of a given value.
     */
-  def sinh() = ApiCall("sinh", Seq(expr))
+  def sinh() = Call("sinh", Seq(expr))
 
   /**
     * Calculates the smallest integer greater than or equal to a given number.
     */
-  def ceil() = ApiCall("ceil", Seq(expr))
+  def ceil() = Call("ceil", Seq(expr))
 
   /**
     * Calculates the sine of a given number.
     */
-  def sin() = ApiCall("sin", Seq(expr))
+  def sin() = Call("sin", Seq(expr))
 
   /**
     * Calculates the cosine of a given number.
     */
-  def cos() = ApiCall("cos", Seq(expr))
+  def cos() = Call("cos", Seq(expr))
 
   /**
     * Calculates the tangent of a given number.
     */
-  def tan() = ApiCall("tan", Seq(expr))
+  def tan() = Call("tan", Seq(expr))
 
   /**
     * Calculates the cotangent of a given number.
     */
-  def cot() = ApiCall("cot", Seq(expr))
+  def cot() = Call("cot", Seq(expr))
 
   /**
     * Calculates the arc sine of a given number.
     */
-  def asin() = ApiCall("asin", Seq(expr))
+  def asin() = Call("asin", Seq(expr))
 
   /**
     * Calculates the arc cosine of a given number.
     */
-  def acos() = ApiCall("acos", Seq(expr))
+  def acos() = Call("acos", Seq(expr))
 
   /**
     * Calculates the arc tangent of a given number.
     */
-  def atan() = ApiCall("atan", Seq(expr))
+  def atan() = Call("atan", Seq(expr))
 
   /**
     * Calculates the hyperbolic tangent of a given number.
     */
-  def tanh() = ApiCall("tanh", Seq(expr))
+  def tanh() = Call("tanh", Seq(expr))
 
   /**
     * Converts numeric from radians to degrees.
     */
-  def degrees() = ApiCall("degrees", Seq(expr))
+  def degrees() = Call("degrees", Seq(expr))
 
   /**
     * Converts numeric from degrees to radians.
     */
-  def radians() = ApiCall("radians", Seq(expr))
+  def radians() = Call("radians", Seq(expr))
 
   /**
     * Calculates the signum of a given number.
     */
-  def sign() = ApiCall("sign", Seq(expr))
+  def sign() = Call("sign", Seq(expr))
 
   /**
     * Rounds the given number to integer places right to the decimal point.
     */
-  def round(places: ApiExpression) = ApiCall("round", Seq(expr, places))
+  def round(places: Expression) = Call("round", Seq(expr, places))
 
   /**
     * Returns a string representation of an integer numeric value in binary format. Returns null if
     * numeric is null. E.g. "4" leads to "100", "12" leads to "1100".
     */
-  def bin() = ApiCall("bin", Seq(expr))
+  def bin() = Call("bin", Seq(expr))
 
   /**
     * Returns a string representation of an integer numeric value or a string in hex format. Returns
@@ -438,7 +438,7 @@ trait ApiImplicitExpressionOperations {
     * E.g. a numeric 20 leads to "14", a numeric 100 leads to "64", and a string "hello,world" leads
     * to "68656c6c6f2c776f726c64".
     */
-  def hex() = ApiCall("hex", Seq(expr))
+  def hex() = Call("hex", Seq(expr))
 
   // String operations
 
@@ -449,8 +449,8 @@ trait ApiImplicitExpressionOperations {
     * @param length number of characters of the substring
     * @return substring
     */
-  def substring(beginIndex: ApiExpression, length: ApiExpression) =
-    ApiCall("substring", Seq(expr, beginIndex, length))
+  def substring(beginIndex: Expression, length: Expression) =
+    Call("substring", Seq(expr, beginIndex, length))
 
   /**
     * Creates a substring of the given string beginning at the given index to the end.
@@ -458,8 +458,8 @@ trait ApiImplicitExpressionOperations {
     * @param beginIndex first character of the substring (starting at 1, inclusive)
     * @return substring
     */
-  def substring(beginIndex: ApiExpression) =
-    ApiCall("substring", Seq(expr, beginIndex))
+  def substring(beginIndex: Expression) =
+    Call("substring", Seq(expr, beginIndex))
 
   /**
     * Removes leading and/or trailing characters from the given string.
@@ -472,13 +472,13 @@ trait ApiImplicitExpressionOperations {
   def trim(
       removeLeading: Boolean = true,
       removeTrailing: Boolean = true,
-      character: ApiExpression = ApiTrimConstants.TRIM_DEFAULT_CHAR) = {
+      character: Expression = ApiTrimConstants.TRIM_DEFAULT_CHAR) = {
     if (removeLeading && removeTrailing) {
-      ApiCall("trim", Seq(ApiTrimMode.BOTH, character, expr))
+      Call("trim", Seq(ApiTrimMode.BOTH, character, expr))
     } else if (removeLeading) {
-      ApiCall("trim", Seq(ApiTrimMode.LEADING, character, expr))
+      Call("trim", Seq(ApiTrimMode.LEADING, character, expr))
     } else if (removeTrailing) {
-      ApiCall("trim", Seq(ApiTrimMode.TRAILING, character, expr))
+      Call("trim", Seq(ApiTrimMode.TRAILING, character, expr))
     } else {
       expr
     }
@@ -488,45 +488,45 @@ trait ApiImplicitExpressionOperations {
     * Returns a new string which replaces all the occurrences of the search target
     * with the replacement string (non-overlapping).
     */
-  def replace(search: ApiExpression, replacement: ApiExpression) =
-    ApiCall("replace", Seq(expr, search, replacement))
+  def replace(search: Expression, replacement: Expression) =
+    Call("replace", Seq(expr, search, replacement))
 
   /**
     * Returns the length of a string.
     */
-  def charLength() = ApiCall("charLength", Seq(expr))
+  def charLength() = Call("charLength", Seq(expr))
 
   /**
     * Returns all of the characters in a string in upper case using the rules of
     * the default locale.
     */
-  def upperCase() = ApiCall("upper", Seq(expr))
+  def upperCase() = Call("upper", Seq(expr))
 
   /**
     * Returns all of the characters in a string in lower case using the rules of
     * the default locale.
     */
-  def lowerCase() = ApiCall("lower", Seq(expr))
+  def lowerCase() = Call("lower", Seq(expr))
 
   /**
     * Converts the initial letter of each word in a string to uppercase.
     * Assumes a string containing only [A-Za-z0-9], everything else is treated as whitespace.
     */
-  def initCap() = ApiCall("initCap", Seq(expr))
+  def initCap() = Call("initCap", Seq(expr))
 
   /**
     * Returns true, if a string matches the specified LIKE pattern.
     *
     * e.g. "Jo_n%" matches all strings that start with "Jo(arbitrary letter)n"
     */
-  def like(pattern: ApiExpression) = ApiCall("like", Seq(expr, pattern))
+  def like(pattern: Expression) = Call("like", Seq(expr, pattern))
 
   /**
     * Returns true, if a string matches the specified SQL regex pattern.
     *
     * e.g. "A+" matches all strings that consist of at least one A
     */
-  def similar(pattern: ApiExpression) = ApiCall("similar", Seq(expr, pattern))
+  def similar(pattern: Expression) = Call("similar", Seq(expr, pattern))
 
   /**
     * Returns the position of string in an other string starting at 1.
@@ -534,7 +534,7 @@ trait ApiImplicitExpressionOperations {
     *
     * e.g. "a".position("bbbbba") leads to 6
     */
-  def position(haystack: ApiExpression) = ApiCall("position", Seq(expr, haystack))
+  def position(haystack: Expression) = Call("position", Seq(expr, haystack))
 
   /**
     * Returns a string left-padded with the given pad string to a length of len characters. If
@@ -542,7 +542,7 @@ trait ApiImplicitExpressionOperations {
     *
     * e.g. "hi".lpad(4, '??') returns "??hi",  "hi".lpad(1, '??') returns "h"
     */
-  def lpad(len: ApiExpression, pad: ApiExpression) = ApiCall("lpad", Seq(expr, len, pad))
+  def lpad(len: Expression, pad: Expression) = Call("lpad", Seq(expr, len, pad))
 
   /**
     * Returns a string right-padded with the given pad string to a length of len characters. If
@@ -550,7 +550,7 @@ trait ApiImplicitExpressionOperations {
     *
     * e.g. "hi".rpad(4, '??') returns "hi??",  "hi".rpad(1, '??') returns "h"
     */
-  def rpad(len: ApiExpression, pad: ApiExpression) = ApiCall("rpad", Seq(expr, len, pad))
+  def rpad(len: Expression, pad: Expression) = Call("rpad", Seq(expr, len, pad))
 
   /**
     * For windowing function to config over window
@@ -559,8 +559,8 @@ trait ApiImplicitExpressionOperations {
     *   .window(Over partitionBy 'c orderBy 'rowtime preceding 2.rows following CURRENT_ROW as 'w)
     *   .select('c, 'a, 'a.count over 'w, 'a.sum over 'w)
     */
-  def over(alias: ApiExpression): ApiExpression = {
-     ApiUnresolvedOverCall(expr, alias)
+  def over(alias: Expression): Expression = {
+     UnresolvedOverCall(expr, alias)
   }
 
   /**
@@ -568,8 +568,8 @@ trait ApiImplicitExpressionOperations {
     *
     * e.g. "xxxxxtest".overlay("xxxx", 6) leads to "xxxxxxxxx"
     */
-  def overlay(newString: ApiExpression, starting: ApiExpression) =
-    ApiCall("overlay", Seq(expr, newString, starting))
+  def overlay(newString: Expression, starting: Expression) =
+    Call("overlay", Seq(expr, newString, starting))
 
   /**
     * Replaces a substring of string with a string starting at a position (starting at 1).
@@ -577,70 +577,70 @@ trait ApiImplicitExpressionOperations {
     *
     * e.g. "xxxxxtest".overlay("xxxx", 6, 2) leads to "xxxxxxxxxst"
     */
-  def overlay(newString: ApiExpression, starting: ApiExpression, length: ApiExpression) =
-    ApiCall("overlay", Seq(expr, newString, starting, length))
+  def overlay(newString: Expression, starting: Expression, length: Expression) =
+    Call("overlay", Seq(expr, newString, starting, length))
 
   /**
     * Returns a string with all substrings that match the regular ApiExpression consecutively
     * being replaced.
     */
-  def regexpReplace(regex: ApiExpression, replacement: ApiExpression) =
-    ApiCall("regexpReplace", Seq(expr, regex, replacement))
+  def regexpReplace(regex: Expression, replacement: Expression) =
+    Call("regexpReplace", Seq(expr, regex, replacement))
 
   /**
     * Returns a string extracted with a specified regular ApiExpression and a regex match group
     * index.
     */
-  def regexpExtract(regex: ApiExpression, extractIndex: ApiExpression) =
-    ApiCall("regexpExtract", Seq(expr, regex, extractIndex))
+  def regexpExtract(regex: Expression, extractIndex: Expression) =
+    Call("regexpExtract", Seq(expr, regex, extractIndex))
 
   /**
     * Returns a string extracted with a specified regular ApiExpression.
     */
-  def regexpExtract(regex: ApiExpression) =
-    ApiCall("regexpExtract", Seq(expr, regex))
+  def regexpExtract(regex: Expression) =
+    Call("regexpExtract", Seq(expr, regex))
 
   /**
     * Returns the base string decoded with base64.
     */
-  def fromBase64() = ApiCall("fromBase64", Seq(expr))
+  def fromBase64() = Call("fromBase64", Seq(expr))
 
   /**
     * Returns the base64-encoded result of the input string.
     */
-  def toBase64() = ApiCall("toBase64", Seq(expr))
+  def toBase64() = Call("toBase64", Seq(expr))
 
   /**
     * Returns a string that removes the left whitespaces from the given string.
     */
-  def ltrim() = ApiCall("ltrim", Seq(expr))
+  def ltrim() = Call("ltrim", Seq(expr))
 
   /**
     * Returns a string that removes the right whitespaces from the given string.
     */
-  def rtrim() = ApiCall("rtrim", Seq(expr))
+  def rtrim() = Call("rtrim", Seq(expr))
 
   /**
     * Returns a string that repeats the base string n times.
     */
-  def repeat(n: ApiExpression) = ApiCall("repeat", Seq(expr, n))
+  def repeat(n: Expression) = Call("repeat", Seq(expr, n))
 
   // Temporal operations
 
   /**
     * Parses a date string in the form "yyyy-MM-dd" to a SQL Date.
     */
-  def toDate = ApiCast(expr, SqlTimeTypeInfo.DATE)
+  def toDate = Cast(expr, SqlTimeTypeInfo.DATE)
 
   /**
     * Parses a time string in the form "HH:mm:ss" to a SQL Time.
     */
-  def toTime = ApiCast(expr, SqlTimeTypeInfo.TIME)
+  def toTime = Cast(expr, SqlTimeTypeInfo.TIME)
 
   /**
     * Parses a timestamp string in the form "yyyy-MM-dd HH:mm:ss[.SSS]" to a SQL Timestamp.
     */
-  def toTimestamp = ApiCast(expr, SqlTimeTypeInfo.TIMESTAMP)
+  def toTimestamp = Cast(expr, SqlTimeTypeInfo.TIMESTAMP)
 
   /**
     * Extracts parts of a time point or time interval. Returns the part as a long value.
@@ -648,7 +648,7 @@ trait ApiImplicitExpressionOperations {
     * e.g. "2006-06-05".toDate.extract(DAY) leads to 5
     */
   def extract(timeIntervalUnit: ApiTimeIntervalUnit) =
-    ApiCall("extract", Seq(timeIntervalUnit, expr))
+    Call("extract", Seq(timeIntervalUnit, expr))
 
   /**
     * Rounds down a time point to the given unit.
@@ -656,7 +656,7 @@ trait ApiImplicitExpressionOperations {
     * e.g. "12:44:31".toDate.floor(MINUTE) leads to 12:44:00
     */
   def floor(timeIntervalUnit: ApiTimeIntervalUnit) =
-    ApiCall("temporalFloor", Seq(timeIntervalUnit, expr))
+    Call("temporalFloor", Seq(timeIntervalUnit, expr))
 
   /**
     * Rounds up a time point to the given unit.
@@ -664,7 +664,7 @@ trait ApiImplicitExpressionOperations {
     * e.g. "12:44:31".toDate.ceil(MINUTE) leads to 12:45:00
     */
   def ceil(timeIntervalUnit: ApiTimeIntervalUnit) =
-    ApiCall("temporalCeil", Seq(timeIntervalUnit, expr))
+    Call("temporalCeil", Seq(timeIntervalUnit, expr))
 
   // Interval types
 
@@ -673,126 +673,126 @@ trait ApiImplicitExpressionOperations {
     *
     * @return interval of months
     */
-  def year: ApiExpression = ApiExpressionUtils.toMonthInterval(expr, 12)
+  def year: Expression = ApiExpressionUtils.toMonthInterval(expr, 12)
 
   /**
     * Creates an interval of the given number of years.
     *
     * @return interval of months
     */
-  def years: ApiExpression = year
+  def years: Expression = year
 
   /**
     * Creates an interval of the given number of quarters.
     *
     * @return interval of months
     */
-  def quarter: ApiExpression = ApiExpressionUtils.toMonthInterval(expr, 3)
+  def quarter: Expression = ApiExpressionUtils.toMonthInterval(expr, 3)
 
   /**
     * Creates an interval of the given number of quarters.
     *
     * @return interval of months
     */
-  def quarters: ApiExpression = quarter
+  def quarters: Expression = quarter
 
   /**
     * Creates an interval of the given number of months.
     *
     * @return interval of months
     */
-  def month: ApiExpression = ApiExpressionUtils.toMonthInterval(expr, 1)
+  def month: Expression = ApiExpressionUtils.toMonthInterval(expr, 1)
 
   /**
     * Creates an interval of the given number of months.
     *
     * @return interval of months
     */
-  def months: ApiExpression = month
+  def months: Expression = month
 
   /**
     * Creates an interval of the given number of weeks.
     *
     * @return interval of milliseconds
     */
-  def week: ApiExpression = ApiExpressionUtils.toMilliInterval(expr, 7 * MILLIS_PER_DAY)
+  def week: Expression = ApiExpressionUtils.toMilliInterval(expr, 7 * MILLIS_PER_DAY)
 
   /**
     * Creates an interval of the given number of weeks.
     *
     * @return interval of milliseconds
     */
-  def weeks: ApiExpression = week
+  def weeks: Expression = week
 
   /**
     * Creates an interval of the given number of days.
     *
     * @return interval of milliseconds
     */
-  def day: ApiExpression = ApiExpressionUtils.toMilliInterval(expr, MILLIS_PER_DAY)
+  def day: Expression = ApiExpressionUtils.toMilliInterval(expr, MILLIS_PER_DAY)
 
   /**
     * Creates an interval of the given number of days.
     *
     * @return interval of milliseconds
     */
-  def days: ApiExpression = day
+  def days: Expression = day
 
   /**
     * Creates an interval of the given number of hours.
     *
     * @return interval of milliseconds
     */
-  def hour: ApiExpression = ApiExpressionUtils.toMilliInterval(expr, MILLIS_PER_HOUR)
+  def hour: Expression = ApiExpressionUtils.toMilliInterval(expr, MILLIS_PER_HOUR)
 
   /**
     * Creates an interval of the given number of hours.
     *
     * @return interval of milliseconds
     */
-  def hours: ApiExpression = hour
+  def hours: Expression = hour
 
   /**
     * Creates an interval of the given number of minutes.
     *
     * @return interval of milliseconds
     */
-  def minute: ApiExpression = ApiExpressionUtils.toMilliInterval(expr, MILLIS_PER_MINUTE)
+  def minute: Expression = ApiExpressionUtils.toMilliInterval(expr, MILLIS_PER_MINUTE)
 
   /**
     * Creates an interval of the given number of minutes.
     *
     * @return interval of milliseconds
     */
-  def minutes: ApiExpression = minute
+  def minutes: Expression = minute
 
   /**
     * Creates an interval of the given number of seconds.
     *
     * @return interval of milliseconds
     */
-  def second: ApiExpression = ApiExpressionUtils.toMilliInterval(expr, MILLIS_PER_SECOND)
+  def second: Expression = ApiExpressionUtils.toMilliInterval(expr, MILLIS_PER_SECOND)
 
   /**
     * Creates an interval of the given number of seconds.
     *
     * @return interval of milliseconds
     */
-  def seconds: ApiExpression = second
+  def seconds: Expression = second
 
   /**
     * Creates an interval of the given number of milliseconds.
     *
     * @return interval of milliseconds
     */
-  def milli: ApiExpression = ApiExpressionUtils.toMilliInterval(expr, 1)
+  def milli: Expression = ApiExpressionUtils.toMilliInterval(expr, 1)
 
   /**
     * Creates an interval of the given number of milliseconds.
     *
     * @return interval of milliseconds
     */
-  def millis: ApiExpression = milli
+  def millis: Expression = milli
 
   // Row interval type
 
@@ -801,7 +801,7 @@ trait ApiImplicitExpressionOperations {
     *
     * @return interval of rows
     */
-  def rows: ApiExpression = ApiExpressionUtils.toRowInterval(expr)
+  def rows: Expression = ApiExpressionUtils.toRowInterval(expr)
 
   // Advanced type helper functions
 
@@ -812,7 +812,7 @@ trait ApiImplicitExpressionOperations {
     * @param name name of the field (similar to Flink's field ApiExpressions)
     * @return value of the field
     */
-  def get(name: String) = ApiGetCompositeField(expr, name)
+  def get(name: String) = GetCompositeField(expr, name)
 
   /**
     * Accesses the field of a Flink composite type (such as Tuple, POJO, etc.) by index and
@@ -821,13 +821,13 @@ trait ApiImplicitExpressionOperations {
     * @param index position of the field
     * @return value of the field
     */
-  def get(index: Int) = ApiGetCompositeField(expr, index)
+  def get(index: Int) = GetCompositeField(expr, index)
 
   /**
     * Converts a Flink composite type (such as Tuple, POJO, etc.) and all of its direct subtypes
     * into a flat representation where every subtype is a separate field.
     */
-  def flatten() = ApiFlattening(expr)
+  def flatten() = Flattening(expr)
 
   /**
     * Accesses the element of an array or map based on a key or an index (starting at 1).
@@ -835,14 +835,14 @@ trait ApiImplicitExpressionOperations {
     * @param index key or position of the element (array index starting at 1)
     * @return value of the element
     */
-  def at(index: ApiExpression) = ApiCall("at", Seq(expr, index))
+  def at(index: Expression) = Call("at", Seq(expr, index))
 
   /**
     * Returns the number of elements of an array or number of entries of a map.
     *
     * @return number of elements or entries
     */
-  def cardinality() = ApiCall("cardinality", Seq(expr))
+  def cardinality() = Call("cardinality", Seq(expr))
 
   /**
     * Returns the sole element of an array with a single element. Returns null if the array is
@@ -850,7 +850,7 @@ trait ApiImplicitExpressionOperations {
     *
     * @return the first and only element of an array with a single element
     */
-  def element() = ApiCall("element", Seq(expr))
+  def element() = Call("element", Seq(expr))
 
   // Time definition
 
@@ -858,13 +858,13 @@ trait ApiImplicitExpressionOperations {
     * Declares a field as the rowtime attribute for indicating, accessing, and working in
     * Flink's event time.
     */
-  def rowtime = ApiRowtimeAttribute(expr)
+  def rowtime = RowtimeAttribute(expr)
 
   /**
     * Declares a field as the proctime attribute for indicating, accessing, and working in
     * Flink's processing time.
     */
-  def proctime = ApiProctimeAttribute(expr)
+  def proctime = ProctimeAttribute(expr)
 
   // Hash functions
 
@@ -873,42 +873,42 @@ trait ApiImplicitExpressionOperations {
     *
     * @return string of 32 hexadecimal digits or null
     */
-  def md5() = ApiCall("md5", Seq(expr))
+  def md5() = Call("md5", Seq(expr))
 
   /**
     * Returns the SHA-1 hash of the string argument; null if string is null.
     *
     * @return string of 40 hexadecimal digits or null
     */
-  def sha1() = ApiCall("sha1", Seq(expr))
+  def sha1() = Call("sha1", Seq(expr))
 
   /**
     * Returns the SHA-224 hash of the string argument; null if string is null.
     *
     * @return string of 56 hexadecimal digits or null
     */
-  def sha224() = ApiCall("sha224", Seq(expr))
+  def sha224() = Call("sha224", Seq(expr))
 
   /**
     * Returns the SHA-256 hash of the string argument; null if string is null.
     *
     * @return string of 64 hexadecimal digits or null
     */
-  def sha256() = ApiCall("sha256", Seq(expr))
+  def sha256() = Call("sha256", Seq(expr))
 
   /**
     * Returns the SHA-384 hash of the string argument; null if string is null.
     *
     * @return string of 96 hexadecimal digits or null
     */
-  def sha384() = ApiCall("sha384", Seq(expr))
+  def sha384() = Call("sha384", Seq(expr))
 
   /**
     * Returns the SHA-512 hash of the string argument; null if string is null.
     *
     * @return string of 128 hexadecimal digits or null
     */
-  def sha512() = ApiCall("sha512", Seq(expr))
+  def sha512() = Call("sha512", Seq(expr))
 
   /**
     * Returns the hash for the given string ApiExpression using the SHA-2 family of hash
@@ -917,7 +917,7 @@ trait ApiImplicitExpressionOperations {
     * @param hashLength bit length of the result (either 224, 256, 384, or 512)
     * @return string or null if one of the arguments is null.
     */
-  def sha2(hashLength: ApiExpression) = ApiCall("sha2", Seq(expr, hashLength))
+  def sha2(hashLength: Expression) = Call("sha2", Seq(expr, hashLength))
 
   /**
     * Returns true if the given ApiExpression is between lowerBound and upperBound (both
@@ -928,8 +928,8 @@ trait ApiImplicitExpressionOperations {
     * @param upperBound numeric or comparable ApiExpression
     * @return boolean or null
     */
-  def between(lowerBound: ApiExpression, upperBound: ApiExpression) =
-    ApiCall("between", Seq(expr, lowerBound, upperBound))
+  def between(lowerBound: Expression, upperBound: Expression) =
+    Call("between", Seq(expr, lowerBound, upperBound))
 
   /**
     * Returns true if the given ApiExpression is not between lowerBound and upperBound (both
@@ -940,116 +940,116 @@ trait ApiImplicitExpressionOperations {
     * @param upperBound numeric or comparable ApiExpression
     * @return boolean or null
     */
-  def notBetween(lowerBound: ApiExpression, upperBound: ApiExpression) =
-    ApiCall("notBetween", Seq(expr, lowerBound, upperBound))
+  def notBetween(lowerBound: Expression, upperBound: Expression) =
+    Call("notBetween", Seq(expr, lowerBound, upperBound))
 }
 
 /**
-  * Implicit conversions from Scala Literals to ApiExpression [[ApiLiteral]] and from
-  * [[ApiExpression]] to [[ApiImplicitExpressionOperations]].
+  * Implicit conversions from Scala Literals to ApiExpression [[Literal]] and from
+  * [[Expression]] to [[ApiImplicitExpressionOperations]].
   */
 trait ApiImplicitExpressionConversions {
 
-  implicit val UNBOUNDED_ROW = ApiUnboundedRow()
-  implicit val UNBOUNDED_RANGE = ApiUnboundedRange()
+  implicit val UNBOUNDED_ROW = UnboundedRow()
+  implicit val UNBOUNDED_RANGE = UnboundedRange()
 
-  implicit val CURRENT_ROW = ApiCurrentRow()
-  implicit val CURRENT_RANGE = ApiCurrentRange()
+  implicit val CURRENT_ROW = CurrentRow()
+  implicit val CURRENT_RANGE = CurrentRange()
 
-  implicit class ApiWithOperations(e: ApiExpression) extends ApiImplicitExpressionOperations {
+  implicit class ApiWithOperations(e: Expression) extends ApiImplicitExpressionOperations {
     def expr = e
   }
 
   implicit class ApiUnresolvedFieldExpression(s: Symbol) extends ApiImplicitExpressionOperations {
-    def expr = ApiUnresolvedFieldReference(s.name)
+    def expr = UnresolvedFieldReference(s.name)
   }
 
   implicit class ApiLiteralLongExpression(l: Long) extends ApiImplicitExpressionOperations {
-    def expr = ApiLiteral(l)
+    def expr = Literal(l)
   }
 
   implicit class ApiLiteralByteExpression(b: Byte) extends ApiImplicitExpressionOperations {
-    def expr = ApiLiteral(b)
+    def expr = Literal(b)
   }
 
   implicit class ApiLiteralShortExpression(s: Short) extends ApiImplicitExpressionOperations {
-    def expr = ApiLiteral(s)
+    def expr = Literal(s)
   }
 
   implicit class ApiLiteralIntExpression(i: Int) extends ApiImplicitExpressionOperations {
-    def expr = ApiLiteral(i)
+    def expr = Literal(i)
   }
 
   implicit class ApiLiteralFloatExpression(f: Float) extends ApiImplicitExpressionOperations {
-    def expr = ApiLiteral(f)
+    def expr = Literal(f)
   }
 
   implicit class ApiLiteralDoubleExpression(d: Double) extends ApiImplicitExpressionOperations {
-    def expr = ApiLiteral(d)
+    def expr = Literal(d)
   }
 
   implicit class ApiLiteralStringExpression(str: String) extends ApiImplicitExpressionOperations {
-    def expr = ApiLiteral(str)
+    def expr = Literal(str)
   }
 
   implicit class ApiLiteralBooleanExpression(bool: Boolean)
     extends ApiImplicitExpressionOperations {
-    def expr = ApiLiteral(bool)
+    def expr = Literal(bool)
   }
 
   implicit class ApiLiteralJavaDecimalExpression(javaDecimal: JBigDecimal)
     extends ApiImplicitExpressionOperations {
-    def expr = ApiLiteral(javaDecimal)
+    def expr = Literal(javaDecimal)
   }
 
   implicit class ApiLiteralScalaDecimalExpression(scalaDecimal: BigDecimal)
     extends ApiImplicitExpressionOperations {
-    def expr = ApiLiteral(scalaDecimal.bigDecimal)
+    def expr = Literal(scalaDecimal.bigDecimal)
   }
 
   implicit class ApiLiteralSqlDateExpression(sqlDate: Date)
     extends ApiImplicitExpressionOperations {
-    def expr = ApiLiteral(sqlDate)
+    def expr = Literal(sqlDate)
   }
 
   implicit class ApiLiteralSqlTimeExpression(sqlTime: Time)
     extends ApiImplicitExpressionOperations {
-    def expr = ApiLiteral(sqlTime)
+    def expr = Literal(sqlTime)
   }
 
   implicit class ApiLiteralSqlTimestampExpression(sqlTimestamp: Timestamp)
     extends ApiImplicitExpressionOperations {
-    def expr = ApiLiteral(sqlTimestamp)
+    def expr = Literal(sqlTimestamp)
   }
 
   implicit class ApiScalarFunctionCallExpression(val s: ScalarFunction) {
-    def apply(params: ApiExpression*): ApiExpression = {
-      ApiScalarFunctionCall(s, params)
+    def apply(params: Expression*): Expression = {
+      ScalarFunctionCall(s, params)
     }
   }
 
-  implicit def apiSymbol2FieldExpression(sym: Symbol): ApiExpression =
-    ApiUnresolvedFieldReference(sym.name)
-  implicit def apiByte2Literal(b: Byte): ApiExpression = ApiLiteral(b)
-  implicit def apiShort2Literal(s: Short): ApiExpression = ApiLiteral(s)
-  implicit def apiInt2Literal(i: Int): ApiExpression = ApiLiteral(i)
-  implicit def apiLong2Literal(l: Long): ApiExpression = ApiLiteral(l)
-  implicit def apiDouble2Literal(d: Double): ApiExpression = ApiLiteral(d)
-  implicit def apiFloat2Literal(d: Float): ApiExpression = ApiLiteral(d)
-  implicit def apiString2Literal(str: String): ApiExpression = ApiLiteral(str)
-  implicit def apiBoolean2Literal(bool: Boolean): ApiExpression = ApiLiteral(bool)
-  implicit def apiJavaDec2Literal(javaDec: JBigDecimal): ApiExpression = ApiLiteral(javaDec)
-  implicit def apiScalaDec2Literal(scalaDec: BigDecimal): ApiExpression =
-    ApiLiteral(scalaDec.bigDecimal)
-  implicit def apiSqlDate2Literal(sqlDate: Date): ApiExpression = ApiLiteral(sqlDate)
-  implicit def apiSqlTime2Literal(sqlTime: Time): ApiExpression = ApiLiteral(sqlTime)
-  implicit def apiSqlTimestamp2Literal(sqlTimestamp: Timestamp): ApiExpression =
-    ApiLiteral(sqlTimestamp)
-  implicit def apiArray2ArrayConstructor(array: Array[_]): ApiExpression =
+  implicit def apiSymbol2FieldExpression(sym: Symbol): Expression =
+    UnresolvedFieldReference(sym.name)
+  implicit def apiByte2Literal(b: Byte): Expression = Literal(b)
+  implicit def apiShort2Literal(s: Short): Expression = Literal(s)
+  implicit def apiInt2Literal(i: Int): Expression = Literal(i)
+  implicit def apiLong2Literal(l: Long): Expression = Literal(l)
+  implicit def apiDouble2Literal(d: Double): Expression = Literal(d)
+  implicit def apiFloat2Literal(d: Float): Expression = Literal(d)
+  implicit def apiString2Literal(str: String): Expression = Literal(str)
+  implicit def apiBoolean2Literal(bool: Boolean): Expression = Literal(bool)
+  implicit def apiJavaDec2Literal(javaDec: JBigDecimal): Expression = Literal(javaDec)
+  implicit def apiScalaDec2Literal(scalaDec: BigDecimal): Expression =
+    Literal(scalaDec.bigDecimal)
+  implicit def apiSqlDate2Literal(sqlDate: Date): Expression = Literal(sqlDate)
+  implicit def apiSqlTime2Literal(sqlTime: Time): Expression = Literal(sqlTime)
+  implicit def apiSqlTimestamp2Literal(sqlTimestamp: Timestamp): Expression =
+    Literal(sqlTimestamp)
+  implicit def apiArray2ArrayConstructor(array: Array[_]): Expression =
     ApiExpressionUtils.convertArray(array)
   implicit def apiUserDefinedAggFunctionConstructor[T: TypeInformation, ACC: TypeInformation]
   (udagg: AggregateFunction[T, ACC]): ApiUDAGGExpression[T, ACC] = ApiUDAGGExpression(udagg)
-  implicit def apiToDistinct(agg: ApiCall): ApiDistinctAggExpression =
+  implicit def apiToDistinct(agg: Call): ApiDistinctAggExpression =
     ApiDistinctAggExpression(agg)
   implicit def apiToDistinct[T: TypeInformation, ACC: TypeInformation]
   (agg: AggregateFunction[T, ACC]): DistinctAggregateFunction[T, ACC] =
@@ -1075,8 +1075,8 @@ object currentDate {
   /**
     * Returns the current SQL date in UTC time zone.
     */
-  def apply(): ApiExpression = {
-    ApiCall("currentDate", Seq())
+  def apply(): Expression = {
+    Call("currentDate", Seq())
   }
 }
 
@@ -1088,8 +1088,8 @@ object currentTime {
   /**
     * Returns the current SQL time in UTC time zone.
     */
-  def apply(): ApiExpression = {
-    ApiCall("currentTime", Seq())
+  def apply(): Expression = {
+    Call("currentTime", Seq())
   }
 }
 
@@ -1101,8 +1101,8 @@ object currentTimestamp {
   /**
     * Returns the current SQL timestamp in UTC time zone.
     */
-  def apply(): ApiExpression = {
-    ApiCall("currentTimestamp", Seq())
+  def apply(): Expression = {
+    Call("currentTimestamp", Seq())
   }
 }
 
@@ -1114,8 +1114,8 @@ object localTime {
   /**
     * Returns the current SQL time in local time zone.
     */
-  def apply(): ApiExpression = {
-    ApiCall("localTime", Seq())
+  def apply(): Expression = {
+    Call("localTime", Seq())
   }
 }
 
@@ -1127,8 +1127,8 @@ object localTimestamp {
   /**
     * Returns the current SQL timestamp in local time zone.
     */
-  def apply(): ApiExpression = {
-    ApiCall("localTimestamp", Seq())
+  def apply(): Expression = {
+    Call("localTimestamp", Seq())
   }
 }
 
@@ -1152,11 +1152,11 @@ object temporalOverlaps {
     * e.g. temporalOverlaps("2:55:00".toTime, 1.hour, "3:30:00".toTime, 2.hour) leads to true
     */
   def apply(
-    leftTimePoint: ApiExpression,
-    leftTemporal: ApiExpression,
-    rightTimePoint: ApiExpression,
-    rightTemporal: ApiExpression): ApiExpression = {
-    ApiCall("temporalOverlaps", Seq(leftTimePoint, leftTemporal, rightTimePoint, rightTemporal))
+             leftTimePoint: Expression,
+             leftTemporal: Expression,
+             rightTimePoint: Expression,
+             rightTemporal: Expression): Expression = {
+    Call("temporalOverlaps", Seq(leftTimePoint, leftTemporal, rightTimePoint, rightTemporal))
   }
 }
 
@@ -1182,9 +1182,9 @@ object dateFormat {
     * @return The formatted timestamp as string.
     */
   def apply(
-    timestamp: ApiExpression,
-    format: ApiExpression): ApiExpression = {
-    ApiCall("dateFormat", Seq(timestamp, format))
+             timestamp: Expression,
+             format: Expression): Expression = {
+    Call("dateFormat", Seq(timestamp, format))
   }
 }
 
@@ -1208,11 +1208,11 @@ object timestampDiff {
     * @return The number of intervals as integer value.
     */
   def apply(
-    timePointUnit: ApiTimePointUnit,
-    timePoint1: ApiExpression,
-    timePoint2: ApiExpression)
-  : ApiExpression = {
-    ApiCall("timestampDiff", Seq(timePointUnit, timePoint1, timePoint2))
+             timePointUnit: ApiTimePointUnit,
+             timePoint1: Expression,
+             timePoint2: Expression)
+  : Expression = {
+    Call("timestampDiff", Seq(timePointUnit, timePoint1, timePoint2))
   }
 }
 
@@ -1224,8 +1224,8 @@ object array {
   /**
     * Creates an array of literals. The array will be an array of objects (not primitives).
     */
-  def apply(head: ApiExpression, tail: ApiExpression*): ApiExpression = {
-    ApiCall("array", head +: tail.toSeq)
+  def apply(head: Expression, tail: Expression*): Expression = {
+    Call("array", head +: tail.toSeq)
   }
 }
 
@@ -1237,8 +1237,8 @@ object row {
   /**
     * Creates a row of ApiExpressions.
     */
-  def apply(head: ApiExpression, tail: ApiExpression*): ApiExpression = {
-    ApiCall("row", head +: tail.toSeq)
+  def apply(head: Expression, tail: Expression*): Expression = {
+    Call("row", head +: tail.toSeq)
   }
 }
 
@@ -1250,8 +1250,8 @@ object map {
   /**
     * Creates a map of ApiExpressions. The map will be a map between two objects (not primitives).
     */
-  def apply(key: ApiExpression, value: ApiExpression, tail: ApiExpression*): ApiExpression = {
-    ApiCall("map", Seq(key, value) ++ tail.toSeq)
+  def apply(key: Expression, value: Expression, tail: Expression*): Expression = {
+    Call("map", Seq(key, value) ++ tail.toSeq)
   }
 }
 
@@ -1263,8 +1263,8 @@ object pi {
   /**
     * Returns a value that is closer than any other value to pi.
     */
-  def apply(): ApiExpression = {
-    ApiCall("pi", Seq())
+  def apply(): Expression = {
+    Call("pi", Seq())
   }
 }
 
@@ -1276,8 +1276,8 @@ object e {
   /**
     * Returns a value that is closer than any other value to e.
     */
-  def apply(): ApiExpression = {
-    ApiCall("e", Seq())
+  def apply(): Expression = {
+    Call("e", Seq())
   }
 }
 
@@ -1289,8 +1289,8 @@ object rand {
   /**
     * Returns a pseudorandom double value between 0.0 (inclusive) and 1.0 (exclusive).
     */
-  def apply(): ApiExpression = {
-    ApiCall("rand", Seq())
+  def apply(): Expression = {
+    Call("rand", Seq())
   }
 
   /**
@@ -1298,8 +1298,8 @@ object rand {
     * initial seed. Two rand() functions will return identical sequences of numbers if they
     * have same initial seed.
     */
-  def apply(seed: ApiExpression): ApiExpression = {
-    ApiCall("rand", Seq(seed))
+  def apply(seed: Expression): Expression = {
+    Call("rand", Seq(seed))
   }
 }
 
@@ -1313,8 +1313,8 @@ object randInteger {
     * Returns a pseudorandom integer value between 0.0 (inclusive) and the specified
     * value (exclusive).
     */
-  def apply(bound: ApiExpression): ApiExpression = {
-    ApiCall("randInteger", Seq(bound))
+  def apply(bound: Expression): Expression = {
+    Call("randInteger", Seq(bound))
   }
 
   /**
@@ -1322,8 +1322,8 @@ object randInteger {
     * (exclusive) with a initial seed. Two randInteger() functions will return identical sequences
     * of numbers if they have same initial seed and same bound.
     */
-  def apply(seed: ApiExpression, bound: ApiExpression): ApiExpression = {
-    ApiCall("randInteger", Seq(seed, bound))
+  def apply(seed: Expression, bound: Expression): Expression = {
+    Call("randInteger", Seq(seed, bound))
   }
 }
 
@@ -1337,8 +1337,8 @@ object concat {
     * Returns the string that results from concatenating the arguments.
     * Returns NULL if any argument is NULL.
     */
-  def apply(string: ApiExpression, strings: ApiExpression*): ApiExpression = {
-    ApiCall("concat", Seq(string) ++ strings)
+  def apply(string: Expression, strings: Expression*): Expression = {
+    Call("concat", Seq(string) ++ strings)
   }
 }
 
@@ -1350,8 +1350,8 @@ object atan2 {
   /**
     * Calculates the arc tangent of a given coordinate.
     */
-  def apply(y: ApiExpression, x: ApiExpression): ApiExpression = {
-    ApiCall("atan2", Seq(y, x))
+  def apply(y: Expression, x: Expression): Expression = {
+    Call("atan2", Seq(y, x))
   }
 }
 
@@ -1363,9 +1363,9 @@ object atan2 {
   * values after the separator argument.
   **/
 object concat_ws {
-  def apply(separator: ApiExpression, string: ApiExpression, strings: ApiExpression*)
-  : ApiExpression = {
-    ApiCall("concat_ws", Seq(separator) ++ Seq(string) ++ strings)
+  def apply(separator: Expression, string: Expression, strings: Expression*)
+  : Expression = {
+    Call("concat_ws", Seq(separator) ++ Seq(string) ++ strings)
   }
 }
 
@@ -1383,8 +1383,8 @@ object uuid {
     * generated) UUID. The UUID is generated using a cryptographically strong pseudo random number
     * generator.
     */
-  def apply(): ApiExpression = {
-    ApiCall("uuid", Seq())
+  def apply(): Expression = {
+    Call("uuid", Seq())
   }
 }
 

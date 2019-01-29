@@ -17,7 +17,7 @@
  */
 package org.apache.flink.table.api
 
-import org.apache.flink.table.apiexpressions.{ApiExpression, ApiOverWindow, ApiWindow}
+import org.apache.flink.table.expressions.{Expression, ApiOverWindow, ApiWindow}
 import org.apache.flink.table.plan.expressions.PlannerExpression
 import org.apache.flink.table.functions.TableFunction
 import org.apache.flink.table.sinks.TableSink
@@ -32,7 +32,7 @@ trait Table {
 
   def selectApi(fields: PlannerExpression*): Table
   def select(fields: String): Table
-  def select(fields: ApiExpression*): Table
+  def select(fields: Expression*): Table
 
   def createTemporalTableFunction(
       timeAttribute: String,
@@ -41,42 +41,42 @@ trait Table {
                                       timeAttribute: PlannerExpression,
                                       primaryKey: PlannerExpression): TableFunction[Row]
   def createTemporalTableFunction(
-      timeAttribute: ApiExpression,
-      primaryKey: ApiExpression): TableFunction[Row]
+                                   timeAttribute: Expression,
+                                   primaryKey: Expression): TableFunction[Row]
 
 
   def asApi(fields: PlannerExpression*): Table
   def as(fields: String): Table
-  def as(fields: ApiExpression*): Table
+  def as(fields: Expression*): Table
 
   def filterApi(predicate: PlannerExpression): Table
   def filter(predicate: String): Table
-  def filter(predicate: ApiExpression): Table
+  def filter(predicate: Expression): Table
 
   def whereApi(predicate: PlannerExpression): Table
   def where(predicate: String): Table
-  def where(predicate: ApiExpression): Table
+  def where(predicate: Expression): Table
 
   def groupByApi(fields: PlannerExpression*): GroupedTable
   def groupBy(fields: String): GroupedTable
-  def groupBy(fields: ApiExpression*): GroupedTable
+  def groupBy(fields: Expression*): GroupedTable
 
   def distinct(): Table
 
   def join(right: Table): Table
   def join(right: Table, joinPredicate: String): Table
   def joinApi(right: Table, joinPredicate: PlannerExpression): Table
-  def join(right: Table, joinPredicate: ApiExpression): Table
+  def join(right: Table, joinPredicate: Expression): Table
   def leftOuterJoin(right: Table): Table
   def leftOuterJoin(right: Table, joinPredicate: String): Table
   def leftOuterJoinApi(right: Table, joinPredicate: PlannerExpression): Table
-  def leftOuterJoin(right: Table, joinPredicate: ApiExpression): Table
+  def leftOuterJoin(right: Table, joinPredicate: Expression): Table
   def rightOuterJoin(right: Table, joinPredicate: String): Table
   def rightOuterJoinApi(right: Table, joinPredicate: PlannerExpression): Table
-  def rightOuterJoin(right: Table, joinPredicate: ApiExpression): Table
+  def rightOuterJoin(right: Table, joinPredicate: Expression): Table
   def fullOuterJoin(right: Table, joinPredicate: String): Table
   def fullOuterJoinApi(right: Table, joinPredicate: PlannerExpression): Table
-  def fullOuterJoin(right: Table, joinPredicate: ApiExpression): Table
+  def fullOuterJoin(right: Table, joinPredicate: Expression): Table
 
   def minus(right: Table): Table
   def minusAll(right: Table): Table
@@ -89,7 +89,7 @@ trait Table {
 
   def orderByApi(fields: PlannerExpression*): Table
   def orderBy(fields: String): Table
-  def orderBy(fields: ApiExpression*): Table
+  def orderBy(fields: Expression*): Table
 
   def offset(offset: Int): Table
 
@@ -117,23 +117,23 @@ trait Table {
 trait GroupedTable {
   def selectApi(fields: PlannerExpression*): Table
   def select(fields: String): Table
-  def select(fields: ApiExpression*): Table
+  def select(fields: Expression*): Table
 }
 
 trait WindowedTable{
   def groupByApi(fields: PlannerExpression*): WindowGroupedTable
   def groupBy(fields: String): WindowGroupedTable
-  def groupBy(fields: ApiExpression*): WindowGroupedTable
+  def groupBy(fields: Expression*): WindowGroupedTable
 }
 
 trait OverWindowedTable {
   def selectApi(fields: PlannerExpression*): Table
   def select(fields: String): Table
-  def select(fields: ApiExpression*): Table
+  def select(fields: Expression*): Table
 }
 
 trait WindowGroupedTable {
   def selectApi(fields: PlannerExpression*): Table
   def select(fields: String): Table
-  def select(fields: ApiExpression*): Table
+  def select(fields: Expression*): Table
 }

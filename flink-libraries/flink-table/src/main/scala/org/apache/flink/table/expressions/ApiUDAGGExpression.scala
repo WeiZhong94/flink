@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flink.table.apiexpressions
+package org.apache.flink.table.expressions
 
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.table.functions.AggregateFunction
@@ -29,9 +29,9 @@ case class ApiUDAGGExpression[T: TypeInformation, ACC: TypeInformation](
     * Creates a call to an [[AggregateFunction]].
     *
     * @param params actual parameters of function
-    * @return a [[ApiAggFunctionCall]]
+    * @return a [[AggFunctionCall]]
     */
-  def apply(params: ApiExpression*): ApiAggFunctionCall = {
+  def apply(params: Expression*): AggFunctionCall = {
     val resultTypeInfo: TypeInformation[_] = getResultTypeOfAggregateFunction(
       aggregateFunction,
       implicitly[TypeInformation[T]])
@@ -40,6 +40,6 @@ case class ApiUDAGGExpression[T: TypeInformation, ACC: TypeInformation](
       aggregateFunction,
       implicitly[TypeInformation[ACC]])
 
-    ApiAggFunctionCall(aggregateFunction, resultTypeInfo, accTypeInfo, params)
+    AggFunctionCall(aggregateFunction, resultTypeInfo, accTypeInfo, params)
   }
 }

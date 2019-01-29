@@ -38,12 +38,12 @@ abstract class Attribute extends PlannerLeafExpression with NamedExpression {
   private[flink] def withName(newName: String): Attribute
 }
 
-case class UnresolvedFieldReference(name: String) extends Attribute {
+case class PlannerUnresolvedFieldReference(name: String) extends Attribute {
 
   override def toString = s"'$name"
 
   override private[flink] def withName(newName: String): Attribute =
-    UnresolvedFieldReference(newName)
+    PlannerUnresolvedFieldReference(newName)
 
   override private[flink] def resultType: TypeInformation[_] =
     throw UnresolvedException(s"Calling resultType on ${this.getClass}.")
@@ -91,7 +91,7 @@ case class PlannerAlias(child: PlannerExpression, name: String, extraNames: Seq[
     if (valid) {
       PlannerResolvedFieldReference(name, child.resultType)
     } else {
-      UnresolvedFieldReference(name)
+      PlannerUnresolvedFieldReference(name)
     }
   }
 
