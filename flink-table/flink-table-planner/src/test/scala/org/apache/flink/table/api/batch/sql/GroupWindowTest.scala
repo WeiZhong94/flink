@@ -23,12 +23,21 @@ import java.sql.Timestamp
 import org.apache.flink.api.scala._
 import org.apache.flink.table.runtime.utils.JavaUserDefinedAggFunctions.WeightedAvgWithMerge
 import org.apache.flink.table.api.scala._
+import org.apache.flink.table.expressions.{Expression, ToInternalExpressionVisitor}
+import org.apache.flink.table.plan.expressions.PlannerExpression
 import org.apache.flink.table.plan.logical._
 import org.apache.flink.table.utils.TableTestUtil._
 import org.apache.flink.table.utils.TableTestBase
 import org.junit.Test
 
 class GroupWindowTest extends TableTestBase {
+  implicit def apiExpression2Expression(apiExpression: Expression): PlannerExpression = {
+    apiExpression.accept(new ToInternalExpressionVisitor)
+  }
+
+  implicit def symbol2Expression(apiExpression: Symbol): PlannerExpression = {
+    apiExpression.accept(new ToInternalExpressionVisitor)
+  }
 
   @Test
   def testNonPartitionedTumbleWindow(): Unit = {

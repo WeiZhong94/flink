@@ -22,7 +22,8 @@ import java.sql.Timestamp
 
 import org.apache.flink.api.scala._
 import org.apache.flink.table.api.scala._
-import org.apache.flink.table.expressions.{TimeIntervalUnit, WindowReference}
+import org.apache.flink.table.expressions.{Expression, TimeIntervalUnit, ToInternalExpressionVisitor}
+import org.apache.flink.table.plan.expressions.{PlannerExpression, PlannerWindowReference}
 import org.apache.flink.table.functions.{ScalarFunction, TableFunction}
 import org.apache.flink.table.plan.TimeIndicatorConversionTest.{ScalarFunc, TableFunc}
 import org.apache.flink.table.plan.logical.TumblingGroupWindow
@@ -34,6 +35,13 @@ import org.junit.Test
   * Tests for [[org.apache.flink.table.calcite.RelTimeIndicatorConverter]].
   */
 class TimeIndicatorConversionTest extends TableTestBase {
+  implicit def apiExpression2Expression(apiExpression: Expression): PlannerExpression = {
+    apiExpression.accept(new ToInternalExpressionVisitor)
+  }
+
+  implicit def symbol2Expression(apiExpression: Symbol): PlannerExpression = {
+    apiExpression.accept(new ToInternalExpressionVisitor)
+  }
 
   @Test
   def testSimpleMaterialization(): Unit = {
@@ -345,7 +353,7 @@ class TimeIndicatorConversionTest extends TableTestBase {
         term(
           "window",
           TumblingGroupWindow(
-            WindowReference("w$"),
+            PlannerWindowReference("w$"),
             'rowtime,
             100.millis)),
         term("select",
