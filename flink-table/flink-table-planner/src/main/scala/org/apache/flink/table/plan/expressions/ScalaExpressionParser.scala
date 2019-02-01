@@ -31,29 +31,40 @@ object ScalaExpressionParser {
       case DistinctAgg(child) =>
         PlannerDistinctAgg(parse(child))
 
-      case AggFunctionCall(function, resultTypeInfo, accTypeInfo, args) =>
-        PlannerAggFunctionCall(function, resultTypeInfo, accTypeInfo, args.map(parse))
+      case Call(func, args) =>
+        //PlannerCall(functionName, args.map(parse))
+        func match {
+          case e: ScalarFunctionDefinition =>
+            PlannerScalarFunctionCall(e.func, args.map(parse))
 
-      case Call(functionName, args) =>
-        PlannerCall(functionName, args.map(parse))
+          case e: AggFunctionDefinition =>
+            PlannerAggFunctionCall(e.func, e.resultTypeInfo, e.accTypeInfo, args.map(parse))
+
+          case e: BuildInFunctionDefinition =>
+            if (e.reuseJavaFunctionCatalog) {
+              PlannerCall(e.name, args.map(parse))
+            } else {
+              e match {
+                case FunctionDefinitions.CAST =>
+                  assert(args.size == 2)
+                  PlannerCast(parse(args.head), args.last.asInstanceOf[TypeLiteral].t)
+
+                case FunctionDefinitions.FlATTENING =>
+                  assert(args.size == 1)
+                  PlannerFlattening(parse(args.head))
+
+                case FunctionDefinitions.GET_COMPOSITE_FIELD =>
+                  assert(args.size == 2)
+                  PlannerGetCompositeField(parse(args.head), args.last.asInstanceOf[Literal].l)
+
+                case FunctionDefinitions.IN =>
+                  PlannerIn(parse(args.head), args.slice(1, args.size).map(parse))
+              }
+            }
+        }
 
       case UnresolvedOverCall(agg, alias) =>
         PlannerUnresolvedOverCall(parse(agg), parse(alias))
-
-      case ScalarFunctionCall(scalarFunction, parameters) =>
-        PlannerScalarFunctionCall(scalarFunction, parameters.map(parse))
-
-      case TableFunctionCall(functionName, tableFunction, parameters, resultType) =>
-        PlannerTableFunctionCall(functionName, tableFunction, parameters.map(parse), resultType)
-
-      case Cast(child, resultType) =>
-        PlannerCast(parse(child), resultType)
-
-      case Flattening(child) =>
-        PlannerFlattening(parse(child))
-
-      case GetCompositeField(child, key) =>
-        PlannerGetCompositeField(parse(child), key)
 
       case UnresolvedFieldReference(name) =>
         PlannerUnresolvedFieldReference(name)
@@ -81,9 +92,6 @@ object ScalaExpressionParser {
 
       case Null(resultType) =>
         PlannerNull(resultType)
-
-      case In(expression, elements) =>
-        PlannerIn(parse(expression), elements.map(parse))
 
       case CurrentRow() =>
         PlannerCurrentRow()

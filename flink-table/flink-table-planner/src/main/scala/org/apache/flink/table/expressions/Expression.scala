@@ -47,16 +47,7 @@ abstract class LeafExpression extends Expression {
 
 case class DistinctAgg(child: Expression) extends UnaryExpression
 
-case class AggFunctionCall(
-    aggregateFunction: AggregateFunction[_, _],
-    resultTypeInfo: TypeInformation[_],
-    accTypeInfo: TypeInformation[_],
-    args: Seq[Expression])
-  extends Expression {
-  override def children: Seq[Expression] = args
-}
-
-case class Call(functionName: String, args: Seq[Expression]) extends Expression {
+case class Call(func: FunctionDefinition, args: Seq[Expression]) extends Expression {
   override def children: Seq[Expression] = args
 }
 
@@ -64,28 +55,6 @@ case class UnresolvedOverCall(agg: Expression, alias: Expression)
   extends Expression {
   override private[flink] def children: Seq[Expression] = Seq(agg, alias)
 }
-
-case class ScalarFunctionCall(
-    scalarFunction: ScalarFunction,
-    parameters: Seq[Expression])
-  extends Expression {
-  override private[flink] def children: Seq[Expression] = parameters
-}
-
-case class TableFunctionCall(
-    functionName: String,
-    tableFunction: TableFunction[_],
-    parameters: Seq[Expression],
-    resultType: TypeInformation[_])
-  extends Expression {
-  override private[flink] def children: Seq[Expression] = parameters
-}
-
-case class Cast(child: Expression, resultType: TypeInformation[_]) extends UnaryExpression
-
-case class Flattening(child: Expression) extends UnaryExpression
-
-case class GetCompositeField(child: Expression, key: Any) extends UnaryExpression
 
 case class UnresolvedFieldReference(name: String) extends LeafExpression
 
@@ -106,11 +75,9 @@ case class StreamRecordTimestamp() extends LeafExpression
 
 case class Literal(l: Any, t: Option[TypeInformation[_]] = None) extends LeafExpression
 
-case class Null(resultType: TypeInformation[_]) extends LeafExpression
+case class TypeLiteral(t: TypeInformation[_]) extends LeafExpression
 
-case class In(expression: Expression, elements: Seq[Expression]) extends Expression {
-  override private[flink] def children: Seq[Expression] = expression +: elements.distinct
-}
+case class Null(resultType: TypeInformation[_]) extends LeafExpression
 
 case class SymbolExpression(symbol: TableSymbol) extends LeafExpression
 
@@ -160,9 +127,9 @@ object ExpressionUtils {
       case Literal(value: Int, BasicTypeInfo.INT_TYPE_INFO) =>
         Literal(value * multiplier, Some(TimeIntervalTypeInfo.INTERVAL_MONTHS))
       case _ =>
-        Cast(
-          Call("times", Seq(expr, Literal(multiplier))),
-          TimeIntervalTypeInfo.INTERVAL_MONTHS)
+        Call(FunctionDefinitions.CAST, Seq(
+          Call(FunctionDefinitions.TIMES, Seq(expr, Literal(multiplier))),
+          TimeIntervalTypeInfo.INTERVAL_MONTHS))
   }
 
   private[flink] def toMilliInterval(expr: Expression, multiplier: Long): Expression =
@@ -176,9 +143,9 @@ object ExpressionUtils {
       case Literal(value: Long, BasicTypeInfo.LONG_TYPE_INFO) =>
         Literal(value * multiplier, Some(TimeIntervalTypeInfo.INTERVAL_MILLIS))
       case _ =>
-        Cast(
-          Call("times", Seq(expr, Literal(multiplier))),
-          TimeIntervalTypeInfo.INTERVAL_MILLIS)
+        Call(FunctionDefinitions.CAST, Seq(
+          Call(FunctionDefinitions.TIMES, Seq(expr, Literal(multiplier))),
+          TimeIntervalTypeInfo.INTERVAL_MILLIS))
     }
 
   private[flink] def toRowInterval(expr: Expression): Expression =
@@ -195,7 +162,7 @@ object ExpressionUtils {
 
   private[flink] def convertArray(array: Array[_]): Expression = {
     def createArray(): Expression = {
-      Call("array", array.map(Literal(_)))
+      Call(FunctionDefinitions.ARRAY, array.map(Literal(_)))
     }
 
     array match {
@@ -223,12 +190,14 @@ object ExpressionUtils {
       case _: Array[Date] => createArray()
       case _: Array[Time] => createArray()
       case _: Array[Timestamp] => createArray()
-      case bda: Array[BigDecimal] => Call("array", bda.map { bd => Literal(bd.bigDecimal) })
+      case bda: Array[BigDecimal] =>
+        Call(FunctionDefinitions.ARRAY, bda.map { bd => Literal(bd.bigDecimal) })
 
       case _ =>
         // nested
         if (array.length > 0 && array.head.isInstanceOf[Array[_]]) {
-          Call("array", array.map { na => convertArray(na.asInstanceOf[Array[_]]) })
+          Call(FunctionDefinitions.ARRAY,
+            array.map { na => convertArray(na.asInstanceOf[Array[_]]) })
         } else {
           throw new ValidationException("Unsupported array type.")
         }
