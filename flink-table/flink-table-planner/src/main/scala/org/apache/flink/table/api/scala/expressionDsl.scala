@@ -25,10 +25,9 @@ import org.apache.flink.api.common.typeinfo.{SqlTimeTypeInfo, TypeInformation}
 import org.apache.flink.table.api._
 import org.apache.flink.table.expressions.ExpressionUtils._
 import org.apache.flink.table.expressions.FunctionDefinitions._
-import org.apache.flink.table.expressions.{Null => ENull, Literal => ELiteral}
-import org.apache.flink.table.expressions.TimeIntervalUnit.TimeIntervalUnit
-import org.apache.flink.table.expressions.TimePointUnit.TimePointUnit
-import org.apache.flink.table.expressions.{Alias, Call, CurrentRange, CurrentRow, DistinctAggExpression, Expression, ExpressionUtils, ProctimeAttribute, RowtimeAttribute, ScalarFunctionDefinition, TableReference, TimePointUnit, TrimConstants, TrimMode, TypeLiteral, UDAGGExpression, UnboundedRange, UnboundedRow, UnresolvedFieldReference, UnresolvedOverCall}
+import org.apache.flink.table.expressions.{Alias, Call, CurrentRange, CurrentRow, DistinctAggExpression, Expression, ExpressionUtils, ProctimeAttribute, RowtimeAttribute, ScalarFunctionDefinition, SymbolExpression, TableReference, TableSymbol, TimePointUnit, TrimConstants, TrimMode, TypeLiteral, UDAGGExpression, UnboundedRange, UnboundedRow, UnresolvedFieldReference, UnresolvedOverCall, Literal => ELiteral, Null => ENull}
+import org.apache.flink.table.expressions.TimeIntervalUnit
+import org.apache.flink.table.expressions.TimePointUnit
 import org.apache.flink.table.functions.{AggregateFunction, DistinctAggregateFunction, ScalarFunction}
 
 import _root_.scala.collection.JavaConverters._
@@ -1046,6 +1045,8 @@ trait ImplicitExpressionConversions {
     }
   }
 
+  implicit def tableSymbolToExpression(symbol: TableSymbol): SymbolExpression =
+    SymbolExpression.apply(symbol)
   implicit def symbol2FieldExpression(sym: Symbol): Expression =
     UnresolvedFieldReference.apply(sym.name)
   implicit def byte2Literal(b: Byte): Expression = literal(b)

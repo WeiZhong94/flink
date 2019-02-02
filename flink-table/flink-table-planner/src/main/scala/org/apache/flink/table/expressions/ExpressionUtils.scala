@@ -28,42 +28,6 @@ import org.apache.flink.table.typeutils.{RowIntervalTypeInfo, TimeIntervalTypeIn
 
 import scala.collection.JavaConverters._
 
-abstract class TableSymbols extends Enumeration {
-  class TableSymbolValue extends Val() with TableSymbol
-
-  protected final def SymbolValue = new TableSymbolValue
-
-  implicit def symbolToExpression(symbol: TableSymbolValue): SymbolExpression =
-    SymbolExpression.apply(symbol)
-}
-
-object TimeIntervalUnit extends TableSymbols {
-  type TimeIntervalUnit = TableSymbolValue
-
-  val YEAR, YEAR_TO_MONTH, QUARTER, MONTH,
-  WEEK, DAY, DAY_TO_HOUR, DAY_TO_MINUTE, DAY_TO_SECOND,
-  HOUR, HOUR_TO_MINUTE, HOUR_TO_SECOND, MINUTE, MINUTE_TO_SECOND, SECOND = SymbolValue
-
-}
-
-object TimePointUnit extends TableSymbols {
-  type TimePointUnit= TableSymbolValue
-
-  val YEAR, MONTH, DAY,
-    HOUR, MINUTE, SECOND,
-    QUARTER, WEEK, MILLISECOND, MICROSECOND = SymbolValue
-}
-
-object TrimMode extends TableSymbols {
-  type TrimMode = TableSymbolValue
-
-  val BOTH, LEADING, TRAILING = SymbolValue
-}
-
-object TrimConstants {
-  val TRIM_DEFAULT_CHAR = ExpressionUtils.literal(" ")
-}
-
 object ExpressionUtils {
   private[flink] def call(func: FunctionDefinition, args: Seq[Expression]): Call = {
     Call.apply(func, args.asJava)
