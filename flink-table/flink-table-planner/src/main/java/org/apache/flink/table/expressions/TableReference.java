@@ -15,10 +15,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flink.table.expressions
 
-case class DistinctAggExpression(apiCall: Call) {
-  def distinct: DistinctAgg = {
-    DistinctAgg.apply(apiCall)
-  }
+package org.apache.flink.table.expressions;
+
+import org.apache.flink.table.api.Table;
+
+/**
+ * TableReference.
+ */
+public class TableReference extends LeafExpression {
+
+	public static TableReference apply(String name, Table table) {
+		return new TableReference(name, table);
+	}
+
+	private String name;
+	private Table table;
+
+	public TableReference(String name, Table table) {
+		this.name = name;
+		this.table = table;
+	}
+
+	String getName() {
+		return name;
+	}
+
+	Table getTable() {
+		return table;
+	}
 }

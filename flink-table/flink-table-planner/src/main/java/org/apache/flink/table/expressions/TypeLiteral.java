@@ -15,10 +15,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flink.table.expressions
 
-case class DistinctAggExpression(apiCall: Call) {
-  def distinct: DistinctAgg = {
-    DistinctAgg.apply(apiCall)
-  }
+package org.apache.flink.table.expressions;
+
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+
+/**
+ * TypeLiteral.
+ */
+public class TypeLiteral extends LeafExpression {
+
+	public static TypeLiteral apply(TypeInformation<?> type) {
+		return new TypeLiteral(type);
+	}
+
+	private TypeInformation<?> type;
+
+	public TypeLiteral(TypeInformation<?> type) {
+		this.type = type;
+	}
+
+	TypeInformation<?> getType() {
+		return type;
+	}
 }

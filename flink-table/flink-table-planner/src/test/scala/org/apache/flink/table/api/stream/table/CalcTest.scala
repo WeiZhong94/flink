@@ -20,7 +20,8 @@ package org.apache.flink.table.api.stream.table
 
 import org.apache.flink.api.scala._
 import org.apache.flink.table.api.scala._
-import org.apache.flink.table.plan.expressions.{ScalaExpressionParser, Upper, PlannerWindowReference}
+import org.apache.flink.table.expressions.ScalaExpressionParser
+import org.apache.flink.table.plan.expressions.{PlannerWindowReference, Upper}
 import org.apache.flink.table.plan.logical.TumblingGroupWindow
 import org.apache.flink.table.utils.TableTestUtil._
 import org.apache.flink.table.utils.TableTestBase

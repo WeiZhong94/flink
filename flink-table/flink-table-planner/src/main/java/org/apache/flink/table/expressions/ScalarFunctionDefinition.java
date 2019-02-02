@@ -15,10 +15,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flink.table.expressions
 
-case class DistinctAggExpression(apiCall: Call) {
-  def distinct: DistinctAgg = {
-    DistinctAgg.apply(apiCall)
-  }
+package org.apache.flink.table.expressions;
+
+import org.apache.flink.table.functions.ScalarFunction;
+
+/**
+ * ScalarFunctionDefinition.
+ */
+public class ScalarFunctionDefinition implements FunctionDefinition {
+
+	private ScalarFunction func;
+
+	public ScalarFunctionDefinition(ScalarFunction func) {
+		this.func = func;
+	}
+
+	public ScalarFunction getFunc() {
+		return func;
+	}
 }

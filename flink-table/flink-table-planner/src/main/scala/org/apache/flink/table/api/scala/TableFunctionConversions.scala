@@ -20,8 +20,7 @@ package org.apache.flink.table.api.scala
 
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.table.api.Table
-import org.apache.flink.table.expressions.Expression
-import org.apache.flink.table.plan.expressions.ScalaExpressionParser
+import org.apache.flink.table.expressions.{Expression, ScalaExpressionParser}
 import org.apache.flink.table.functions.TableFunction
 import org.apache.flink.table.plan.logical.LogicalTableFunctionCall
 

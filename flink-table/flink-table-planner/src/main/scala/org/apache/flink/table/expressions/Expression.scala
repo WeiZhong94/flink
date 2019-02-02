@@ -23,65 +23,10 @@ import java.math.{BigDecimal => JBigDecimal}
 import java.sql.{Date, Time, Timestamp}
 
 import org.apache.flink.api.common.typeinfo.{BasicTypeInfo, TypeInformation}
-import org.apache.flink.table.api.{Table, ValidationException}
-import org.apache.flink.table.functions.{AggregateFunction, ScalarFunction, TableFunction}
-import org.apache.flink.table.plan.TreeNode
+import org.apache.flink.table.api.ValidationException
 import org.apache.flink.table.typeutils.{RowIntervalTypeInfo, TimeIntervalTypeInfo}
 
-abstract class Expression extends TreeNode[Expression]
-
-abstract class BinaryExpression extends Expression {
-  private[flink] def left: Expression
-  private[flink] def right: Expression
-  private[flink] def children = Seq(left, right)
-}
-
-abstract class UnaryExpression extends Expression {
-  private[flink] def child: Expression
-  private[flink] def children = Seq(child)
-}
-
-abstract class LeafExpression extends Expression {
-  private[flink] val children = Nil
-}
-
-case class DistinctAgg(child: Expression) extends UnaryExpression
-
-case class Call(func: FunctionDefinition, args: Seq[Expression]) extends Expression {
-  override def children: Seq[Expression] = args
-}
-
-case class UnresolvedOverCall(agg: Expression, alias: Expression)
-  extends Expression {
-  override private[flink] def children: Seq[Expression] = Seq(agg, alias)
-}
-
-case class UnresolvedFieldReference(name: String) extends LeafExpression
-
-case class Alias(child: Expression, name: String, extraNames: Seq[String] = Seq())
-  extends UnaryExpression
-
-case class TableReference(name: String, table: Table) extends LeafExpression
-
-case class RowtimeAttribute(expr: Expression) extends UnaryExpression {
-  override private[flink] def child: Expression = expr
-}
-
-case class ProctimeAttribute(expr: Expression) extends UnaryExpression {
-  override private[flink] def child: Expression = expr
-}
-
-case class StreamRecordTimestamp() extends LeafExpression
-
-case class Literal(l: Any, t: Option[TypeInformation[_]] = None) extends LeafExpression
-
-case class TypeLiteral(t: TypeInformation[_]) extends LeafExpression
-
-case class Null(resultType: TypeInformation[_]) extends LeafExpression
-
-case class SymbolExpression(symbol: TableSymbol) extends LeafExpression
-
-trait TableSymbol
+import scala.collection.JavaConverters._
 
 abstract class TableSymbols extends Enumeration {
   class TableSymbolValue extends Val() with TableSymbol
@@ -89,7 +34,7 @@ abstract class TableSymbols extends Enumeration {
   protected final def SymbolValue = new TableSymbolValue
 
   implicit def symbolToExpression(symbol: TableSymbolValue): SymbolExpression =
-    SymbolExpression(symbol)
+    SymbolExpression.apply(symbol)
 }
 
 object TimeIntervalUnit extends TableSymbols {
@@ -116,53 +61,79 @@ object TrimMode extends TableSymbols {
 }
 
 object TrimConstants {
-  val TRIM_DEFAULT_CHAR = Literal(" ")
+  val TRIM_DEFAULT_CHAR = ExpressionUtils.literal(" ")
 }
 
 object ExpressionUtils {
+  private[flink] def call(func: FunctionDefinition, args: Seq[Expression]): Call = {
+    Call.apply(func, args.asJava)
+  }
+
+  private[flink] def literal(l: Any): Literal = {
+    Literal.apply(l)
+  }
+
+  private[flink] def literal(l: Any, t: TypeInformation[_]): Literal = {
+    Literal.apply(l, t)
+  }
+
   private[flink] def toMonthInterval(expr: Expression, multiplier: Int): Expression =
     expr match {
-      case Literal(value: Int, None) =>
-        Literal(value * multiplier, Some(TimeIntervalTypeInfo.INTERVAL_MONTHS))
-      case Literal(value: Int, BasicTypeInfo.INT_TYPE_INFO) =>
-        Literal(value * multiplier, Some(TimeIntervalTypeInfo.INTERVAL_MONTHS))
+      case e: Literal if e.getValue.isInstanceOf[Int] && !e.getType.isPresent =>
+        literal(e.getValue.asInstanceOf[Int] * multiplier,
+          TimeIntervalTypeInfo.INTERVAL_MONTHS)
+      case e: Literal if e.getValue.isInstanceOf[Int] && e.getType.isPresent
+        && e.getType.get().equals(BasicTypeInfo.INT_TYPE_INFO) =>
+        literal(e.getValue.asInstanceOf[Int] * multiplier,
+          TimeIntervalTypeInfo.INTERVAL_MONTHS)
       case _ =>
-        Call(FunctionDefinitions.CAST, Seq(
-          Call(FunctionDefinitions.TIMES, Seq(expr, Literal(multiplier))),
+        call(FunctionDefinitions.CAST, Seq(
+          call(FunctionDefinitions.TIMES, Seq(expr, literal(multiplier))),
           TimeIntervalTypeInfo.INTERVAL_MONTHS))
   }
 
   private[flink] def toMilliInterval(expr: Expression, multiplier: Long): Expression =
     expr match {
-      case Literal(value: Int, None) =>
-        Literal(value * multiplier, Some(TimeIntervalTypeInfo.INTERVAL_MILLIS))
-      case Literal(value: Int, BasicTypeInfo.INT_TYPE_INFO) =>
-        Literal(value * multiplier, Some(TimeIntervalTypeInfo.INTERVAL_MILLIS))
-      case Literal(value: Long, None) =>
-        Literal(value * multiplier, Some(TimeIntervalTypeInfo.INTERVAL_MILLIS))
-      case Literal(value: Long, BasicTypeInfo.LONG_TYPE_INFO) =>
-        Literal(value * multiplier, Some(TimeIntervalTypeInfo.INTERVAL_MILLIS))
+      case e: Literal if e.getValue.isInstanceOf[Int] && !e.getType.isPresent =>
+        literal(e.getValue.asInstanceOf[Int] * multiplier,
+          TimeIntervalTypeInfo.INTERVAL_MILLIS)
+      case e: Literal if e.getValue.isInstanceOf[Int] && e.getType.isPresent
+        && e.getType.get().equals(BasicTypeInfo.INT_TYPE_INFO) =>
+        literal(e.getValue.asInstanceOf[Int] * multiplier,
+          TimeIntervalTypeInfo.INTERVAL_MILLIS)
+      case e: Literal if e.getValue.isInstanceOf[Long] && !e.getType.isPresent =>
+        literal(e.getValue.asInstanceOf[Long] * multiplier,
+          TimeIntervalTypeInfo.INTERVAL_MILLIS)
+      case e: Literal if e.getValue.isInstanceOf[Long] && e.getType.isPresent
+        && e.getType.get().equals(BasicTypeInfo.LONG_TYPE_INFO) =>
+        literal(e.getValue.asInstanceOf[Long] * multiplier,
+          TimeIntervalTypeInfo.INTERVAL_MILLIS)
       case _ =>
-        Call(FunctionDefinitions.CAST, Seq(
-          Call(FunctionDefinitions.TIMES, Seq(expr, Literal(multiplier))),
+        call(FunctionDefinitions.CAST, Seq(
+          call(FunctionDefinitions.TIMES, Seq(expr, literal(multiplier))),
           TimeIntervalTypeInfo.INTERVAL_MILLIS))
     }
 
   private[flink] def toRowInterval(expr: Expression): Expression =
     expr match {
-      case Literal(value: Int, None) =>
-        Literal(value.toLong, Some(RowIntervalTypeInfo.INTERVAL_ROWS))
-      case Literal(value: Int, BasicTypeInfo.INT_TYPE_INFO) =>
-        Literal(value.toLong, Some(RowIntervalTypeInfo.INTERVAL_ROWS))
-      case Literal(value: Long, None) =>
-        Literal(value, Some(RowIntervalTypeInfo.INTERVAL_ROWS))
-      case Literal(value: Long, BasicTypeInfo.LONG_TYPE_INFO) =>
-        Literal(value, Some(RowIntervalTypeInfo.INTERVAL_ROWS))
+      case e: Literal if e.getValue.isInstanceOf[Int] && !e.getType.isPresent =>
+        literal(e.getValue.asInstanceOf[Int].toLong,
+          RowIntervalTypeInfo.INTERVAL_ROWS)
+      case e: Literal if e.getValue.isInstanceOf[Int] && e.getType.isPresent
+        && e.getType.get().equals(BasicTypeInfo.INT_TYPE_INFO) =>
+        literal(e.getValue.asInstanceOf[Int].toLong,
+          RowIntervalTypeInfo.INTERVAL_ROWS)
+      case e: Literal if e.getValue.isInstanceOf[Long] && !e.getType.isPresent =>
+        literal(e.getValue, RowIntervalTypeInfo.INTERVAL_ROWS)
+      case e: Literal if e.getValue.isInstanceOf[Long] && e.getType.isPresent
+        && e.getType.get().equals(BasicTypeInfo.LONG_TYPE_INFO) =>
+        literal(e.getValue, RowIntervalTypeInfo.INTERVAL_ROWS)
     }
 
   private[flink] def convertArray(array: Array[_]): Expression = {
     def createArray(): Expression = {
-      Call(FunctionDefinitions.ARRAY, array.map(Literal(_)))
+      call(FunctionDefinitions.ARRAY,
+        array.map(literal(_).asInstanceOf[Expression]))
     }
 
     array match {
@@ -191,12 +162,13 @@ object ExpressionUtils {
       case _: Array[Time] => createArray()
       case _: Array[Timestamp] => createArray()
       case bda: Array[BigDecimal] =>
-        Call(FunctionDefinitions.ARRAY, bda.map { bd => Literal(bd.bigDecimal) })
+        call(FunctionDefinitions.ARRAY,
+          bda.map { bd => literal(bd.bigDecimal)})
 
       case _ =>
         // nested
         if (array.length > 0 && array.head.isInstanceOf[Array[_]]) {
-          Call(FunctionDefinitions.ARRAY,
+          call(FunctionDefinitions.ARRAY,
             array.map { na => convertArray(na.asInstanceOf[Array[_]]) })
         } else {
           throw new ValidationException("Unsupported array type.")

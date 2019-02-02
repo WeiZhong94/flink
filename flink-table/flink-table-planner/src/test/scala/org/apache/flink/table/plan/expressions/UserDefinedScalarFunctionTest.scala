@@ -32,8 +32,6 @@ import org.apache.flink.table.functions.ScalarFunction
 import org.junit.Test
 import java.lang.{Boolean => JBoolean}
 
-import org.apache.flink.table.expressions.Null
-
 class UserDefinedScalarFunctionTest extends ExpressionTestBase {
 
   @Test

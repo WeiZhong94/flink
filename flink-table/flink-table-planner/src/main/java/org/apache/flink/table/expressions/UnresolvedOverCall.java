@@ -15,10 +15,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flink.table.expressions
 
-case class DistinctAggExpression(apiCall: Call) {
-  def distinct: DistinctAgg = {
-    DistinctAgg.apply(apiCall)
-  }
+package org.apache.flink.table.expressions;
+
+/**
+ * UnresolvedOverCall.
+ */
+public class UnresolvedOverCall extends BinaryExpression {
+
+	public static UnresolvedOverCall apply(Expression agg, Expression alias) {
+		return new UnresolvedOverCall(agg, alias);
+	}
+
+	private Expression agg;
+
+	private Expression alias;
+
+	public UnresolvedOverCall(Expression agg, Expression alias) {
+		this.agg = agg;
+		this.alias = alias;
+	}
+
+	@Override
+	Expression getLeft() {
+		return agg;
+	}
+
+	@Override
+	Expression getRight() {
+		return alias;
+	}
 }

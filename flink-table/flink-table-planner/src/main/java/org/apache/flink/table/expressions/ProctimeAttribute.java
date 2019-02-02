@@ -15,10 +15,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flink.table.expressions
 
-case class DistinctAggExpression(apiCall: Call) {
-  def distinct: DistinctAgg = {
-    DistinctAgg.apply(apiCall)
-  }
+package org.apache.flink.table.expressions;
+
+/**
+ * ProctimeAttribute.
+ */
+public class ProctimeAttribute extends UnaryExpression {
+
+	public static ProctimeAttribute apply(Expression expr) {
+		return new ProctimeAttribute(expr);
+	}
+
+	private Expression expr;
+
+	public ProctimeAttribute(Expression expr) {
+		this.expr = expr;
+	}
+
+	@Override
+	Expression getChild() {
+		return expr;
+	}
 }

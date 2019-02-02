@@ -20,7 +20,6 @@ package org.apache.flink.table.plan.expressions
 
 import org.apache.flink.table.api.Types
 import org.apache.flink.table.api.scala._
-import org.apache.flink.table.expressions.Null
 import org.apache.flink.table.plan.expressions.utils.{ScalarOperatorsTestBase, ShouldNotExecuteFunc}
 import org.junit.Test
 

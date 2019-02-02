@@ -16,11 +16,12 @@
  * limitations under the License.
  */
 
-package org.apache.flink.table.plan.expressions
+package org.apache.flink.table.expressions
 
 import org.apache.flink.table.api._
-import org.apache.flink.table.api.scala.{CurrentRange, CurrentRow, UnboundedRange, UnboundedRow}
-import org.apache.flink.table.expressions._
+import org.apache.flink.table.plan.expressions._
+
+import _root_.scala.collection.JavaConverters._
 
 object ScalaExpressionParser {
   def parse(expr: Expression): PlannerExpression = {
@@ -28,85 +29,89 @@ object ScalaExpressionParser {
       return null
     }
     expr match {
-      case DistinctAgg(child) =>
-        PlannerDistinctAgg(parse(child))
+      case e: DistinctAgg =>
+        PlannerDistinctAgg(parse(e.getChild))
 
-      case Call(func, args) =>
-        //PlannerCall(functionName, args.map(parse))
+      case e: Call =>
+        val func = e.getFunc
+        val args = e.getChildren.asScala
         func match {
           case e: ScalarFunctionDefinition =>
-            PlannerScalarFunctionCall(e.func, args.map(parse))
+            PlannerScalarFunctionCall(e.getFunc, args.map(parse))
 
           case e: AggFunctionDefinition =>
-            PlannerAggFunctionCall(e.func, e.resultTypeInfo, e.accTypeInfo, args.map(parse))
+            PlannerAggFunctionCall(
+              e.getFunc, e.getResultTypeInfo, e.getAccTypeInfo, args.map(parse))
 
           case e: BuildInFunctionDefinition =>
-            if (e.reuseJavaFunctionCatalog) {
-              PlannerCall(e.name, args.map(parse))
+            if (e.isReuseJavaFunctionCatalog) {
+              PlannerCall(e.getName, args.map(parse))
             } else {
               e match {
                 case FunctionDefinitions.CAST =>
                   assert(args.size == 2)
-                  PlannerCast(parse(args.head), args.last.asInstanceOf[TypeLiteral].t)
+                  PlannerCast(parse(args.head), args.last.asInstanceOf[TypeLiteral].getType)
 
-                case FunctionDefinitions.FlATTENING =>
+                case FunctionDefinitions.FLATTENING =>
                   assert(args.size == 1)
                   PlannerFlattening(parse(args.head))
 
                 case FunctionDefinitions.GET_COMPOSITE_FIELD =>
                   assert(args.size == 2)
-                  PlannerGetCompositeField(parse(args.head), args.last.asInstanceOf[Literal].l)
+                  PlannerGetCompositeField(parse(args.head),
+                    args.last.asInstanceOf[Literal].getValue)
 
                 case FunctionDefinitions.IN =>
                   PlannerIn(parse(args.head), args.slice(1, args.size).map(parse))
+
+                case _ =>
+                  throw new TableException("unsupported FunctionDefinition: " + e)
               }
             }
         }
 
-      case UnresolvedOverCall(agg, alias) =>
-        PlannerUnresolvedOverCall(parse(agg), parse(alias))
+      case e: UnresolvedOverCall =>
+        PlannerUnresolvedOverCall(parse(e.getLeft), parse(e.getRight))
 
-      case UnresolvedFieldReference(name) =>
-        PlannerUnresolvedFieldReference(name)
+      case e: UnresolvedFieldReference =>
+        PlannerUnresolvedFieldReference(e.getName)
 
-      case Alias(child, name, extraNames) =>
-        PlannerAlias(parse(child), name, extraNames)
+      case e: Alias =>
+        PlannerAlias(parse(e.getChild), e.getName, e.getExtraNames.asScala)
 
-      case TableReference(name, table) =>
-        PlannerTableReference(name, table)
+      case e: TableReference =>
+        PlannerTableReference(e.getName, e.getTable)
 
-      case RowtimeAttribute(expression) =>
-        PlannerRowtimeAttribute(parse(expression))
+      case e: RowtimeAttribute =>
+        PlannerRowtimeAttribute(parse(e.getChild))
 
-      case ProctimeAttribute(expression) =>
-        PlannerProctimeAttribute(parse(expression))
+      case e: ProctimeAttribute =>
+        PlannerProctimeAttribute(parse(e.getChild))
 
-      case StreamRecordTimestamp() =>
-        PlannerStreamRecordTimestamp()
+      case e: Literal =>
+        if (!e.getType.isPresent) {
+          PlannerLiteral(e.getValue)
+        } else {
+          PlannerLiteral(e.getValue, e.getType.get())
+        }
 
-      case Literal(l, None) =>
-        PlannerLiteral(l)
+      case e: Null =>
+        PlannerNull(e.getType)
 
-      case Literal(l, Some(t)) =>
-        PlannerLiteral(l, t)
-
-      case Null(resultType) =>
-        PlannerNull(resultType)
-
-      case CurrentRow() =>
+      case e: CurrentRow =>
         PlannerCurrentRow()
 
-      case CurrentRange() =>
+      case e: CurrentRange =>
         PlannerCurrentRange()
 
-      case UnboundedRow() =>
+      case e: UnboundedRow =>
         PlannerUnboundedRow()
 
-      case UnboundedRange() =>
+      case e: UnboundedRange =>
         PlannerUnboundedRange()
 
-      case SymbolExpression(symbol) =>
-        val tableSymbol = symbol match {
+      case e: SymbolExpression =>
+        val tableSymbol = e.getSymbol match {
           case TimeIntervalUnit.YEAR => PlannerTimeIntervalUnit.YEAR
           case TimeIntervalUnit.YEAR_TO_MONTH => PlannerTimeIntervalUnit.YEAR_TO_MONTH
           case TimeIntervalUnit.QUARTER => PlannerTimeIntervalUnit.QUARTER
@@ -139,7 +144,7 @@ object ScalaExpressionParser {
           case TrimMode.TRAILING => PlannerTrimMode.TRAILING
 
           case _ =>
-            throw new TableException("unsupported TableSymbolValue: " + symbol)
+            throw new TableException("unsupported TableSymbolValue: " + e.getSymbol)
         }
         PlannerSymbolExpression(tableSymbol)
 

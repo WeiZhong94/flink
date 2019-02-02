@@ -15,10 +15,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flink.table.expressions
 
-case class DistinctAggExpression(apiCall: Call) {
-  def distinct: DistinctAgg = {
-    DistinctAgg.apply(apiCall)
-  }
+package org.apache.flink.table.expressions;
+
+/**
+ * UnresolvedFieldReference.
+ */
+public class UnresolvedFieldReference extends LeafExpression {
+
+	public static UnresolvedFieldReference apply(String name) {
+		return new UnresolvedFieldReference(name);
+	}
+
+	private String name;
+
+	public UnresolvedFieldReference(String name) {
+		this.name = name;
+	}
+
+	String getName() {
+		return name;
+	}
 }

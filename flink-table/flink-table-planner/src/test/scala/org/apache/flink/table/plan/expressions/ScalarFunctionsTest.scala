@@ -20,7 +20,7 @@ package org.apache.flink.table.plan.expressions
 
 import org.apache.flink.table.api.Types
 import org.apache.flink.table.api.scala._
-import org.apache.flink.table.expressions.{Expression, Null, TimeIntervalUnit, TimePointUnit}
+import org.apache.flink.table.expressions.{Expression, TimeIntervalUnit, TimePointUnit}
 import org.apache.flink.table.plan.expressions.utils.ScalarTypesTestBase
 import org.junit.Test
 

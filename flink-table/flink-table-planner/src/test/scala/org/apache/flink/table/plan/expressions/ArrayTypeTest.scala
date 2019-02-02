@@ -22,7 +22,6 @@ import java.sql.Date
 
 import org.apache.flink.table.api.Types
 import org.apache.flink.table.api.scala._
-import org.apache.flink.table.expressions.Null
 import org.apache.flink.table.plan.expressions.utils.ArrayTypeTestBase
 import org.junit.Test
 

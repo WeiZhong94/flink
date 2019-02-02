@@ -15,10 +15,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flink.table.expressions
 
-case class DistinctAggExpression(apiCall: Call) {
-  def distinct: DistinctAgg = {
-    DistinctAgg.apply(apiCall)
-  }
+package org.apache.flink.table.expressions;
+
+/**
+ * BuildInFunctionDefinition.
+ */
+public class BuildInFunctionDefinition implements FunctionDefinition {
+
+	private String name;
+	private boolean reuseJavaFunctionCatalog;
+
+	public BuildInFunctionDefinition(String name) {
+		this(name, true);
+	}
+
+	public BuildInFunctionDefinition(String name, boolean reuseJavaFunctionCatalog) {
+		this.name = name;
+		this.reuseJavaFunctionCatalog = reuseJavaFunctionCatalog;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public boolean isReuseJavaFunctionCatalog() {
+		return reuseJavaFunctionCatalog;
+	}
 }

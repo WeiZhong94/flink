@@ -15,10 +15,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flink.table.expressions
 
-case class DistinctAggExpression(apiCall: Call) {
-  def distinct: DistinctAgg = {
-    DistinctAgg.apply(apiCall)
-  }
+package org.apache.flink.table.expressions;
+
+/**
+ * SymbolExpression.
+ */
+public class SymbolExpression extends LeafExpression {
+
+	public static SymbolExpression apply(TableSymbol symbol) {
+		return new SymbolExpression(symbol);
+	}
+
+	private TableSymbol symbol;
+
+	public SymbolExpression(TableSymbol symbol) {
+		this.symbol = symbol;
+	}
+
+	TableSymbol getSymbol() {
+		return symbol;
+	}
 }

@@ -15,10 +15,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flink.table.expressions
 
-case class DistinctAggExpression(apiCall: Call) {
-  def distinct: DistinctAgg = {
-    DistinctAgg.apply(apiCall)
-  }
+package org.apache.flink.table.expressions;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * UnaryExpression.
+ */
+public abstract class UnaryExpression extends Expression {
+
+	abstract Expression getChild();
+
+	@Override
+	List<Expression> getChildren() {
+		ArrayList<Expression> chilren = new ArrayList<>();
+		chilren.add(getChild());
+		return chilren;
+	}
 }

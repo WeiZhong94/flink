@@ -40,6 +40,7 @@ case class UDAGGExpression[T: TypeInformation, ACC: TypeInformation](
       aggregateFunction,
       implicitly[TypeInformation[ACC]])
 
-    Call(new AggFunctionDefinition(aggregateFunction, resultTypeInfo, accTypeInfo), params)
+    ExpressionUtils.call(
+      new AggFunctionDefinition(aggregateFunction, resultTypeInfo, accTypeInfo), params)
   }
 }

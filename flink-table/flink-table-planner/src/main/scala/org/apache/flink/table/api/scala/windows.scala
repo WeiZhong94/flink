@@ -161,14 +161,6 @@ case class ScalaOverWindow(
     private[flink] val preceding: Expression,
     private[flink] val following: Expression) extends UnresolvedOverWindow
 
-case class CurrentRow() extends LeafExpression
-
-case class CurrentRange() extends LeafExpression
-
-case class UnboundedRow() extends LeafExpression
-
-case class UnboundedRange() extends LeafExpression
-
 /**
   * A partially defined over window.
   */

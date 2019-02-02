@@ -15,10 +15,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flink.table.expressions
 
-case class DistinctAggExpression(apiCall: Call) {
-  def distinct: DistinctAgg = {
-    DistinctAgg.apply(apiCall)
-  }
+package org.apache.flink.table.expressions;
+
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+
+import java.util.Optional;
+
+/**
+ * Literal.
+ */
+public class Literal extends LeafExpression {
+
+	public static Literal apply(Object value) {
+		return new Literal(value);
+	}
+
+	public static Literal apply(Object value, TypeInformation<?> type) {
+		return new Literal(value, type);
+	}
+
+	private Object value;
+
+	private Optional<TypeInformation<?>> type;
+
+	public Literal(Object value) {
+		this.value = value;
+		this.type = Optional.empty();
+	}
+
+	public Literal(Object value, TypeInformation<?> type) {
+		this.value = value;
+		this.type = Optional.of(type);
+	}
+
+	Object getValue() {
+		return value;
+	}
+
+	Optional<TypeInformation<?>> getType() {
+		return type;
+	}
 }
