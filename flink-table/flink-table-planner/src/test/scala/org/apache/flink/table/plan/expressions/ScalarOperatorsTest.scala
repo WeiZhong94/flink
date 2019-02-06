@@ -296,8 +296,7 @@ class ScalarOperatorsTest extends ScalarOperatorsTestBase {
     )
 
     testTableApi(
-      'f10.in("This is a test String.", "String", "Hello world", "Comment#1",
-        Null(Types.STRING)),
+      'f10.in("This is a test String.", "String", "Hello world", "Comment#1", Null(Types.STRING)),
       "f10.in('This is a test String.', 'String', 'Hello world', 'Comment#1', Null(STRING))",
       "true"
     )

@@ -91,14 +91,6 @@ class StreamTableEnvironment @deprecated(
     scan(name)
   }
 
-  def fromDataStream[T](dataStream: DataStream[T], fields: String): Table = {
-
-    val name = createUniqueTableName()
-    registerDataStreamInternal(name, dataStream.javaStream,
-      ExpressionParser.parseExpressionList(fields).toArray)
-    scan(name)
-  }
-
   /**
     * Registers the given [[DataStream]] as table in the
     * [[TableEnvironment]]'s catalog.
