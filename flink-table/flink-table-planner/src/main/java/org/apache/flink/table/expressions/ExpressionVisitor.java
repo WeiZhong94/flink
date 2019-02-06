@@ -18,6 +18,9 @@
 
 package org.apache.flink.table.expressions;
 
+/**
+ * @param <R> The type of Expression.
+ */
 public interface ExpressionVisitor<R> {
 	//~ Methods ----------------------------------------------------------------
 
@@ -39,7 +42,7 @@ public interface ExpressionVisitor<R> {
 
 	R visitCurrentRange(CurrentRange currentRange);
 
-	R visitNull(Null _null);
+	R visitNull(Null nullExpression);
 
 	R visitSymbolExpression(SymbolExpression symbolExpression);
 
