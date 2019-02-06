@@ -31,13 +31,6 @@ import org.apache.flink.table.utils.TableTestBase
 import org.junit.Test
 
 class GroupWindowTest extends TableTestBase {
-  implicit def apiExpression2Expression(apiExpression: Expression): PlannerExpression = {
-    apiExpression.accept(new ToInternalExpressionVisitor)
-  }
-
-  implicit def symbol2Expression(apiExpression: Symbol): PlannerExpression = {
-    apiExpression.accept(new ToInternalExpressionVisitor)
-  }
 
   @Test
   def testNonPartitionedTumbleWindow(): Unit = {
