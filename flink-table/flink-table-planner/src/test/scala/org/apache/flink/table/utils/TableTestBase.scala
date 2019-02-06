@@ -31,7 +31,7 @@ import org.apache.flink.table.api.java.{BatchTableEnvironment => JavaBatchTableE
 import org.apache.flink.table.api.scala.{BatchTableEnvironment => ScalaBatchTableEnv, StreamTableEnvironment => ScalaStreamTableEnv}
 import org.apache.flink.table.api.scala._
 import org.apache.flink.table.api.{Table, TableSchema}
-import org.apache.flink.table.expressions.{Expression, ScalaExpressionParser}
+import org.apache.flink.table.expressions.{Expression, ToInternalExpressionVisitor}
 import org.apache.flink.table.functions.{AggregateFunction, ScalarFunction, TableFunction}
 import org.apache.flink.table.plan.expressions.PlannerExpression
 import org.junit.Assert.assertEquals
@@ -47,11 +47,11 @@ import util.control.Breaks._
 class TableTestBase {
 
   implicit def expression2PlannerExpression(apiExpression: Expression): PlannerExpression = {
-    ScalaExpressionParser.parse(apiExpression)
+    apiExpression.accept(new ToInternalExpressionVisitor)
   }
 
   implicit def symbol2PlannerExpression(apiExpression: Symbol): PlannerExpression = {
-    ScalaExpressionParser.parse(apiExpression)
+    apiExpression.accept(new ToInternalExpressionVisitor)
   }
 
   // used for accurate exception information checking.

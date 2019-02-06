@@ -1093,12 +1093,16 @@ class Table(
 
     val overWindowImpls: Seq[OverWindow] = overWindows.map {
       case w: ScalaOverWindow =>
+        val following = if (w.following != null) {
+          w.following.accept(new ToInternalExpressionVisitor)
+        } else {
+          null
+        }
         new OverWindowWithPreceding(
           w.partitionBy.map(_.accept(new ToInternalExpressionVisitor)),
           w.orderBy.accept(new ToInternalExpressionVisitor),
           w.preceding.accept(new ToInternalExpressionVisitor)
-        ).following(w.following.accept(new ToInternalExpressionVisitor))
-          .as(w.alias.accept(new ToInternalExpressionVisitor))
+        ).following(following).as(w.alias.accept(new ToInternalExpressionVisitor))
       case w: JavaOverWindow =>
         val paritionBy = if ("" != w.partitionBy) {
           ExpressionParser.parseExpressionList(w.partitionBy).toSeq
