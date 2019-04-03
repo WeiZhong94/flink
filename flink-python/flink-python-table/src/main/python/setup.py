@@ -28,6 +28,6 @@ setup(
     license='Licensed under the Apache License, Version 2.0',
     author='Flink Developers',
     author_email='dev@flink.apache.org',
-    install_requires=['py4j==0.10.7'],
+    install_requires=['py4j==0.10.8.1'],
     description='Flink Python API'
 )
