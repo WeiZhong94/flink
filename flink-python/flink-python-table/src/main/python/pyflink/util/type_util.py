@@ -34,6 +34,7 @@ _init_lock = RLock()
 if sys.version > '3':
     xrange = range
 
+
 class TypesUtil(object):
 
     @staticmethod

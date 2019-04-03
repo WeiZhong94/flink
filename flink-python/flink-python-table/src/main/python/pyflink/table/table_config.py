@@ -26,7 +26,6 @@ class TableConfig(object):
         self._parallelism = None
         self._j_table_config = j_conf
 
-
     @property
     def is_stream(self):
         return self._is_stream
