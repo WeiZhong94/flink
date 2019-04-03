@@ -58,11 +58,6 @@ class DataType(object):
         return self.type_name() != other.type_name()
 
 
-# class NullType(DataType):
-#     """None data types.  SQL NULL
-#     """
-
-
 class StringType(DataType):
     """String data type.  SQL VARCHAR
     """

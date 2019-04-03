@@ -31,9 +31,6 @@ __all__ = [
 
 
 class TableEnvironment(object):
-    """
-    Wrapper for org.apache.flink.table.api.java.TableEnvironment
-    """
 
     __metaclass__ = ABCMeta
 
@@ -49,22 +46,13 @@ class TableEnvironment(object):
     def register_table_source(self, name, table_source):
         self._j_tenv.registerTableSource(name, table_source.j_table_source)
 
-    def register_table_sink(self, name, field_names_or_table_sink, field_types=None, table_sink=None):
-        if table_sink is not None:
-            # j_field_names =
-            field_names = field_names_or_table_sink
-            j_names = TypesUtil.convert_py_list_to_java_array(ClassName.STRING,
-                                                              field_names)
-            j_types = []
-            for field_type in field_types:
-                j_types.append(TypesUtil.to_java_sql_type(field_type))
-            j_types_array = TypesUtil.convert_py_list_to_java_array(ClassName.TYPE_INFORMATION,
-                                                                    j_types)
-
-            self._j_tenv.registerTableSink(name, j_names, j_types_array, table_sink._j_table_sink)
-        else:
-            table_sink = field_names_or_table_sink
-            self._j_tenv.registerTableSink(name, table_sink._j_table_sink)
+    def register_table_sink(self, name, field_names, field_types, table_sink):
+        j_field_names = TypesUtil.convert_py_list_to_java_array(ClassName.STRING, field_names)
+        j_field_ypes = []
+        for field_type in field_types:
+            j_field_ypes.append(TypesUtil.to_java_sql_type(field_type))
+        j_field_types_array = TypesUtil.convert_py_list_to_java_array(ClassName.TYPE_INFORMATION, j_field_ypes)
+        self._j_tenv.registerTableSink(name, j_field_names, j_field_types_array, table_sink._j_table_sink)
 
     def scan(self, *table_path):
         j_varargs = TypesUtil.convert_py_list_to_java_array(ClassName.STRING, table_path)
@@ -97,65 +85,55 @@ class TableEnvironment(object):
     @classmethod
     def _get_stream_table_environment(cls):
         table_env = TypesUtil.class_for_name(ClassName.TABLE_ENVIRONMENT)
-        _cls = TypesUtil.class_for_name(ClassName.STREAM_EXECUTION_ENVIRONMENT)
-        j_env = _cls.getExecutionEnvironment()
+        exec_env = TypesUtil.class_for_name(ClassName.STREAM_EXECUTION_ENVIRONMENT)
+        j_env = exec_env.getExecutionEnvironment()
         j_t_env = table_env.getTableEnvironment(j_env)
         return StreamTableEnvironment(j_t_env)
 
     @classmethod
     def _get_batch_table_environment(cls):
         table_env = TypesUtil.class_for_name(ClassName.TABLE_ENVIRONMENT)
-        _cls = TypesUtil.class_for_name(ClassName.EXECUTION_ENVIRONMENT)
-        j_env = _cls.getExecutionEnvironment()
+        exec_env = TypesUtil.class_for_name(ClassName.EXECUTION_ENVIRONMENT)
+        j_env = exec_env.getExecutionEnvironment()
         j_t_env = table_env.getTableEnvironment(j_env)
         return BatchTableEnvironment(j_t_env)
 
 
 class StreamTableEnvironment(TableEnvironment):
-    """
-    Wrapper for org.apache.flink.table.api.java.StreamTableEnvironment
-    """
 
-    def __init__(self, env):
-        self._j_tenv = env
-        super(StreamTableEnvironment, self).__init__(env)
-
-    def _from_data_stream(self, data_stream, fields=None):
-        if fields is None:
-            j_table = self._j_tenv.fromDataStream(data_stream)
-        else:
-            j_table = self._j_tenv.fromDataStream(data_stream, fields)
-        return Table(j_table)
+    def __init__(self, j_tenv):
+        self._j_tenv = j_tenv
+        super(StreamTableEnvironment, self).__init__(j_tenv)
 
     def from_collection(self, data, fields=None):
         if type(data[0]) is tuple:
             java_list = TypesUtil.convert_tuple_list(data)
         else:
             java_list = TypesUtil.convert_pylist_to_java_list(data)
-        j_ds_source = self._j_tenv.execEnv().fromCollection(java_list)
-        return self._from_data_stream(j_ds_source, fields)
+
+        j_ds = self._j_tenv.execEnv().fromCollection(java_list)
+        if fields is None:
+            j_table = self._j_tenv.fromDataStream(j_ds)
+        else:
+            j_table = self._j_tenv.fromDataStream(j_ds, fields)
+        return Table(j_table)
 
 
 class BatchTableEnvironment(TableEnvironment):
-    """
-    Wrapper for org.apache.flink.table.api.java.BatchTableEnvironment
-    """
 
-    def __init__(self, env):
-        self._j_tenv = env
-        super(BatchTableEnvironment, self).__init__(env)
-
-    def _from_data_set(self, data_set, fields=None):
-        if fields is None:
-            j_table = self._j_tenv.fromDataSet(data_set)
-        else:
-            j_table = self._j_tenv.fromDataSet(data_set, fields)
-        return Table(j_table)
+    def __init__(self, j_tenv):
+        self._j_tenv = j_tenv
+        super(BatchTableEnvironment, self).__init__(j_tenv)
 
     def from_collection(self, data, fields=None):
         if type(data[0]) is tuple:
             java_list = TypesUtil.convert_tuple_list(data)
         else:
             java_list = TypesUtil.convert_pylist_to_java_list(data)
-        j_ds_source = self._j_tenv.execEnv().fromCollection(java_list)
-        return self._from_data_set(j_ds_source, fields)
+
+        j_ds = self._j_tenv.execEnv().fromCollection(java_list)
+        if fields is None:
+            j_table = self._j_tenv.fromDataSet(j_ds)
+        else:
+            j_table = self._j_tenv.fromDataSet(j_ds, fields)
+        return Table(j_table)

@@ -15,14 +15,15 @@
 #  See the License for the specific language governing permissions and
 # limitations under the License.
 ################################################################################
+
 from pyflink.java_gateway import ClassName
 from pyflink.util.type_util import TypesUtil
 
+__all__ = ['TableSink', 'CsvTableSink']
 
-class JavaTableSink(object):
-    """
-    A wrapper for existing Java TableSink
-    """
+
+class TableSink(object):
+
     def __init__(self, j_sink):
         self._j_table_sink = j_sink
 
@@ -32,7 +33,7 @@ class WriteMode(object):
     OVERWRITE = 1
 
 
-class CsvTableSink(JavaTableSink):
+class CsvTableSink(TableSink):
 
     def __init__(self, path, field_delimiter=',', num_files=1, write_mode=WriteMode.NO_OVERWRITE):
         self._path = path
@@ -42,15 +43,13 @@ class CsvTableSink(JavaTableSink):
             self._write_mode = TypesUtil.class_for_name(ClassName.WRITE_MODE).NO_OVERWRITE
         else:
             self._write_mode = TypesUtil.class_for_name(ClassName.WRITE_MODE).OVERWRITE
-        cls = TypesUtil.class_for_name(ClassName.CSV_TABLE_SINK)
-        self._j_csv_table_sink = \
-            cls(self._path, self._field_delimiter, self._num_files, self._write_mode)
-        super(CsvTableSink, self).__init__(self._j_csv_table_sink)
+        csv_table_sink = TypesUtil.class_for_name(ClassName.CSV_TABLE_SINK)
+        j_csv_table_sink = csv_table_sink(self._path, self._field_delimiter, self._num_files, self._write_mode)
+        super(CsvTableSink, self).__init__(j_csv_table_sink)
 
     def configure(self, field_names, field_types):
         j_field_names = TypesUtil.convert_py_list_to_java_array(ClassName.STRING, field_names)
         j_field_types = TypesUtil.to_java_sql_type(field_types)
-        self._j_csv_table_sink = self._j_csv_table_sink.configure(j_field_names, j_field_types)
-        self._j_table_sink = self._j_csv_table_sink
+        self._j_table_sink = self._j_table_sink.configure(j_field_names, j_field_types)
         return self
 

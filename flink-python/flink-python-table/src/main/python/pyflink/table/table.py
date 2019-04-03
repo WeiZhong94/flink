@@ -48,16 +48,16 @@ class Table(object):
     the expression syntax.
     """
 
-    def __init__(self, java_table_or_t_env,):
-        self._java_table = java_table_or_t_env
+    def __init__(self, j_table):
+        self._j_table = j_table
 
     @property
     def table_name(self):
-        return self._java_table.tableName()
+        return self._j_table.tableName()
 
     @table_name.setter
     def table_name(self, name):
-        self._java_table.tableName(name)
+        self._j_table.tableName(name)
 
     def select(self, col_list):
         """
@@ -70,7 +70,7 @@ class Table(object):
         :param col_list: expression string
         :return: result table
         """
-        return Table(self._java_table.select(col_list))
+        return Table(self._j_table.select(col_list))
 
     def as_(self, col_list):
         """
@@ -83,7 +83,7 @@ class Table(object):
         :param col_list: field list expression string
         :return: result table
         """
-        return Table(get_method(self._java_table, "as")(col_list))
+        return Table(get_method(self._j_table, "as")(col_list))
 
     def filter(self, predicate):
         """
@@ -96,7 +96,7 @@ class Table(object):
         :param predicate: predicate expression string
         :return: result table
         """
-        return Table(self._java_table.filter(predicate))
+        return Table(self._j_table.filter(predicate))
 
     def where(self, predicate):
         """
@@ -110,7 +110,7 @@ class Table(object):
         :param predicate: predicate expression string
         :return: result table
         """
-        return Table(self._java_table.where(predicate))
+        return Table(self._j_table.where(predicate))
 
     def group_by(self, key_list):
         """
@@ -124,7 +124,7 @@ class Table(object):
         :param key_list: field list expression string
         :return: grouped table
         """
-        return GroupedTable(self._java_table.groupBy(key_list))
+        return GroupedTable(self._j_table.groupBy(key_list))
 
     def distinct(self):
         """
@@ -135,7 +135,7 @@ class Table(object):
 
         :return: result table
         """
-        return Table(self._java_table.distinct())
+        return Table(self._j_table.distinct())
 
     def join(self, right, join_predicate=None):
         """
@@ -156,9 +156,9 @@ class Table(object):
         :return: result table
         """
         if join_predicate is not None:
-            return Table(self._java_table.join(right._java_table, join_predicate))
+            return Table(self._j_table.join(right._j_table, join_predicate))
         else:
-            return Table(self._java_table.join(right._java_table))
+            return Table(self._j_table.join(right._j_table))
 
     def left_outer_join(self, right, join_predicate=None):
         """
@@ -179,10 +179,10 @@ class Table(object):
         :return: result table
         """
         if join_predicate is None:
-            return Table(self._java_table.leftOuterJoin(right._java_table))
+            return Table(self._j_table.leftOuterJoin(right._j_table))
         else:
-            return Table(self._java_table.leftOuterJoin(
-                right._java_table, join_predicate))
+            return Table(self._j_table.leftOuterJoin(
+                right._j_table, join_predicate))
 
     def right_outer_join(self, right, join_predicate):
         """
@@ -201,8 +201,8 @@ class Table(object):
         :param join_predicate: the join predicate expression string
         :return: result table
         """
-        return Table(self._java_table.rightOuterJoin(
-            right._java_table, join_predicate))
+        return Table(self._j_table.rightOuterJoin(
+            right._j_table, join_predicate))
 
     def full_outer_join(self, right, join_predicate):
         """
@@ -221,8 +221,8 @@ class Table(object):
         :param join_predicate: the join predicate expression string
         :return: result table
         """
-        return Table(self._java_table.fullOuterJoin(
-            right._java_table, join_predicate))
+        return Table(self._j_table.fullOuterJoin(
+            right._j_table, join_predicate))
 
     def minus(self, right):
         """
@@ -241,7 +241,7 @@ class Table(object):
         :param right: right table
         :return: result table
         """
-        return Table(self._java_table.minus(right._java_table))
+        return Table(self._j_table.minus(right._j_table))
 
     def minus_all(self, right):
         """
@@ -261,7 +261,7 @@ class Table(object):
         :param right: right table
         :return: result table
         """
-        return Table(self._java_table.minusAll(right._java_table))
+        return Table(self._j_table.minusAll(right._j_table))
 
     def union(self, right):
         """
@@ -278,7 +278,7 @@ class Table(object):
         :param right: right table
         :return: result table
         """
-        return Table(self._java_table.union(right._java_table))
+        return Table(self._j_table.union(right._j_table))
 
     def union_all(self, right):
         """
@@ -295,7 +295,7 @@ class Table(object):
         :param right: right table
         :return: result table
         """
-        return Table(self._java_table.unionAll(right._java_table))
+        return Table(self._j_table.unionAll(right._j_table))
 
     def intersect(self, right):
         """
@@ -314,7 +314,7 @@ class Table(object):
         :param right: right table
         :return: result table
         """
-        return Table(self._java_table.intersect(right._java_table))
+        return Table(self._j_table.intersect(right._j_table))
 
     def intersect_all(self, right):
         """
@@ -333,7 +333,7 @@ class Table(object):
         :param right: right table
         :return: result table
         """
-        return Table(self._java_table.intersectAll(right._java_table))
+        return Table(self._j_table.intersectAll(right._j_table))
 
     def order_by(self, fields):
         """
@@ -347,7 +347,7 @@ class Table(object):
         :param fields: order fields expression string
         :return: result table
         """
-        return Table(self._java_table.orderBy(fields))
+        return Table(self._j_table.orderBy(fields))
 
     def offset(self, offset):
         """
@@ -367,7 +367,7 @@ class Table(object):
         :param offset: number of records to skip
         :return: result table
         """
-        return Table(self._java_table.offset(offset))
+        return Table(self._j_table.offset(offset))
 
     def fetch(self, fetch_num):
         """
@@ -387,7 +387,7 @@ class Table(object):
         :param fetch_num: the number of records to return. Fetch must be >= 0.
         :return: result table
         """
-        return Table(self._java_table.fetch(fetch_num))
+        return Table(self._j_table.fetch(fetch_num))
 
     def insert_into(self, table_name):
         """
@@ -399,17 +399,13 @@ class Table(object):
 
         :param table_name: Name of the ``TableSink`` to which the ``Table`` is written.
         """
-        self._java_table.insertInto(table_name)
+        self._j_table.insertInto(table_name)
 
 
 class GroupedTable(object):
 
-    """
-    Wrapper of org.apache.flink.table.api.GroupedTable
-    """
-
     def __init__(self, java_table):
-        self._java_table = java_table
+        self._j_table = java_table
 
     def select(self, col_list):
-        return Table(self._java_table.select(col_list))
+        return Table(self._j_table.select(col_list))

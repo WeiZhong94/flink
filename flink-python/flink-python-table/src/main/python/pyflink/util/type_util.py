@@ -25,7 +25,7 @@ from py4j.java_collections import ListConverter
 from py4j.java_gateway import JavaClass
 
 from pyflink.java_gateway import get_gateway, ClassName
-from pyflink.sql.data_type import *
+from pyflink.table.data_type import *
 
 _sql_basic_types_py2j_map = None
 _sql_complex_type_py2j_map = None
