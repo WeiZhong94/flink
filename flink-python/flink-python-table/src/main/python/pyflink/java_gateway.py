@@ -129,7 +129,6 @@ def _test():
 
 
 class ClassName(object):
-    TABLE = "org.apache.flink.table.api.Table"
     TABLE_ENVIRONMENT = "org.apache.flink.table.api.TableEnvironment"
     STREAM_TABLE_ENVIRONMENT = "org.apache.flink.table.api.java.StreamTableEnvironment"
     BATCH_TABLE_ENVIRONMENT = "org.apache.flink.table.api.java.BatchTableEnvironment"
@@ -149,9 +148,6 @@ class ClassName(object):
     TIMESTAMP = "java.sql.Timestamp"
     DATE = "java.sql.Date"
     TIME = "java.sql.Time"
-    SCHEMA = "org.apache.flink.table.descriptors.Schema"
-    OLD_CSV = "org.apache.flink.table.descriptors.OldCsv"
-    FILE_SYSTEM = "org.apache.flink.table.descriptors.FileSystem"
 
 
 if __name__ == "__main__":
