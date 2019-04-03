@@ -29,8 +29,6 @@ from pyflink.sql.data_type import *
 
 _sql_basic_types_py2j_map = None
 _sql_complex_type_py2j_map = None
-_sql_basic_types_j2py_map = None
-_sql_complex_type_j2py_map = None
 _init_lock = RLock()
 
 if sys.version > '3':
@@ -96,7 +94,7 @@ class TypesUtil(object):
         return _sql_basic_types_py2j_map.get(py_sql_type)
 
     @staticmethod
-    def _convert_pylist_to_java_list(py_list):
+    def convert_pylist_to_java_list(py_list):
         _gateway = get_gateway()
         java_list = []
         for item in py_list:
@@ -106,7 +104,7 @@ class TypesUtil(object):
         return j_list
 
     @staticmethod
-    def _convert_tuple_list(tuple_list):
+    def convert_tuple_list(tuple_list):
         _gateway = get_gateway()
         java_tuple_list = []
         for item in tuple_list:

@@ -18,23 +18,17 @@
 import sys
 
 from abc import ABCMeta
-from threading import RLock
 
 from pyflink.java_gateway import ClassName
 from pyflink.table import Table
 from pyflink.table.table_config import TableConfig
 from pyflink.util.type_util import TypesUtil
 
-if sys.version > '3':
-    xrange = range
-
 __all__ = [
     'BatchTableEnvironment',
     'StreamTableEnvironment',
     'TableEnvironment'
 ]
-
-_lock = RLock()
 
 
 class TableEnvironment(object):
@@ -43,10 +37,6 @@ class TableEnvironment(object):
     """
 
     __metaclass__ = ABCMeta
-
-    table_config = None
-
-    _DEFAULT_JOB_NAME = 'Flink Exec Table Job'
 
     def __init__(self, j_tenv):
         self._j_tenv = j_tenv
@@ -127,26 +117,22 @@ class StreamTableEnvironment(TableEnvironment):
     Wrapper for org.apache.flink.table.api.java.StreamTableEnvironment
     """
 
-    _j_tenv = None
-
     def __init__(self, env):
         self._j_tenv = env
         super(StreamTableEnvironment, self).__init__(env)
 
     def _from_data_stream(self, data_stream, fields=None):
-
         if fields is None:
             j_table = self._j_tenv.fromDataStream(data_stream)
         else:
             j_table = self._j_tenv.fromDataStream(data_stream, fields)
-
         return Table(j_table)
 
     def from_collection(self, data, fields=None):
         if type(data[0]) is tuple:
-            java_list = TypesUtil._convert_tuple_list(data)
+            java_list = TypesUtil.convert_tuple_list(data)
         else:
-            java_list = TypesUtil._convert_pylist_to_java_list(data)
+            java_list = TypesUtil.convert_pylist_to_java_list(data)
         j_ds_source = self._j_tenv.execEnv().fromCollection(java_list)
         return self._from_data_stream(j_ds_source, fields)
 
@@ -156,19 +142,21 @@ class BatchTableEnvironment(TableEnvironment):
     Wrapper for org.apache.flink.table.api.java.BatchTableEnvironment
     """
 
-    _j_tenv = None
-
     def __init__(self, env):
         self._j_tenv = env
         super(BatchTableEnvironment, self).__init__(env)
 
+    def _from_data_set(self, data_set, fields=None):
+        if fields is None:
+            j_table = self._j_tenv.fromDataSet(data_set)
+        else:
+            j_table = self._j_tenv.fromDataSet(data_set, fields)
+        return Table(j_table)
+
     def from_collection(self, data, fields=None):
         if type(data[0]) is tuple:
-            java_list = TypesUtil._convert_tuple_list(data)
+            java_list = TypesUtil.convert_tuple_list(data)
         else:
-            java_list =TypesUtil._convert_pylist_to_java_list(data)
-        if fields is None:
-            j_table = self._j_tenv.fromCollection(java_list)
-        else:
-            j_table = self._j_tenv.fromCollection(java_list, fields)
-        return Table(j_table)
+            java_list = TypesUtil.convert_pylist_to_java_list(data)
+        j_ds_source = self._j_tenv.execEnv().fromCollection(java_list)
+        return self._from_data_set(j_ds_source, fields)

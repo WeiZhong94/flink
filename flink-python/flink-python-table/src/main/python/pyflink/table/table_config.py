@@ -53,7 +53,7 @@ class TableConfig(object):
             self.is_stream = True
             return self
 
-        def as_bacth_execution(self):
+        def as_batch_execution(self):
             self.is_stream = False
             return self
 
@@ -66,7 +66,3 @@ class TableConfig(object):
             table_conf.is_stream = self.is_stream
             table_conf.parallelism = self.parallelism
             return table_conf
-
-
-
-

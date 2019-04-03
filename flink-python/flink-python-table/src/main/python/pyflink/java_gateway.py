@@ -56,7 +56,7 @@ def receive_all(sock, data_len):
     return b''.join(chunks)
 
 
-def launch_java_gateway(conf = None):
+def launch_java_gateway():
 
     java_port = None
     # if not started yet, start it.

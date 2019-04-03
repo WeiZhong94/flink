@@ -23,7 +23,6 @@ from pyflink.table.table_environment import TableEnvironment, StreamTableEnviron
 from pyflink.table.table_config import TableConfig
 from pyflink.table.table_source import JavaTableSource, CsvTableSource
 
-
 __all__ = [
     'TableEnvironment',
     'Table',
