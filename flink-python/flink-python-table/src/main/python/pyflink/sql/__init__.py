@@ -17,8 +17,8 @@
 ################################################################################
 from __future__ import absolute_import
 
-from pyflink.sql.data_type import StringType, BooleanType, ShortType, ByteType, CharType, IntegerType, LongType, FloatType, \
-    DoubleType, BinaryType, DateType, TimeType, TimestampType, DecimalType, RowType, DataTypes
+from pyflink.sql.data_type import StringType, BooleanType, ShortType, ByteType, CharType, IntegerType, LongType, \
+    FloatType, DoubleType, BinaryType, DateType, TimeType, TimestampType, DecimalType, RowType, DataTypes
 
 __all__ = [
     'StringType',

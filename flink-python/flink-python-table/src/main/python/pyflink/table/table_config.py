@@ -21,7 +21,7 @@ __all__ = ['TableConfig']
 
 class TableConfig(object):
 
-    def __init__(self, j_conf = None):
+    def __init__(self, j_conf=None):
         self._is_stream = True
         self._parallelism = None
         self._j_table_config = j_conf
