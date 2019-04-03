@@ -15,23 +15,44 @@
 #  See the License for the specific language governing permissions and
 # limitations under the License.
 ################################################################################
+
 from __future__ import absolute_import
 
-from pyflink.table.table_sink import JavaTableSink, CsvTableSink
+from pyflink.table.data_type import StringType, BooleanType, ShortType, ByteType, CharType, IntegerType, LongType, \
+    FloatType, DoubleType, BinaryType, DateType, TimeType, TimestampType, DecimalType, RowType, DataTypes
+from pyflink.table.table_sink import TableSink, CsvTableSink
 from pyflink.table.table import Table, GroupedTable
 from pyflink.table.table_environment import TableEnvironment, StreamTableEnvironment, BatchTableEnvironment
 from pyflink.table.table_config import TableConfig
-from pyflink.table.table_source import JavaTableSource, CsvTableSource
+from pyflink.table.table_source import TableSource, CsvTableSource
 
 __all__ = [
     'TableEnvironment',
     'Table',
     'TableConfig',
-    'JavaTableSink',
+    'TableSink',
     'CsvTableSink',
     'GroupedTable',
     'StreamTableEnvironment',
     'BatchTableEnvironment',
-    'JavaTableSource',
-    'CsvTableSource'
+    'TableSource',
+    'CsvTableSource',
+
+    # data types
+    'StringType',
+    'BooleanType',
+    'ShortType',
+    'ByteType',
+    'CharType',
+    'IntegerType',
+    'LongType',
+    'FloatType',
+    'DoubleType',
+    'BinaryType',
+    'DateType',
+    'TimeType',
+    'TimestampType',
+    'DecimalType',
+    'RowType',
+    'DataTypes'
 ]

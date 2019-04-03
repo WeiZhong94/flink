@@ -21,7 +21,7 @@ import tempfile
 from pyflink.table import TableEnvironment, TableConfig
 from pyflink.table.table_sink import CsvTableSink
 from pyflink.table.table_source import CsvTableSource
-from pyflink.sql.data_type import DataTypes
+from pyflink.table.data_type import DataTypes
 
 
 def test_new_api():

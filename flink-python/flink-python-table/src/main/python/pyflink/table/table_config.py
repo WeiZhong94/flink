@@ -21,35 +21,26 @@ __all__ = ['TableConfig']
 
 class TableConfig(object):
 
-    def __init__(self, j_conf=None):
-        self._is_stream = True
-        self._parallelism = None
-        self._j_table_config = j_conf
+    def __init__(self, is_stream, parallelism):
+        self._is_stream = is_stream
+        self._parallelism = parallelism
 
     @property
     def is_stream(self):
         return self._is_stream
 
-    @is_stream.setter
-    def is_stream(self, value):
-        self._is_stream = value
-
     @property
     def parallelism(self):
         return self._parallelism
 
-    @parallelism.setter
-    def parallelism(self, value):
-        self._parallelism = value
-
     class Builder(object):
 
         def __init__(self):
-            self.is_stream = None
-            self.parallelism = None
+            self._is_stream = None
+            self._parallelism = None
 
         def as_streaming_execution(self):
-            self.is_stream = True
+            self._is_stream = True
             return self
 
         def as_batch_execution(self):
@@ -57,11 +48,8 @@ class TableConfig(object):
             return self
 
         def set_parallelism(self, parallelism):
-            self.parallelism = parallelism
+            self._parallelism = parallelism
             return self
 
         def build(self):
-            table_conf = TableConfig()
-            table_conf.is_stream = self.is_stream
-            table_conf.parallelism = self.parallelism
-            return table_conf
+            return TableConfig(self._is_stream, self._parallelism)
