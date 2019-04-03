@@ -17,8 +17,6 @@
 ################################################################################
 
 from py4j.java_gateway import get_method
-from pyflink.java_gateway import ClassName
-from pyflink.util.type_util import TypesUtil
 
 __all__ = [
     'GroupedTable',
@@ -32,12 +30,8 @@ class Table(object):
     Wrapper of org.apache.flink.table.api.Table
     """
 
-    def __init__(self, java_table_or_t_env, udtf_call = None):
-        if udtf_call == None:
-            self._java_table = java_table_or_t_env
-        else:
-            self._java_table = \
-                TypesUtil.class_for_name(ClassName.TABLE)(java_table_or_t_env._j_tenv, udtf_call)
+    def __init__(self, java_table_or_t_env,):
+        self._java_table = java_table_or_t_env
 
     @property
     def table_name(self):
