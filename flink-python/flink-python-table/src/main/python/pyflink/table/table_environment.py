@@ -31,6 +31,9 @@ __all__ = [
 
 
 class TableEnvironment(object):
+    """
+    The abstract base class for batch and stream TableEnvironments.
+    """
 
     __metaclass__ = ABCMeta
 
@@ -38,12 +41,32 @@ class TableEnvironment(object):
         self._j_tenv = j_tenv
 
     def from_table_source(self, table_source):
-        self._j_tenv.fromTableSource(table_source.j_table_source)
+        """
+        Creates a table from a table source.
+
+        :param table_source: table source used as table
+        :return: result table
+        """
+        return Table(self._j_tenv.fromTableSource(table_source.j_table_source))
 
     def register_table(self, name, table):
+        """
+        Registers a ``Table`` under a unique name in the TableEnvironment's catalog.
+        Registered tables can be referenced in SQL queries.
+
+        :param name: The name under which the table will be registered.
+        :param table: The table to register.
+        """
         self._j_tenv.registerTable(name, table._java_table)
 
     def register_table_source(self, name, table_source):
+        """
+        Registers an external ``TableSource`` in this ``TableEnvironment``'s catalog.
+        Registered tables can be referenced in SQL queries.
+
+        :param name: The name under which the ``TableSource`` is registered.
+        :param table_source: The ``TableSource`` to register.
+        """
         self._j_tenv.registerTableSource(name, table_source.j_table_source)
 
     def register_table_sink(self, name, field_names, field_types, table_sink):
