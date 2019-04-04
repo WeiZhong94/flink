@@ -20,7 +20,6 @@ from abc import ABCMeta
 
 from pyflink.java_gateway import ClassName
 from pyflink.table import Table
-from pyflink.table.table_config import TableConfig
 from pyflink.util.type_util import TypesUtil
 
 __all__ = [
@@ -67,9 +66,19 @@ class TableEnvironment(object):
         :param name: The name under which the ``TableSource`` is registered.
         :param table_source: The ``TableSource`` to register.
         """
-        self._j_tenv.registerTableSource(name, table_source.j_table_source)
+        self._j_tenv.registerTableSource(name, table_source._j_table_source)
 
     def register_table_sink(self, name, field_names, field_types, table_sink):
+        """
+        Registers an external ``TableSink`` with given field names and types in this
+        ``TableEnvironment``\ 's catalog.
+        Registered sink tables can be referenced in SQL DML statements.
+
+        :param name: The name under which the ``TableSink`` is registered.
+        :param field_names: The field names to register with the ``TableSink``.
+        :param field_types: The field types to register with the ``TableSink``.
+        :param table_sink: The ``TableSink`` to register.
+        """
         j_field_names = TypesUtil.convert_py_list_to_java_array(ClassName.STRING, field_names)
         j_field_ypes = []
         for field_type in field_types:
@@ -78,11 +87,35 @@ class TableEnvironment(object):
         self._j_tenv.registerTableSink(name, j_field_names, j_field_types_array, table_sink._j_table_sink)
 
     def scan(self, *table_path):
+        """
+        Scans a registered table and returns the resulting ``Table``.
+        A table to scan must be registered in the TableEnvironment. It can be either directly
+        registered as TableSource or Table.
+
+        Examples:
+
+        Scanning a directly registered table
+        ::
+            >>> tab = t_env.scan("tableName")
+
+        Scanning a table from a registered catalog
+        ::
+            >>> tab = t_env.scan("catalogName", "dbName", "tableName")
+
+        :param table_path: The path of the table to scan.
+        :throws: Exception if no table is found using the given table path.
+        :return: The resulting ``Table``
+        """
         j_varargs = TypesUtil.convert_py_list_to_java_array(ClassName.STRING, table_path)
         j_table = self._j_tenv.scan(j_varargs)
         return Table(j_table)
 
     def execute(self, job_name=None):
+        """
+        Triggers the program execution.
+
+        :param job_name: Optional, desired name of the job.
+        """
         if job_name is not None:
             self._j_tenv.execEnv().execute(job_name)
         else:
@@ -91,9 +124,11 @@ class TableEnvironment(object):
     @classmethod
     def get_table_environment(cls, table_config):
         """
+        Returns a ``StreamTableEnvironment`` or a ``BatchTableEnvironment``
+        which matches the ``TableConfig``'s content.
 
-        :type table_config: TableConfig
-        :return:
+        :type table_config: The TableConfig for the new TableEnvironment.
+        :return: Desired ``TableEnvironment``.
         """
         if table_config.is_stream:
             t_env = TableEnvironment._get_stream_table_environment()
@@ -129,6 +164,17 @@ class StreamTableEnvironment(TableEnvironment):
         super(StreamTableEnvironment, self).__init__(j_tenv)
 
     def from_collection(self, data, fields=None):
+        """
+        Creates a ``Table`` from the given non-empty collection.
+
+        Exmaple:
+        ::
+            >>> t = t_env.from_collection([(1, "Bob"), (2, "Harry")], "a, b")
+
+        :param data: The collection of elements to create the ``Table`` from.
+        :param fields: The field names of the resulting ``Table``.
+        :return: The resulting ``Table``.
+        """
         if type(data[0]) is tuple:
             java_list = TypesUtil.convert_tuple_list(data)
         else:
@@ -149,6 +195,17 @@ class BatchTableEnvironment(TableEnvironment):
         super(BatchTableEnvironment, self).__init__(j_tenv)
 
     def from_collection(self, data, fields=None):
+        """
+        Creates a ``Table`` from the given non-empty collection.
+
+        Exmaple:
+        ::
+            >>> t = t_env.from_collection([(1, "Bob"), (2, "Harry")], "a, b")
+
+        :param data: The collection of elements to create the ``Table`` from.
+        :param fields: The field names of the resulting ``Table``.
+        :return: The resulting ``Table``.
+        """
         if type(data[0]) is tuple:
             java_list = TypesUtil.convert_tuple_list(data)
         else:

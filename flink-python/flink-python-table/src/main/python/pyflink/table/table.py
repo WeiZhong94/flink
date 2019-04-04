@@ -378,10 +378,13 @@ class Table(object):
         ``Table#offset(offset)`` call to return n rows after skipping the first o rows.
 
         Example:
+
+        Returns the first 3 records.
         ::
-            # returns the first 3 records.
             >>> t =tab.order_by("name.desc").fetch(3)
-            # skips the first 10 rows and returns the next 5 rows.
+
+        Skips the first 10 rows and returns the next 5 rows.
+        ::
             >>> t = tab.order_by("name.desc").offset(10).fetch(5)
 
         :param fetch_num: the number of records to return. Fetch must be >= 0.
