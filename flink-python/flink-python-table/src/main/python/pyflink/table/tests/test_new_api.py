@@ -55,7 +55,7 @@ def test_new_api():
 
     t_env.register_table_sink(
         "Results",
-        CsvTableSink(tmp_csv).configure(field_names, field_types))
+        field_names, field_types, CsvTableSink(tmp_csv))
 
     t = t_env.scan("Orders")  # schema (a, b, c)
 
