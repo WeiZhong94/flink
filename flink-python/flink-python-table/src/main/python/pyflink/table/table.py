@@ -63,12 +63,13 @@ class Table(object):
         """
         Performs a selection operation. Similar to a SQL SELECT statement. The field expressions
         can contain complex expressions and aggregations.
+
         Example:
         ::
             >>> t = tab.select("key, value.avg + ' The average' as average")
 
-        :param col_list: expression string
-        :return: result table
+        :param col_list: Expression string.
+        :return: Result table.
         """
         return Table(self._j_table.select(col_list))
 
@@ -80,8 +81,8 @@ class Table(object):
         ::
             >>> t = tab.as_("a, b")
 
-        :param col_list: field list expression string
-        :return: result table
+        :param col_list: Field list expression string.
+        :return: Result table.
         """
         return Table(get_method(self._j_table, "as")(col_list))
 
@@ -93,8 +94,8 @@ class Table(object):
         ::
             >>> t = tab.filter("name = 'Fred'")
 
-        :param predicate: predicate expression string
-        :return: result table
+        :param predicate: Predicate expression string.
+        :return: Result table.
         """
         return Table(self._j_table.filter(predicate))
 
@@ -107,8 +108,8 @@ class Table(object):
 
             >>> t = tab.where("name = 'Fred'")
 
-        :param predicate: predicate expression string
-        :return: result table
+        :param predicate: Predicate expression string.
+        :return: Result table.
         """
         return Table(self._j_table.where(predicate))
 
@@ -121,8 +122,8 @@ class Table(object):
         ::
             >>> t = tab.group_by("key").select("key, value.avg")
 
-        :param key_list: field list expression string
-        :return: grouped table
+        :param key_list: Group keys.
+        :return: The grouped table.
         """
         return GroupedTable(self._j_table.groupBy(key_list))
 
@@ -133,7 +134,7 @@ class Table(object):
         ::
             >>> t = tab.select("key, value").distinct()
 
-        :return: result table
+        :return: Result table.
         """
         return Table(self._j_table.distinct())
 
@@ -151,9 +152,9 @@ class Table(object):
             >>> t = left.join(right).where("a = b && c > 3").select("a, b, d")
             >>> t = left.join(right, "a = b")
 
-        :param right: right table
-        :param join_predicate: optional, the join predicate expression string
-        :return: result table
+        :param right: Right table.
+        :param join_predicate: Optional, the join predicate expression string.
+        :return: Result table.
         """
         if join_predicate is not None:
             return Table(self._j_table.join(right._j_table, join_predicate))
@@ -174,9 +175,9 @@ class Table(object):
             >>> t = left.left_outer_join(right).select("a, b, d")
             >>> t = left.left_outer_join(right, "a = b").select("a, b, d")
 
-        :param right: right table
-        :param join_predicate: optional, the join predicate expression string
-        :return: result table
+        :param right: Right table.
+        :param join_predicate: Optional, the join predicate expression string.
+        :return: Result table.
         """
         if join_predicate is None:
             return Table(self._j_table.leftOuterJoin(right._j_table))
@@ -191,15 +192,15 @@ class Table(object):
 
         .. note::
             Both tables must be bound to the same ``TableEnvironment`` and its
-        ``TableConfig`` must have null check enabled (default).
+            ``TableConfig`` must have null check enabled (default).
 
         Example:
         ::
             >>> t = left.right_outer_join(right, "a = b").select("a, b, d")
 
-        :param right: right table
-        :param join_predicate: the join predicate expression string
-        :return: result table
+        :param right: Right table.
+        :param join_predicate: The join predicate expression string.
+        :return: Result table.
         """
         return Table(self._j_table.rightOuterJoin(
             right._j_table, join_predicate))
@@ -217,9 +218,9 @@ class Table(object):
         ::
             >>> t = left.full_outer_join(right, "a = b").select("a, b, d")
 
-        :param right: right table
-        :param join_predicate: the join predicate expression string
-        :return: result table
+        :param right: Right table.
+        :param join_predicate: The join predicate expression string.
+        :return: Result table.
         """
         return Table(self._j_table.fullOuterJoin(
             right._j_table, join_predicate))
@@ -238,8 +239,8 @@ class Table(object):
         ::
             >>> t = left.minus(right)
 
-        :param right: right table
-        :return: result table
+        :param right: Right table.
+        :return: Result table.
         """
         return Table(self._j_table.minus(right._j_table))
 
@@ -258,8 +259,8 @@ class Table(object):
         ::
             >>> t = left.minus_all(right)
 
-        :param right: right table
-        :return: result table
+        :param right: Right table.
+        :return: Result table.
         """
         return Table(self._j_table.minusAll(right._j_table))
 
@@ -275,8 +276,8 @@ class Table(object):
         ::
             >>> t = left.union(right)
 
-        :param right: right table
-        :return: result table
+        :param right: Right table.
+        :return: Result table.
         """
         return Table(self._j_table.union(right._j_table))
 
@@ -292,8 +293,8 @@ class Table(object):
         ::
             >>> t = left.union_all(right)
 
-        :param right: right table
-        :return: result table
+        :param right: Right table.
+        :return: Result table.
         """
         return Table(self._j_table.unionAll(right._j_table))
 
@@ -311,8 +312,8 @@ class Table(object):
         ::
             >>> t = left.intersect(right)
 
-        :param right: right table
-        :return: result table
+        :param right: Right table.
+        :return: Result table.
         """
         return Table(self._j_table.intersect(right._j_table))
 
@@ -330,8 +331,8 @@ class Table(object):
         ::
             >>> t = left.intersect_all(right)
 
-        :param right: right table
-        :return: result table
+        :param right: Right table.
+        :return: Result table.
         """
         return Table(self._j_table.intersectAll(right._j_table))
 
@@ -344,8 +345,8 @@ class Table(object):
         ::
             >>> t = tab.order_by("name.desc")
 
-        :param fields: order fields expression string
-        :return: result table
+        :param fields: Order fields expression string,
+        :return: Result table.
         """
         return Table(self._j_table.orderBy(fields))
 
@@ -364,8 +365,8 @@ class Table(object):
             # skips the first 10 rows and returns the next 5 rows.
             >>> t = tab.order_by("name.desc").offset(10).fetch(5)
 
-        :param offset: number of records to skip
-        :return: result table
+        :param offset: Number of records to skip.
+        :return: Result table.
         """
         return Table(self._j_table.offset(offset))
 
@@ -387,8 +388,8 @@ class Table(object):
         ::
             >>> t = tab.order_by("name.desc").offset(10).fetch(5)
 
-        :param fetch_num: the number of records to return. Fetch must be >= 0.
-        :return: result table
+        :param fetch_num: The number of records to return. Fetch must be >= 0.
+        :return: Result table.
         """
         return Table(self._j_table.fetch(fetch_num))
 
@@ -411,4 +412,16 @@ class GroupedTable(object):
         self._j_table = java_table
 
     def select(self, col_list):
+        """
+        Performs a selection operation on a grouped table. Similar to an SQL SELECT statement.
+        The field expressions can contain complex expressions and aggregations.
+
+        Example:
+        ::
+            >>> t = tab.group_by("key").select("key, value.avg + ' The average' as average")
+
+
+        :param col_list: Expression string that contains group keys and aggregate function calls.
+        :return: Result table.
+        """
         return Table(self._j_table.select(col_list))

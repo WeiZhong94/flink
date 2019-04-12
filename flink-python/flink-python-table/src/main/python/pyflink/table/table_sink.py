@@ -46,10 +46,3 @@ class CsvTableSink(TableSink):
         csv_table_sink = TypesUtil.class_for_name(ClassName.CSV_TABLE_SINK)
         j_csv_table_sink = csv_table_sink(self._path, self._field_delimiter, self._num_files, self._write_mode)
         super(CsvTableSink, self).__init__(j_csv_table_sink)
-
-    def configure(self, field_names, field_types):
-        j_field_names = TypesUtil.convert_py_list_to_java_array(ClassName.STRING, field_names)
-        j_field_types = TypesUtil.to_java_sql_type(field_types)
-        self._j_table_sink = self._j_table_sink.configure(j_field_names, j_field_types)
-        return self
-

@@ -6,7 +6,6 @@ Subpackages
 
 .. toctree::
 
-    pyflink.sql
     pyflink.table
 
 Module contents

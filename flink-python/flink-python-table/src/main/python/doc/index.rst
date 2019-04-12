@@ -11,7 +11,6 @@ Welcome to Flink Python Table API's documentation!
    :caption: Contents:
 
    pyflink
-   pyflink.sql
    pyflink.table
 
 

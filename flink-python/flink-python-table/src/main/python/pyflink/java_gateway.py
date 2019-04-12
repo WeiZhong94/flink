@@ -131,8 +131,6 @@ def _test():
 
 class ClassName(object):
     TABLE_ENVIRONMENT = "org.apache.flink.table.api.TableEnvironment"
-    STREAM_TABLE_ENVIRONMENT = "org.apache.flink.table.api.java.StreamTableEnvironment"
-    BATCH_TABLE_ENVIRONMENT = "org.apache.flink.table.api.java.BatchTableEnvironment"
     EXECUTION_ENVIRONMENT = "org.apache.flink.api.java.ExecutionEnvironment"
     STREAM_EXECUTION_ENVIRONMENT = \
         "org.apache.flink.streaming.api.environment.StreamExecutionEnvironment"

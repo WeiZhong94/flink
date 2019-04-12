@@ -22,7 +22,6 @@ setup(
     version='1.0',
     packages=['pyflink',
               'pyflink.table',
-              'pyflink.sql',
               'pyflink.util'],
     url='http://flink.apache.org',
     license='Licensed under the Apache License, Version 2.0',
