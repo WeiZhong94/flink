@@ -15,11 +15,12 @@
 #  See the License for the specific language governing permissions and
 # limitations under the License.
 ################################################################################
-
 import os
+import shutil
 import signal
 import struct
-import socket
+import tempfile
+import time
 from subprocess import Popen, PIPE
 from threading import RLock
 
@@ -28,7 +29,6 @@ from py4j.java_gateway import JavaGateway, GatewayClient
 _gateway = None
 _lock = RLock()
 _execute_mode_param = '--mini-cluster'
-
 
 def get_gateway():
     global _gateway
@@ -62,31 +62,18 @@ def launch_java_gateway():
     java_port = None
     # if not started yet, start it.
     if java_port is None:
-        # start a ServerSocket and tell Java the port, so that Java can pass its Gateway port
-        # through this socket connection.
-        handshake_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        handshake_socket.bind(('127.0.0.1', 0))
-        handshake_socket.listen(1)
-        host, port = handshake_socket.getsockname()
-
-        # TODO: investigate that settimeout() seems doesn't work
-        # timeout = 2.0
-        # handshake_socket.settimeout(timeout)
-
-        launch_java_process(port)
-
-        connection = None
+        conn_info_dir = tempfile.mkdtemp()
         try:
-            connection, _ = handshake_socket.accept()
-            data = receive_all(connection, 4)
-            java_port = struct.unpack("!I", data)[0]
-        except Exception as err:
-            print(err)   # TODO: add logger
-            raise err
+            fd, conn_info_file = tempfile.mkstemp(dir=conn_info_dir)
+            os.close(fd)
+            os.unlink(conn_info_file)
+
+            launch_java_process(conn_info_file)
+
+            with open(conn_info_file, "rb") as info:
+                java_port = struct.unpack("!I", info.read(4))[0]
         finally:
-            if connection is not None:
-                connection.close()
-            handshake_socket.close()
+            shutil.rmtree(conn_info_dir)
 
     # Connect to the java gateway
     gateway = JavaGateway(GatewayClient(port=java_port), auto_convert=True)
@@ -94,7 +81,7 @@ def launch_java_gateway():
     return gateway
 
 
-def launch_java_process(port):
+def launch_java_process(conn_info_file):
     flink_home = None
     if 'FLINK_ROOT_DIR' in os.environ:
         flink_home = os.environ['FLINK_ROOT_DIR']
@@ -105,49 +92,37 @@ def launch_java_process(port):
     bin_dir = flink_home + '/bin'
 
     shell_gateway = ClassName.PYTHON_SHELL_GATEWAY_SERVER
-    try:
-        command = [bin_dir+'/pyflink2.sh', _execute_mode_param, '-c', shell_gateway, str(port)]
+    command = [bin_dir+'/pyflink2.sh', _execute_mode_param, '-c', shell_gateway, conn_info_file]
 
-        def preexec_func():
-            # ignore SIGINT
-            signal.signal(signal.SIGINT, signal.SIG_IGN)
+    def preexec_func():
+        # ignore SIGINT
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
 
-        p = Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE, preexec_fn=preexec_func, env=dict(os.environ))
-    except Exception as err:
-        raise err
+    p = Popen(command, stdin=PIPE, preexec_fn=preexec_func, env=dict(os.environ))
 
-    # if it has exited
-    if p.poll() is not None:
-        raise Exception("Launching Java failed!")
+    while not p.poll() and not os.path.isfile(conn_info_file):
+        time.sleep(0.1)
+
+    if not os.path.isfile(conn_info_file):
+        raise Exception("Java gateway process exited before sending its port number")
     return p
 
 
-def _test():
-    try:
-        launch_java_gateway()
-    except Exception as err:
-        print(err)
-
-
 class ClassName(object):
-    TABLE_ENVIRONMENT = "org.apache.flink.table.api.TableEnvironment"
-    EXECUTION_ENVIRONMENT = "org.apache.flink.api.java.ExecutionEnvironment"
-    STREAM_EXECUTION_ENVIRONMENT = \
-        "org.apache.flink.streaming.api.environment.StreamExecutionEnvironment"
-    PYTHON_SHELL_GATEWAY_SERVER = "org.apache.flink.api.python.PythonShellGatewayServer"
     STRING = "java.lang.String"
-    TYPE_INFORMATION = "org.apache.flink.api.common.typeinfo.TypeInformation"
-    CSV_TABLE_SINK = "org.apache.flink.table.sinks.CsvTableSink"
-    CSV_TABLE_SOURCE = "org.apache.flink.table.sources.CsvTableSource"
-    WRITE_MODE = "org.apache.flink.core.fs.FileSystem.WriteMode"
-    TUPLE = "org.apache.flink.api.java.tuple.Tuple"
-    TYPES = "org.apache.flink.api.common.typeinfo.Types"
-    TIME_INDICATOR_TYPE_INFO = "org.apache.flink.table.typeutils.TimeIndicatorTypeInfo"
-    ROW_TYPE_INFO = "org.apache.flink.api.java.typeutils.RowTypeInfo"
-    TIMESTAMP = "java.sql.Timestamp"
     DATE = "java.sql.Date"
     TIME = "java.sql.Time"
+    TIMESTAMP = "java.sql.Timestamp"
+    TUPLE = "org.apache.flink.api.java.tuple.Tuple"
+    TYPES = "org.apache.flink.api.common.typeinfo.Types"
+    TYPE_INFORMATION = "org.apache.flink.api.common.typeinfo.TypeInformation"
+    TIME_INDICATOR_TYPE_INFO = "org.apache.flink.table.typeutils.TimeIndicatorTypeInfo"
+    ROW_TYPE_INFO = "org.apache.flink.api.java.typeutils.RowTypeInfo"
+    CSV_TABLE_SOURCE = "org.apache.flink.table.sources.CsvTableSource"
+    CSV_TABLE_SINK = "org.apache.flink.table.sinks.CsvTableSink"
+    WRITE_MODE = "org.apache.flink.core.fs.FileSystem.WriteMode"
+    TABLE_ENVIRONMENT = "org.apache.flink.table.api.TableEnvironment"
+    EXECUTION_ENVIRONMENT = "org.apache.flink.api.java.ExecutionEnvironment"
+    STREAM_EXECUTION_ENVIRONMENT = "org.apache.flink.streaming.api.environment.StreamExecutionEnvironment"
+    PYTHON_SHELL_GATEWAY_SERVER = "org.apache.flink.api.python.PythonShellGatewayServer"
 
-
-if __name__ == "__main__":
-    _test()

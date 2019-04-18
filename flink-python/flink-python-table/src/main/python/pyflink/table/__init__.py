@@ -28,21 +28,21 @@ from pyflink.table.table_source import TableSource, CsvTableSource
 
 __all__ = [
     'TableEnvironment',
-    'Table',
-    'TableConfig',
-    'TableSink',
-    'CsvTableSink',
-    'GroupedTable',
     'StreamTableEnvironment',
     'BatchTableEnvironment',
+    'Table',
+    'GroupedTable',
+    'TableConfig',
+    'TableSink',
     'TableSource',
+    'CsvTableSink',
     'CsvTableSource',
 
     # data types
     'StringType',
     'BooleanType',
-    'ShortType',
     'ByteType',
+    'ShortType',
     'CharType',
     'IntegerType',
     'LongType',

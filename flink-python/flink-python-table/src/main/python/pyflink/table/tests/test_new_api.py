@@ -25,6 +25,7 @@ from pyflink.table.data_type import DataTypes
 
 
 def test_new_api():
+    #os.environ['PYFLINK_SERVER_DEBUG'] = "true"
     tmp_dir = tempfile.gettempdir()
     source_path = tmp_dir + '/streaming.csv'
     if os.path.isfile(source_path):

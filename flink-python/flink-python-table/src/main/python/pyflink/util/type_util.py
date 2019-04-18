@@ -125,15 +125,7 @@ class TypesUtil(object):
     @staticmethod
     def convert_py_list_to_java_array(arr_type, seq):
         _gateway = get_gateway()
-        ns = _gateway.jvm
-
-        # e.g.: org.apache.flink.streaming.api.TimeCharacteristic
-        attrs = arr_type.split('.')
-        for attr in attrs:
-            if hasattr(ns, attr):
-                ns = getattr(ns, attr)
-            else:
-                raise Exception('Has no such attribute')
+        ns = TypesUtil.class_for_name(arr_type)
         size = len(seq)
         java_array = _gateway.new_array(ns, size)
         for i in range(size):
