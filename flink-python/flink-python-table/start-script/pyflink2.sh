@@ -26,7 +26,6 @@ bin=`cd "$bin"; pwd`
 FLINK_CLASSPATH=`constructFlinkClassPath`
 
 ARGS=()
-EXECUTE_MODE="local"
 
 # if shell mode has been specified, use shell-driver
 while [[ $# -gt 0 ]]
@@ -38,10 +37,6 @@ do
             shift
             shift
             ;;
-        --mini-cluster)
-            EXECUTE_MODE="mini"
-            shift
-            ;;
         *)
            ARGS+=("$1")
            shift
@@ -49,11 +44,7 @@ do
     esac
 done
 
-export PYTHON_JAR_PATH=`echo "$FLINK_ROOT_DIR"/opt/flink-python-table*.jar`
-if [[ "$EXECUTE_MODE" == "local" ]]; then
-    exec "$FLINK_BIN_DIR"/flink run -c ${DRIVER} ${PYTHON_JAR_PATH} ${ARGS[@]}
-elif [[ "$EXECUTE_MODE" == "mini" ]]; then
-    exec $JAVA_RUN $JVM_ARGS -cp ${FLINK_CLASSPATH}:${PYTHON_JAR_PATH} ${DRIVER} ${ARGS[@]}
-fi
+PYTHON_JAR_PATH=`echo "$FLINK_ROOT_DIR"/opt/flink-python-table*.jar`
+exec $JAVA_RUN $JVM_ARGS -cp ${FLINK_CLASSPATH}:${PYTHON_JAR_PATH} ${DRIVER} ${ARGS[@]}
 
 
