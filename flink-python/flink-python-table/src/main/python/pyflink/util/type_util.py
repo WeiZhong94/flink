@@ -27,24 +27,21 @@ from py4j.java_gateway import JavaClass
 from pyflink.java_gateway import get_gateway, ClassName
 from pyflink.table.data_type import *
 
-_sql_basic_types_py2j_map = None
-_sql_complex_type_py2j_map = None
-_init_lock = RLock()
-
 if sys.version > '3':
     xrange = range
 
 
 class TypesUtil(object):
+    _sql_basic_types_py2j_map = None
+    _sql_complex_type_py2j_map = None
+    _init_lock = RLock()
 
     @staticmethod
     def to_java_sql_type(py_sql_type):
-        global _sql_basic_types_py2j_map
-        global _sql_complex_type_py2j_map
-        if (_sql_basic_types_py2j_map is None) or (_sql_complex_type_py2j_map is None):
-            with _init_lock:
+        if (TypesUtil._sql_basic_types_py2j_map is None) or (TypesUtil._sql_complex_type_py2j_map is None):
+            with TypesUtil._init_lock:
                 j_sql_types = TypesUtil.class_for_name(ClassName.TYPES)
-                _sql_basic_types_py2j_map = {
+                TypesUtil._sql_basic_types_py2j_map = {
                     DataTypes.STRING: j_sql_types.STRING,
                     DataTypes.INT: j_sql_types.INT,
                     DataTypes.BOOLEAN: j_sql_types.BOOLEAN,
@@ -65,12 +62,12 @@ class TypesUtil(object):
                     DataTypes.DECIMAL: j_sql_types.BIG_DEC
                 }
 
-                _sql_complex_type_py2j_map = {
+                TypesUtil._sql_complex_type_py2j_map = {
                     RowType: TypesUtil.class_for_name(ClassName.ROW_TYPE_INFO)
                 }
 
         if isinstance(py_sql_type, list):
-            j_types = [_sql_basic_types_py2j_map[pt] for pt in py_sql_type]
+            j_types = [TypesUtil._sql_basic_types_py2j_map[pt] for pt in py_sql_type]
             j_types_arr = TypesUtil.convert_py_list_to_java_array(
                 ClassName.TYPE_INFORMATION,
                 j_types
@@ -78,9 +75,9 @@ class TypesUtil(object):
             return j_types_arr
 
         if isinstance(py_sql_type, DecimalType):
-            return _sql_complex_type_py2j_map.get(type(py_sql_type))
+            return TypesUtil._sql_complex_type_py2j_map.get(type(py_sql_type))
         if isinstance(py_sql_type, RowType):
-            j_types = [_sql_basic_types_py2j_map[pt] for pt in py_sql_type.data_types]
+            j_types = [TypesUtil._sql_basic_types_py2j_map[pt] for pt in py_sql_type.data_types]
             j_types_arr = TypesUtil.convert_py_list_to_java_array(
                 ClassName.TYPE_INFORMATION,
                 j_types
@@ -89,10 +86,10 @@ class TypesUtil(object):
                 ClassName.STRING,
                 py_sql_type.fields_names
             )
-            j_clz = _sql_complex_type_py2j_map.get(type(py_sql_type))
+            j_clz = TypesUtil._sql_complex_type_py2j_map.get(type(py_sql_type))
             return j_clz(j_types_arr, j_names_arr)
 
-        return _sql_basic_types_py2j_map.get(py_sql_type)
+        return TypesUtil._sql_basic_types_py2j_map.get(py_sql_type)
 
     @staticmethod
     def convert_pylist_to_java_list(py_list):

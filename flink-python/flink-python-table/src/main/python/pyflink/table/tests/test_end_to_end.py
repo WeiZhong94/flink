@@ -24,8 +24,7 @@ from pyflink.table.table_source import CsvTableSource
 from pyflink.table.data_type import DataTypes
 
 
-def test_new_api():
-    #os.environ['PYFLINK_SERVER_DEBUG'] = "true"
+def test_end_to_end():
     tmp_dir = tempfile.gettempdir()
     source_path = tmp_dir + '/streaming.csv'
     if os.path.isfile(source_path):
@@ -72,4 +71,4 @@ def test_new_api():
 
 
 if __name__ == '__main__':
-    test_new_api()
+    test_end_to_end()

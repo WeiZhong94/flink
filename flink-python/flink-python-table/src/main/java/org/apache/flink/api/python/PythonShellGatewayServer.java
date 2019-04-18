@@ -74,6 +74,5 @@ public class PythonShellGatewayServer {
 			// Do nothing
 		}
 		gatewayServer.shutdown();
-		System.out.println("PythonShellGatewayServer exited.");
 	}
 }

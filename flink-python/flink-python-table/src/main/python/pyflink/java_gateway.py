@@ -28,7 +28,6 @@ from py4j.java_gateway import JavaGateway, GatewayClient
 
 _gateway = None
 _lock = RLock()
-_execute_mode_param = '--mini-cluster'
 
 def get_gateway():
     global _gateway
@@ -92,7 +91,7 @@ def launch_java_process(conn_info_file):
     bin_dir = flink_home + '/bin'
 
     shell_gateway = ClassName.PYTHON_SHELL_GATEWAY_SERVER
-    command = [bin_dir+'/pyflink2.sh', _execute_mode_param, '-c', shell_gateway, conn_info_file]
+    command = [bin_dir+'/pyflink2.sh', '-c', shell_gateway, conn_info_file]
 
     def preexec_func():
         # ignore SIGINT
