@@ -19,7 +19,7 @@
 from pyflink.java_gateway import ClassName
 from pyflink.util.type_util import TypesUtil
 
-__all__ = ['TableSink', 'CsvTableSink']
+__all__ = ['TableSink', 'CsvTableSink', 'WriteMode']
 
 
 class TableSink(object):

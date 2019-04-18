@@ -291,6 +291,7 @@ under the License.
                 <configuration>
                     <excludes>
                         <exclude>lib/py4j-LICENSE.txt</exclude>
+<!--                        <exclude>doc/**/*</exclude>-->
                     </excludes>
                 </configuration>
             </plugin>
