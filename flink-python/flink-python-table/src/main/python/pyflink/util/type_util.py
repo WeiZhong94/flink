@@ -17,12 +17,10 @@
 ################################################################################
 import sys
 from threading import RLock
-from typing import Union
 
 from py4j.java_gateway import JavaClass, JavaObject
 from pyflink.java_gateway import get_gateway, ClassName
 from pyflink.table.data_type import *
-from pyflink.table.data_type import DataType
 
 if sys.version > '3':
     xrange = range
@@ -34,7 +32,6 @@ class TypesUtil(object):
 
     @staticmethod
     def to_java_sql_type(py_sql_type):
-        # type: (Union[list[DataType],DataType]) -> JavaObject
         if TypesUtil._sql_basic_types_py2j_map is None:
             with TypesUtil._init_lock:
                 TYPES = TypesUtil.class_for_name(ClassName.TYPES)
