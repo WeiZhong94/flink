@@ -17,6 +17,7 @@
 ################################################################################
 
 from pyflink.java_gateway import ClassName
+from pyflink.table.data_type import DataType
 from pyflink.util.type_util import TypesUtil
 
 __all__ = ['TableSource', 'CsvTableSource']
@@ -43,9 +44,6 @@ class CsvTableSource(TableSource):
 
     def __init__(self, source_path, field_names, field_types):
         # type: (str, list[str], list[DataType]) -> None
-        self._source_path = source_path
-        self._field_names = field_names
-        self._field_types = field_types
         j_csv_table_source = TypesUtil.class_for_name(ClassName.CSV_TABLE_SOURCE)
         j_field_names = TypesUtil.convert_py_list_to_java_array(ClassName.STRING, field_names)
         j_field_types = TypesUtil.to_java_sql_type(field_types)

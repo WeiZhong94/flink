@@ -70,7 +70,7 @@ class TableConfig(object):
             :param parallelism: The parallelism.
             :return: Builder
             """
-            # type: (int) -> TableConfig.Builder
+            # type: int -> TableConfig.Builder
             self._parallelism = parallelism
             return self
 

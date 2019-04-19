@@ -22,6 +22,7 @@ if sys.version > '3':
     xrange = range
 
 __all__ = [
+    'DataType',
     'StringType',
     'BooleanType',
     'ShortType',
