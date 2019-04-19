@@ -27,6 +27,7 @@ from threading import RLock
 from py4j.java_gateway import JavaGateway, GatewayParameters
 from pyflink.find_flink_home import _find_flink_home
 
+
 _gateway = None
 _lock = RLock()
 
@@ -56,7 +57,8 @@ def launch_gateway():
     # TODO windows support
     script = "./bin/pyflink2.sh"
     gateway_server = ClassName.PYTHON_SHELL_GATEWAY_SERVER
-    command = [os.path.join(FLINK_HOME, script, '-c', gateway_server)]
+    command = [os.path.join(FLINK_HOME, script)]
+    command += ['-c', gateway_server]
 
     # Create a temporary directory where the gateway server should write the connection information.
     conn_info_dir = tempfile.mkdtemp()

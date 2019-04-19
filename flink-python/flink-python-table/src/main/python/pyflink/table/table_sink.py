@@ -27,8 +27,8 @@ class TableSink(object):
     A :class:`TableSink` specifies how to emit a table to an external system or location.
     """
 
-    def __init__(self, j_sink):
-        self._j_table_sink = j_sink
+    def __init__(self, j_table_sink):
+        self._j_table_sink = j_table_sink
 
 
 class WriteMode(object):
@@ -46,15 +46,12 @@ class CsvTableSink(TableSink):
     :param write_mode: The write mode to specify whether existing files are overwritten or not.
     """
 
-    def __init__(self, path, field_delimiter=',', num_files=1, write_mode=WriteMode.NO_OVERWRITE):
+    def __init__(self, path, field_delimiter=',', num_files=1, write_mode=None):
         # type: (str, str, int, int) -> None
-        self._path = path
-        self._field_delimiter = field_delimiter
-        self._num_files = num_files
-        if write_mode == WriteMode.NO_OVERWRITE:
+        if write_mode is None:
             self._write_mode = TypesUtil.class_for_name(ClassName.WRITE_MODE).NO_OVERWRITE
         else:
             self._write_mode = TypesUtil.class_for_name(ClassName.WRITE_MODE).OVERWRITE
         csv_table_sink = TypesUtil.class_for_name(ClassName.CSV_TABLE_SINK)
-        j_csv_table_sink = csv_table_sink(self._path, self._field_delimiter, self._num_files, self._write_mode)
+        j_csv_table_sink = csv_table_sink(path, field_delimiter, num_files, self._write_mode)
         super(CsvTableSink, self).__init__(j_csv_table_sink)
