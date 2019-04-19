@@ -46,7 +46,7 @@ class CsvTableSource(TableSource):
     def __init__(self, source_path, field_names, field_types):
         # type: (str, list[str], list[DataType]) -> None
         gateway = get_gateway()
-        j_field_names = utils.to_jarray(get_gateway.jvm.String, field_names)
-        j_field_types = utils.to_jarray(get_gateway.jvm.TypeInformation,
+        j_field_names = utils.to_jarray(gateway.jvm.String, field_names)
+        j_field_types = utils.to_jarray(gateway.jvm.TypeInformation,
                                         [type_utils.to_java_type(field_type) for field_type in field_types])
         super(CsvTableSource, self).__init__(gateway.jvm.CsvTableSource(source_path, j_field_names, j_field_types))

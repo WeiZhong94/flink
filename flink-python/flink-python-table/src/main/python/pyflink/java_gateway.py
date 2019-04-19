@@ -24,7 +24,7 @@ import time
 from subprocess import Popen, PIPE
 from threading import RLock
 
-from py4j.java_gateway import JavaGateway, GatewayParameters
+from py4j.java_gateway import java_import, JavaGateway, GatewayParameters
 from pyflink.find_flink_home import _find_flink_home
 
 
@@ -90,24 +90,22 @@ def launch_gateway():
         shutil.rmtree(conn_info_dir)
 
     # Connect to the gateway
-    gateway_param = GatewayParameters(port=gateway_port, auto_convert=True)
-    return JavaGateway(gateway_parameters=gateway_param)
+    gateway = JavaGateway(gateway_parameters=GatewayParameters(port=gateway_port, auto_convert=True))
+
+    # Import the classes used by PyFlink
+    java_import(gateway.jvm, "org.apache.flink.table.api.*")
+    java_import(gateway.jvm, "org.apache.flink.table.api.dataview.*")
+    java_import(gateway.jvm, "org.apache.flink.table.sources.*")
+    java_import(gateway.jvm, "org.apache.flink.table.sinks.*")
+    java_import(gateway.jvm, "org.apache.flink.api.common.typeinfo.TypeInformation")
+    java_import(gateway.jvm, "org.apache.flink.api.common.typeinfo.Types")
+    java_import(gateway.jvm, "org.apache.flink.api.java.ExecutionEnvironment")
+    java_import(gateway.jvm, "org.apache.flink.streaming.api.environment.StreamExecutionEnvironment")
+
+    return gateway
 
 
 class ClassName(object):
-    STRING = "java.lang.String"
-    DATE = "java.sql.Date"
-    TIME = "java.sql.Time"
-    TIMESTAMP = "java.sql.Timestamp"
     TUPLE = "org.apache.flink.api.java.tuple.Tuple"
-    TYPES = "org.apache.flink.api.common.typeinfo.Types"
-    TYPE_INFORMATION = "org.apache.flink.api.common.typeinfo.TypeInformation"
-    TIME_INDICATOR_TYPE_INFO = "org.apache.flink.table.typeutils.TimeIndicatorTypeInfo"
-    ROW_TYPE_INFO = "org.apache.flink.api.java.typeutils.RowTypeInfo"
-    CSV_TABLE_SOURCE = "org.apache.flink.table.sources.CsvTableSource"
-    CSV_TABLE_SINK = "org.apache.flink.table.sinks.CsvTableSink"
     WRITE_MODE = "org.apache.flink.core.fs.FileSystem.WriteMode"
-    EXECUTION_ENVIRONMENT = "org.apache.flink.api.java.ExecutionEnvironment"
-    TABLE_ENVIRONMENT = "org.apache.flink.table.api.TableEnvironment"
-    STREAM_EXECUTION_ENVIRONMENT = "org.apache.flink.streaming.api.environment.StreamExecutionEnvironment"
     PYTHON_SHELL_GATEWAY_SERVER = "org.apache.flink.api.python.PythonShellGatewayServer"
