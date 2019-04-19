@@ -25,14 +25,13 @@ __all__ = [
     'DataType',
     'StringType',
     'BooleanType',
-    'ShortType',
     'ByteType',
     'CharType',
+    'ShortType',
     'IntegerType',
     'LongType',
     'FloatType',
     'DoubleType',
-    'BinaryType',
     'DateType',
     'TimeType',
     'TimestampType',
@@ -41,7 +40,7 @@ __all__ = [
 
 
 class DataType(object):
-    """ data types.
+    """ Base class for data types.
     """
     @classmethod
     def type_name(cls):
@@ -67,11 +66,6 @@ class BooleanType(DataType):
     """
 
 
-class ShortType(DataType):
-    """Short data types.  SQL SMALLINT (16bits)
-    """
-
-
 class ByteType(DataType):
     """Byte data type. SQL TINYINT
     """
@@ -80,6 +74,11 @@ class ByteType(DataType):
 class CharType(DataType):
     """
     Char data type. SQL CHAR
+    """
+
+
+class ShortType(DataType):
+    """Short data types.  SQL SMALLINT (16bits)
     """
 
 
@@ -103,11 +102,6 @@ class DoubleType(DataType):
     """
 
 
-class BinaryType(DataType):
-    """Bytes data type.  SQL VARBINARY
-    """
-
-
 class DateType(DataType):
     """Date data type.  SQL DATE
     """
@@ -121,18 +115,6 @@ class TimeType(DataType):
 class TimestampType(DataType):
     """Timestamp data type.  SQL TIMESTAMP
     """
-    def __init__(self, id, name):
-        self.id = id
-        self.name = name
-
-    def __eq__(self, other):
-        return self.id == other.id and self.name == other.name
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-    def __hash__(self):
-        return hash(self.id) ^ hash(self.name)
 
 
 class DataTypes(object):
@@ -141,17 +123,13 @@ class DataTypes(object):
     """
     STRING = StringType()
     BOOLEAN = BooleanType()
-    SHORT = ShortType()
-    DOUBLE = DoubleType()
-    FLOAT = FloatType()
     BYTE = ByteType()
+    CHAR = CharType()
+    SHORT = ShortType()
     INT = IntegerType()
     LONG = LongType()
-    CHAR = CharType()
-    BYTE_ARRARY = BinaryType()
+    FLOAT = FloatType()
+    DOUBLE = DoubleType()
     DATE = DateType()
     TIME = TimeType()
-    TIMESTAMP = TimestampType(0, "TimestampType")
-    INTERVAL_MILLIS = TimestampType(1, "IntervalMillis")
-    ROWTIME_INDICATOR = TimestampType(2, "RowTimeIndicator")
-    PROCTIME_INDICATOR = TimestampType(3, "ProctimeTimeIndicator")
+    TIMESTAMP = TimestampType()

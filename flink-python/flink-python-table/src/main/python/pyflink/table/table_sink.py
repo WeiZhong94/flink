@@ -17,7 +17,7 @@
 ################################################################################
 
 from pyflink.java_gateway import ClassName
-from pyflink.util.type_util import TypesUtil
+from pyflink.util import type_utils
 
 __all__ = ['TableSink', 'CsvTableSink']
 
@@ -49,9 +49,9 @@ class CsvTableSink(TableSink):
     def __init__(self, path, field_delimiter=',', num_files=1, write_mode=None):
         # type: (str, str, int, int) -> None
         if write_mode is None:
-            self._write_mode = TypesUtil.class_for_name(ClassName.WRITE_MODE).NO_OVERWRITE
+            self._write_mode = type_utils.class_for_name(ClassName.WRITE_MODE).NO_OVERWRITE
         else:
-            self._write_mode = TypesUtil.class_for_name(ClassName.WRITE_MODE).OVERWRITE
-        csv_table_sink = TypesUtil.class_for_name(ClassName.CSV_TABLE_SINK)
+            self._write_mode = type_utils.class_for_name(ClassName.WRITE_MODE).OVERWRITE
+        csv_table_sink = type_utils.class_for_name(ClassName.CSV_TABLE_SINK)
         j_csv_table_sink = csv_table_sink(path, field_delimiter, num_files, self._write_mode)
         super(CsvTableSink, self).__init__(j_csv_table_sink)
