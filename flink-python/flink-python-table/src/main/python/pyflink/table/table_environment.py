@@ -79,8 +79,9 @@ class TableEnvironment(object):
         :param field_types: The field types to register with the :class:`TableSink`.
         :param table_sink: The :class:`TableSink` to register.
         """
-        j_field_names = utils.to_jarray(get_gateway.jvm.String, field_names)
-        j_field_types = utils.to_jarray(get_gateway.jvm.TypeInformation,
+        gateway = get_gateway()
+        j_field_names = utils.to_jarray(gateway.jvm.String, field_names)
+        j_field_types = utils.to_jarray(gateway.jvm.TypeInformation,
                                         [type_utils.to_java_type(field_type) for field_type in field_types])
         self._j_tenv.registerTableSink(name, j_field_names, j_field_types, table_sink._j_table_sink)
 
@@ -104,7 +105,8 @@ class TableEnvironment(object):
         :throws: Exception if no table is found using the given table path.
         :return: The resulting :class:`Table`
         """
-        j_varargs = utils.to_jarray(get_gateway.jvm.String, table_path)
+        gateway = get_gateway()
+        j_varargs = utils.to_jarray(gateway.jvm.String, table_path)
         j_table = self._j_tenv.scan(j_varargs)
         return Table(j_table)
 
@@ -119,21 +121,6 @@ class TableEnvironment(object):
         else:
             self._j_tenv.execEnv().execute()
 
-    @abstractmethod
-    def from_collection(self, data, fields=None):
-        """
-        Creates a :class:`Table` from the given non-empty collection.
-
-        Exmaple:
-        ::
-            >>> t = t_env.from_collection([(1, "Bob"), (2, "Harry")], "a, b")
-
-        :param data: The collection of elements to create the :class:`Table` from.
-        :param fields: The field names of the resulting :class:`Table`.
-        :return: The resulting :class:`Table`.
-        """
-        pass
-
     @classmethod
     def get_table_environment(cls, table_config):
         """
@@ -144,9 +131,9 @@ class TableEnvironment(object):
         :return: Desired :class:`TableEnvironment`.
         """
         if table_config.is_stream:
-            t_env = TableEnvironment._get_stream_table_environment()
+            t_env = TableEnvironment._get_stream_table_environment(table_config)
         else:
-            t_env = TableEnvironment._get_batch_table_environment()
+            t_env = TableEnvironment._get_batch_table_environment(table_config)
 
         if table_config.parallelism is not None:
             t_env._j_tenv.execEnv().setParallelism(table_config.parallelism)
@@ -154,14 +141,14 @@ class TableEnvironment(object):
         return t_env
 
     @classmethod
-    def _get_stream_table_environment(cls):
+    def _get_stream_table_environment(cls, table_config):
         gateway = get_gateway()
         j_execution_env = gateway.jvm.StreamExecutionEnvironment.getExecutionEnvironment()
         j_tenv = gateway.jvm.TableEnvironment.getTableEnvironment(j_execution_env)
         return StreamTableEnvironment(j_tenv)
 
     @classmethod
-    def _get_batch_table_environment(cls):
+    def _get_batch_table_environment(cls, table_config):
         gateway = get_gateway()
         j_execution_env = gateway.jvm.ExecutionEnvironment.getExecutionEnvironment()
         j_tenv = gateway.jvm.TableEnvironment.getTableEnvironment(j_execution_env)

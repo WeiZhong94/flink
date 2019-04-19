@@ -148,11 +148,15 @@ class FloatType(FractionalType):
     Float data type. SQL FLOAT
     """
 
+    __metaclass__ = DataTypeSingleton
+
 
 class DoubleType(FractionalType):
     """
     Double data type. SQL DOUBLE
     """
+
+    __metaclass__ = DataTypeSingleton
 
 
 class DateType(AtomicType):
