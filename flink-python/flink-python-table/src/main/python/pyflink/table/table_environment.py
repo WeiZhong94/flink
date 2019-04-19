@@ -16,7 +16,7 @@
 # limitations under the License.
 ################################################################################
 
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 
 from pyflink.java_gateway import get_gateway
 from pyflink.table import Table
@@ -46,7 +46,7 @@ class TableEnvironment(object):
         :param table_source: table source used as table
         :return: result table
         """
-        return Table(self._j_tenv.fromTableSource(table_source.j_table_source))
+        return Table(self._j_tenv.fromTableSource(table_source._j_table_source))
 
     def register_table(self, name, table):
         """
@@ -106,8 +106,8 @@ class TableEnvironment(object):
         :return: The resulting :class:`Table`
         """
         gateway = get_gateway()
-        j_varargs = utils.to_jarray(gateway.jvm.String, table_path)
-        j_table = self._j_tenv.scan(j_varargs)
+        j_table_paths = utils.to_jarray(gateway.jvm.String, table_path)
+        j_table = self._j_tenv.scan(j_table_paths)
         return Table(j_table)
 
     def execute(self, job_name=None):
@@ -130,29 +130,20 @@ class TableEnvironment(object):
         :type table_config: The TableConfig for the new TableEnvironment.
         :return: Desired :class:`TableEnvironment`.
         """
+        gateway = get_gateway()
         if table_config.is_stream:
-            t_env = TableEnvironment._get_stream_table_environment(table_config)
+            j_execution_env = gateway.jvm.StreamExecutionEnvironment.getExecutionEnvironment()
+            j_tenv = gateway.jvm.TableEnvironment.getTableEnvironment(j_execution_env)
+            t_env = StreamTableEnvironment(j_tenv)
         else:
-            t_env = TableEnvironment._get_batch_table_environment(table_config)
+            j_execution_env = gateway.jvm.ExecutionEnvironment.getExecutionEnvironment()
+            j_tenv = gateway.jvm.TableEnvironment.getTableEnvironment(j_execution_env)
+            t_env = BatchTableEnvironment(j_tenv)
 
         if table_config.parallelism is not None:
             t_env._j_tenv.execEnv().setParallelism(table_config.parallelism)
 
         return t_env
-
-    @classmethod
-    def _get_stream_table_environment(cls, table_config):
-        gateway = get_gateway()
-        j_execution_env = gateway.jvm.StreamExecutionEnvironment.getExecutionEnvironment()
-        j_tenv = gateway.jvm.TableEnvironment.getTableEnvironment(j_execution_env)
-        return StreamTableEnvironment(j_tenv)
-
-    @classmethod
-    def _get_batch_table_environment(cls, table_config):
-        gateway = get_gateway()
-        j_execution_env = gateway.jvm.ExecutionEnvironment.getExecutionEnvironment()
-        j_tenv = gateway.jvm.TableEnvironment.getTableEnvironment(j_execution_env)
-        return BatchTableEnvironment(j_tenv)
 
 
 class StreamTableEnvironment(TableEnvironment):
