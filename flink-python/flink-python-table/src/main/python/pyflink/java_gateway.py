@@ -33,46 +33,29 @@ def get_gateway():
     global _gateway
     global _lock
     with _lock:
-        # if Java Gateway is ready(in this case, python is started by java)
         if _gateway is None:
+            # if Java Gateway is already running
             if 'PYFLINK_GATEWAY_PORT' in os.environ:
                 gateway_port = int(os.environ['PYFLINK_GATEWAY_PORT'])
                 _gateway = JavaGateway(GatewayClient(port=gateway_port), auto_convert=True)
             else:
-                # we start Java from python
                 _gateway = launch_java_gateway()
     return _gateway
 
 
-def receive_all(sock, data_len):
-    chunks = []
-    bytes_recd = 0
-    while bytes_recd < data_len:
-        chunk = sock.recv(min(data_len - bytes_recd, 2048))
-        if chunk == b'':
-            raise RuntimeError("socket connection broken")
-        chunks.append(chunk)
-        bytes_recd = bytes_recd + len(chunk)
-    return b''.join(chunks)
-
-
 def launch_java_gateway():
+    conn_info_dir = tempfile.mkdtemp()
+    try:
+        fd, conn_info_file = tempfile.mkstemp(dir=conn_info_dir)
+        os.close(fd)
+        os.unlink(conn_info_file)
 
-    java_port = None
-    # if not started yet, start it.
-    if java_port is None:
-        conn_info_dir = tempfile.mkdtemp()
-        try:
-            fd, conn_info_file = tempfile.mkstemp(dir=conn_info_dir)
-            os.close(fd)
-            os.unlink(conn_info_file)
+        launch_java_process(conn_info_file)
 
-            launch_java_process(conn_info_file)
-
-            with open(conn_info_file, "rb") as info:
-                java_port = struct.unpack("!I", info.read(4))[0]
-        finally:
-            shutil.rmtree(conn_info_dir)
+        with open(conn_info_file, "rb") as info:
+            java_port = struct.unpack("!I", info.read(4))[0]
+    finally:
+        shutil.rmtree(conn_info_dir)
 
     # Connect to the java gateway
     gateway = JavaGateway(GatewayClient(port=java_port), auto_convert=True)

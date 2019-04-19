@@ -16,8 +16,6 @@
 # limitations under the License.
 ################################################################################
 
-from __future__ import absolute_import
-
 from pyflink.table.data_type import StringType, BooleanType, ShortType, ByteType, CharType, IntegerType, LongType, \
     FloatType, DoubleType, BinaryType, DateType, TimeType, TimestampType, DecimalType, RowType, DataTypes
 from pyflink.table.table_sink import TableSink, CsvTableSink
