@@ -178,57 +178,9 @@ class StreamTableEnvironment(TableEnvironment):
         self._j_tenv = j_tenv
         super(StreamTableEnvironment, self).__init__(j_tenv)
 
-    def from_collection(self, data, fields=None):
-        """
-        Creates a :class:`Table` from the given non-empty collection.
-
-        Exmaple:
-        ::
-            >>> t = t_env.from_collection([(1, "Bob"), (2, "Harry")], "a, b")
-
-        :param data: The collection of elements to create the :class:`Table` from.
-        :param fields: The field names of the resulting :class:`Table`.
-        :return: The resulting :class:`Table`.
-        """
-        if type(data[0]) is tuple:
-            java_list = TypesUtil.convert_tuple_list(data)
-        else:
-            java_list = TypesUtil.convert_pylist_to_java_list(data)
-
-        j_ds = self._j_tenv.execEnv().fromCollection(java_list)
-        if fields is None:
-            j_table = self._j_tenv.fromDataStream(j_ds)
-        else:
-            j_table = self._j_tenv.fromDataStream(j_ds, fields)
-        return Table(j_table)
-
 
 class BatchTableEnvironment(TableEnvironment):
 
     def __init__(self, j_tenv):
         self._j_tenv = j_tenv
         super(BatchTableEnvironment, self).__init__(j_tenv)
-
-    def from_collection(self, data, fields=None):
-        """
-        Creates a :class:`Table` from the given non-empty collection.
-
-        Exmaple:
-        ::
-            >>> t = t_env.from_collection([(1, "Bob"), (2, "Harry")], "a, b")
-
-        :param data: The collection of elements to create the :class:`Table` from.
-        :param fields: The field names of the resulting :class:`Table`.
-        :return: The resulting :class:`Table`.
-        """
-        if type(data[0]) is tuple:
-            java_list = TypesUtil.convert_tuple_list(data)
-        else:
-            java_list = TypesUtil.convert_pylist_to_java_list(data)
-
-        j_ds = self._j_tenv.execEnv().fromCollection(java_list)
-        if fields is None:
-            j_table = self._j_tenv.fromDataSet(j_ds)
-        else:
-            j_table = self._j_tenv.fromDataSet(j_ds, fields)
-        return Table(j_table)
