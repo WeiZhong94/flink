@@ -46,7 +46,6 @@ def test_end_to_end():
         CsvTableSource(source_path, field_names, field_types))
 
     # register Results table in table environment
-
     tmp_dir = tempfile.gettempdir()
     tmp_csv = tmp_dir + '/streaming2.csv'
     if os.path.isfile(tmp_csv):
@@ -56,12 +55,10 @@ def test_end_to_end():
         "Results",
         field_names, field_types, CsvTableSink(tmp_csv))
 
-    t = t_env.scan("Orders")  # schema (a, b, c)
-
-    t.select("a, b, c") \
-        .where("a > 0") \
-        .select("a + 1, b, c") \
-        .insert_into("Results")
+    t_env.scan("Orders") \
+         .where("a > 0") \
+         .select("a + 1, b, c") \
+         .insert_into("Results")
 
     t_env.execute()
     with open(tmp_csv, 'r') as f:
