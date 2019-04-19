@@ -13,6 +13,16 @@ Welcome to Flink Python Table API's documentation!
 
    pyflink
 
+Core Class
+----------
+
+    :class:`pyflink.table.TableEnvironment`
+
+    Main entry point for Flink functionality.
+
+    :class:`pyflink.table.Table`
+
+    Core component of the Flink Table API. The Flink Table API is built around :class:`~pyflink.table.Table`.
 
 Indices and tables
 ==================
