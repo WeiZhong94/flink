@@ -45,6 +45,7 @@ do
 done
 
 PYTHON_JAR_PATH=`echo "$FLINK_ROOT_DIR"/opt/flink-python-table*.jar`
-exec $JAVA_RUN $JVM_ARGS -cp ${FLINK_CLASSPATH}:${PYTHON_JAR_PATH} ${DRIVER} ${ARGS[@]}
+TABLE_JAR_PATH=`echo "$FLINK_ROOT_DIR"/opt/flink-table*.jar`
+exec $JAVA_RUN $JVM_ARGS -cp ${FLINK_CLASSPATH}:${TABLE_JAR_PATH}:${PYTHON_JAR_PATH} ${DRIVER} ${ARGS[@]}
 
 

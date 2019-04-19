@@ -41,7 +41,8 @@ def get_gateway():
             # if Java Gateway is already running
             if 'PYFLINK_GATEWAY_PORT' in os.environ:
                 gateway_port = int(os.environ['PYFLINK_GATEWAY_PORT'])
-                _gateway = JavaGateway(GatewayParameters(port=gateway_port, auto_convert=True))
+                gateway_param = GatewayParameters(port=gateway_port, auto_convert=True)
+                _gateway = JavaGateway(gateway_parameters=gateway_param)
             else:
                 _gateway = launch_gateway()
     return _gateway
@@ -90,7 +91,8 @@ def launch_gateway():
         shutil.rmtree(conn_info_dir)
 
     # Connect to the gateway
-    return JavaGateway(GatewayParameters(port=gateway_port, auto_convert=True))
+    gateway_param = GatewayParameters(port=gateway_port, auto_convert=True)
+    return JavaGateway(gateway_parameters=gateway_param)
 
 
 class ClassName(object):
