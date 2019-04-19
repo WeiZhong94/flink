@@ -19,24 +19,24 @@
 import sys
 from threading import RLock
 
-from py4j.java_gateway import JavaClass, JavaObject
-from pyflink.java_gateway import get_gateway, ClassName
+from pyflink.java_gateway import get_gateway
 from pyflink.table.types import DataTypes
 
 if sys.version > '3':
     xrange = range
 
 _data_types_mapping = None
-_init_lock = RLock()
+_lock = RLock()
 
 
 def to_java_type(py_type):
     global _data_types_mapping
-    global _init_lock
+    global _lock
 
     if _data_types_mapping is None:
-        with _init_lock:
-            TYPES = class_for_name(ClassName.TYPES)
+        with _lock:
+            gateway = get_gateway()
+            TYPES = gateway.jvm.org.apache.flink.api.common.typeinfo.Types
             _data_types_mapping = {
                 DataTypes.STRING: TYPES.STRING,
                 DataTypes.BOOLEAN: TYPES.BOOLEAN,
@@ -53,40 +53,3 @@ def to_java_type(py_type):
             }
 
     return _data_types_mapping[py_type]
-
-
-def convert_py_list_to_java_array(arr_type, seq):
-    # type: (str, Union[list,tuple]) -> JavaObject
-    gateway = get_gateway()
-    size = len(seq)
-    java_array = gateway.new_array(class_for_name(arr_type), size)
-    for i in range(size):
-        java_array[i] = seq[i]
-
-    return java_array
-
-
-def class_for_name(class_name):
-    # type: (str) -> JavaClass
-    gateway = get_gateway()
-    clz = getattr(gateway.jvm, class_name)
-    if not isinstance(clz, JavaClass):
-        # a workaround to access nested class
-        attrs = class_name.split('.')
-        for i in reversed(xrange(len(attrs) - 1)):
-            outer_class_name = ''
-            for j in xrange(i + 1):
-                # outer class canonical name
-                if len(outer_class_name) > 0:
-                    outer_class_name += '.'
-                outer_class_name += attrs[j]
-            internal_class_name = ''
-            for j in xrange(len(attrs) - 1 - i):
-                if len(internal_class_name) > 0:
-                    internal_class_name += '.'
-                internal_class_name += attrs[i + j + 1]
-            clz = getattr(gateway.jvm, outer_class_name)
-            clz = getattr(clz, internal_class_name)
-            if isinstance(clz, JavaClass):
-                return clz
-    return clz

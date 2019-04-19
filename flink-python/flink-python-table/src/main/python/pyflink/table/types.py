@@ -57,76 +57,126 @@ class DataType(object):
         return self.type_name() != other.type_name()
 
 
-class StringType(DataType):
+class DataTypeSingleton(type):
+    """
+    Metaclass for DataType
+    """
+
+    _instances = {}
+
+    def __call__(cls):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(DataTypeSingleton, cls).__call__()
+        return cls._instances[cls]
+
+
+class AtomicType(DataType):
+    """
+    An internal type used to represent everything that is not
+    null, arrays, structs, and maps.
+    """
+
+
+class NumericType(AtomicType):
+    """
+    Numeric data types.
+    """
+
+
+class IntegralType(NumericType):
+    """
+    Integral data types.
+    """
+
+    __metaclass__ = DataTypeSingleton
+
+
+class FractionalType(NumericType):
+    """
+    Fractional data types.
+    """
+
+
+class StringType(AtomicType):
     """
     String data type.  SQL VARCHAR
     """
 
+    __metaclass__ = DataTypeSingleton
 
-class BooleanType(DataType):
+
+class BooleanType(AtomicType):
     """
     Boolean data types. SQL BOOLEAN
     """
 
+    __metaclass__ = DataTypeSingleton
 
-class ByteType(DataType):
+
+class ByteType(IntegralType):
     """
     Byte data type. SQL TINYINT
     """
 
 
-class CharType(DataType):
+class CharType(IntegralType):
     """
     Char data type. SQL CHAR
     """
 
 
-class ShortType(DataType):
+class ShortType(IntegralType):
     """
     Short data types.  SQL SMALLINT (16bits)
     """
 
 
-class IntegerType(DataType):
+class IntegerType(IntegralType):
     """
     Int data types. SQL INT (32bits)
     """
 
 
-class LongType(DataType):
+class LongType(IntegralType):
     """
     Long data types. SQL BIGINT (64bits)
     """
 
 
-class FloatType(DataType):
+class FloatType(FractionalType):
     """
     Float data type. SQL FLOAT
     """
 
 
-class DoubleType(DataType):
+class DoubleType(FractionalType):
     """
     Double data type. SQL DOUBLE
     """
 
 
-class DateType(DataType):
+class DateType(AtomicType):
     """
     Date data type.  SQL DATE
     """
 
+    __metaclass__ = DataTypeSingleton
 
-class TimeType(DataType):
+
+class TimeType(AtomicType):
     """
     Time data type. SQL TIME
     """
 
+    __metaclass__ = DataTypeSingleton
 
-class TimestampType(DataType):
+
+class TimestampType(AtomicType):
     """
     Timestamp data type.  SQL TIMESTAMP
     """
+
+    __metaclass__ = DataTypeSingleton
 
 
 class DataTypes(object):
