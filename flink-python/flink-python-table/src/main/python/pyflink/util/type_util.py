@@ -118,7 +118,6 @@ class TypesUtil(object):
     def class_for_name(class_name):
         # type: (str) -> JavaClass
         _gateway = get_gateway()
-        # e.g.: org.apache.flink.streaming.api.TimeCharacteristic
         clz = getattr(_gateway.jvm, class_name)
         if not isinstance(clz, JavaClass):
             # a workaround to access nested class

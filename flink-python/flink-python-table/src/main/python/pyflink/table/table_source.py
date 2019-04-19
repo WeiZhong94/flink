@@ -24,7 +24,7 @@ __all__ = ['TableSource', 'CsvTableSource']
 
 class TableSource(object):
     """
-    Defines an table from an external system or location.
+    Defines a table from an external system or location.
     """
 
     def __init__(self, j_table_source):
