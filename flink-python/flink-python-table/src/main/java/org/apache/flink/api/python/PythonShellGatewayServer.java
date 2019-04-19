@@ -41,9 +41,6 @@ public class PythonShellGatewayServer {
 	 * </p>
 	 */
 	public static void main(String[] args) throws IOException, InterruptedException {
-		if (args.length == 0) {
-			System.exit(1);
-		}
 		if (System.getenv().containsKey(DEBUG_FLAG)) {
 			System.out.println("Debug flag detected, waiting for remote debug connection.");
 			Thread.sleep(30 * 1000);
@@ -55,7 +52,7 @@ public class PythonShellGatewayServer {
 		int serverPort = gatewayServer.getListeningPort();
 
 		// Tell python side the port of our java rpc server
-		String handshakeFilePath = args[0];
+		String handshakeFilePath = System.getenv("_PYFLINK_CONN_INFO_PATH");
 		File handshakeFile = new File(handshakeFilePath);
 		if (handshakeFile.createNewFile()) {
 			FileOutputStream fileOutputStream = new FileOutputStream(handshakeFile);
