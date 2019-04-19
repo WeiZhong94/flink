@@ -18,7 +18,7 @@
 
 from abc import ABCMeta, abstractmethod
 
-from pyflink.java_gateway import ClassName
+from pyflink.java_gateway import get_gateway
 from pyflink.table import Table
 from pyflink.util import type_utils
 
@@ -82,7 +82,7 @@ class TableEnvironment(object):
         j_field_names = type_utils.convert_py_list_to_java_array(ClassName.STRING, field_names)
         j_field_ypes = []
         for field_type in field_types:
-            j_field_ypes.append(type_utils.to_java_sql_type(field_type))
+            j_field_ypes.append(type_utils.to_java_type(field_type))
         j_field_types_array = type_utils.convert_py_list_to_java_array(ClassName.TYPE_INFORMATION, j_field_ypes)
         self._j_tenv.registerTableSink(name, j_field_names, j_field_types_array, table_sink._j_table_sink)
 
@@ -157,8 +157,9 @@ class TableEnvironment(object):
 
     @classmethod
     def _get_stream_table_environment(cls):
-        table_env = type_utils.class_for_name(ClassName.TABLE_ENVIRONMENT)
-        exec_env = type_utils.class_for_name(ClassName.STREAM_EXECUTION_ENVIRONMENT)
+        gateway = get_gateway()
+        table_env = gateway.jvm.TableEnvironment
+        exec_env = gateway.jvm.StreamExecutionEnvironment
         j_env = exec_env.getExecutionEnvironment()
         j_t_env = table_env.getTableEnvironment(j_env)
         return StreamTableEnvironment(j_t_env)
