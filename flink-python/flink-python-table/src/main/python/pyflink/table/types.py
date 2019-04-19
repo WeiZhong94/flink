@@ -57,17 +57,20 @@ class DataType(object):
 
 
 class StringType(DataType):
-    """String data type.  SQL VARCHAR
+    """
+    String data type.  SQL VARCHAR
     """
 
 
 class BooleanType(DataType):
-    """Boolean data types. SQL BOOLEAN
+    """
+    Boolean data types. SQL BOOLEAN
     """
 
 
 class ByteType(DataType):
-    """Byte data type. SQL TINYINT
+    """
+    Byte data type. SQL TINYINT
     """
 
 
@@ -78,42 +81,50 @@ class CharType(DataType):
 
 
 class ShortType(DataType):
-    """Short data types.  SQL SMALLINT (16bits)
+    """
+    Short data types.  SQL SMALLINT (16bits)
     """
 
 
 class IntegerType(DataType):
-    """Int data types. SQL INT (32bits)
+    """
+    Int data types. SQL INT (32bits)
     """
 
 
 class LongType(DataType):
-    """Long data types. SQL BIGINT (64bits)
+    """
+    Long data types. SQL BIGINT (64bits)
     """
 
 
 class FloatType(DataType):
-    """Float data type. SQL FLOAT
+    """
+    Float data type. SQL FLOAT
     """
 
 
 class DoubleType(DataType):
-    """Double data type. SQL DOUBLE
+    """
+    Double data type. SQL DOUBLE
     """
 
 
 class DateType(DataType):
-    """Date data type.  SQL DATE
+    """
+    Date data type.  SQL DATE
     """
 
 
 class TimeType(DataType):
-    """Time data type. SQL TIME
+    """
+    Time data type. SQL TIME
     """
 
 
 class TimestampType(DataType):
-    """Timestamp data type.  SQL TIMESTAMP
+    """
+    Timestamp data type.  SQL TIMESTAMP
     """
 
 
