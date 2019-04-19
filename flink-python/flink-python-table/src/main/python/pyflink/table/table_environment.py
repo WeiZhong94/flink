@@ -20,7 +20,7 @@ from abc import ABCMeta, abstractmethod
 
 from pyflink.java_gateway import ClassName
 from pyflink.table import Table
-from pyflink.util.type_util import TypesUtil
+from pyflink.util import type_utils
 
 __all__ = [
     'BatchTableEnvironment',
@@ -79,11 +79,11 @@ class TableEnvironment(object):
         :param field_types: The field types to register with the :class:`TableSink`.
         :param table_sink: The :class:`TableSink` to register.
         """
-        j_field_names = TypesUtil.convert_py_list_to_java_array(ClassName.STRING, field_names)
+        j_field_names = type_utils.convert_py_list_to_java_array(ClassName.STRING, field_names)
         j_field_ypes = []
         for field_type in field_types:
-            j_field_ypes.append(TypesUtil.to_java_sql_type(field_type))
-        j_field_types_array = TypesUtil.convert_py_list_to_java_array(ClassName.TYPE_INFORMATION, j_field_ypes)
+            j_field_ypes.append(type_utils.to_java_sql_type(field_type))
+        j_field_types_array = type_utils.convert_py_list_to_java_array(ClassName.TYPE_INFORMATION, j_field_ypes)
         self._j_tenv.registerTableSink(name, j_field_names, j_field_types_array, table_sink._j_table_sink)
 
     def scan(self, *table_path):
@@ -106,7 +106,7 @@ class TableEnvironment(object):
         :throws: Exception if no table is found using the given table path.
         :return: The resulting :class:`Table`
         """
-        j_varargs = TypesUtil.convert_py_list_to_java_array(ClassName.STRING, table_path)
+        j_varargs = type_utils.convert_py_list_to_java_array(ClassName.STRING, table_path)
         j_table = self._j_tenv.scan(j_varargs)
         return Table(j_table)
 
@@ -157,16 +157,16 @@ class TableEnvironment(object):
 
     @classmethod
     def _get_stream_table_environment(cls):
-        table_env = TypesUtil.class_for_name(ClassName.TABLE_ENVIRONMENT)
-        exec_env = TypesUtil.class_for_name(ClassName.STREAM_EXECUTION_ENVIRONMENT)
+        table_env = type_utils.class_for_name(ClassName.TABLE_ENVIRONMENT)
+        exec_env = type_utils.class_for_name(ClassName.STREAM_EXECUTION_ENVIRONMENT)
         j_env = exec_env.getExecutionEnvironment()
         j_t_env = table_env.getTableEnvironment(j_env)
         return StreamTableEnvironment(j_t_env)
 
     @classmethod
     def _get_batch_table_environment(cls):
-        table_env = TypesUtil.class_for_name(ClassName.TABLE_ENVIRONMENT)
-        exec_env = TypesUtil.class_for_name(ClassName.EXECUTION_ENVIRONMENT)
+        table_env = type_utils.class_for_name(ClassName.TABLE_ENVIRONMENT)
+        exec_env = type_utils.class_for_name(ClassName.EXECUTION_ENVIRONMENT)
         j_env = exec_env.getExecutionEnvironment()
         j_t_env = table_env.getTableEnvironment(j_env)
         return BatchTableEnvironment(j_t_env)
