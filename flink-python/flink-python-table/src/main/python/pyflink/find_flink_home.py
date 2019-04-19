@@ -26,7 +26,15 @@ def _find_flink_home():
     if 'FLINK_HOME' in os.environ:
         return os.environ['FLINK_HOME']
     else:
-        print("FLINK_HOME has not been set", file=sys.stderr)
+        try:  # for developer
+            flink_dev_root = os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + "/../../../../../../")
+            flink_build_target = flink_dev_root + "/build-target"
+            flink_pyflink_file = flink_build_target + "/bin/pyflink2.sh"
+            if os.path.isfile(flink_pyflink_file):
+                return flink_build_target
+        except Exception:
+            pass
+        print("Could not find valid FLINK_HOME in current environment.", file=sys.stderr)
         sys.exit(-1)
 
 
