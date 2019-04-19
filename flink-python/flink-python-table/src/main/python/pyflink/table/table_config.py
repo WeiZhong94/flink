@@ -20,8 +20,12 @@ __all__ = ['TableConfig']
 
 
 class TableConfig(object):
+    """
+    A config to define the runtime behavior of the Table API.
+    """
 
     def __init__(self, is_stream, parallelism):
+        # type: (bool, int) -> None
         self._is_stream = is_stream
         self._parallelism = parallelism
 
@@ -40,16 +44,40 @@ class TableConfig(object):
             self._parallelism = None
 
         def as_streaming_execution(self):
+            """
+            Configures streaming execution mode.
+            If this method is called, :class:`StreamTableEnvironment` will be created.
+
+            :return: Builder
+            """
             self._is_stream = True
             return self
 
         def as_batch_execution(self):
+            """
+            Configures batch execution mode.
+            If this method is called, :class:`BatchTableEnvironment` will be created.
+
+            :return: Builder
+            """
             self.is_stream = False
             return self
 
         def set_parallelism(self, parallelism):
+            """
+            Sets the parallelism for all operations.
+
+            :param parallelism: The parallelism.
+            :return: Builder
+            """
+            # type: (int) -> TableConfig.Builder
             self._parallelism = parallelism
             return self
 
         def build(self):
+            """
+            Builds :class:`TableConfig` object.
+
+            :return: TableConfig
+            """
             return TableConfig(self._is_stream, self._parallelism)

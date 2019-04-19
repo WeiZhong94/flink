@@ -12,7 +12,6 @@ Welcome to Flink Python Table API's documentation!
    :caption: Contents:
 
    pyflink
-   pyflink.table
 
 
 Indices and tables

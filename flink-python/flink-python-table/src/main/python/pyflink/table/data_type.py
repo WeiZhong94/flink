@@ -35,8 +35,6 @@ __all__ = [
     'DateType',
     'TimeType',
     'TimestampType',
-    'DecimalType',
-    'RowType',
     'DataTypes',
 ]
 
@@ -136,49 +134,6 @@ class TimestampType(DataType):
         return hash(self.id) ^ hash(self.name)
 
 
-class DecimalType(DataType):
-    """Decimal data type. BIG DEC
-    """
-
-
-class RowType(DataType):
-    """
-    Python interface for RowType.
-    When it is passed to Flink, it will be automatically converted to Java's RowType
-    """
-    def __init__(self, data_types, fields_names=None):
-        self.data_types = data_types
-        if fields_names is not None:
-            self.fields_names = fields_names
-        else:
-            self.fields_names = []
-            for i in xrange(len(self.data_types)):
-                self.fields_names.append('f' + str(i))
-
-    def get_field_names(self):
-        return self.fields_names
-
-    def get_field_types(self):
-        return self.data_types
-
-    def get_arity(self):
-        return len(self.data_types)
-
-    def get_internal_type_at(self, i):
-        return self.data_types[i]
-
-    def get_field_index(self, field_name):
-        return self.fields_names.index(field_name)
-
-    def __str__(self):
-        return 'RowType{0}, types={1}, fieldNames={2}{3}'.format(
-            '{',
-            str(self.data_types),
-            str(self.fields_names),
-            '}'
-        )
-
-
 class DataTypes(object):
     """
     Utils for types
@@ -199,4 +154,3 @@ class DataTypes(object):
     INTERVAL_MILLIS = TimestampType(1, "IntervalMillis")
     ROWTIME_INDICATOR = TimestampType(2, "RowTimeIndicator")
     PROCTIME_INDICATOR = TimestampType(3, "ProctimeTimeIndicator")
-    DECIMAL = DecimalType()

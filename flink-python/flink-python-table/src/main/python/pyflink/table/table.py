@@ -27,11 +27,11 @@ __all__ = [
 class Table(object):
 
     """
-    A ``Table`` is the core component of the Table API.
+    A :class:`Table` is the core component of the Table API.
     Similar to how the batch and streaming APIs have DataSet and DataStream,
-    the Table API is built around ``Table``.
+    the Table API is built around :class:`Table`.
 
-    Use the methods of ``Table`` to transform data.
+    Use the methods of :class:`Table` to transform data.
 
     Example:
     ::
@@ -43,7 +43,8 @@ class Table(object):
         >>> t.insert_into("print")
         >>> t_env.execute()
 
-    Operations such as ``join``, ``select``, ``where`` and ``group_by``
+    Operations such as :func:`~pyflink.table.Table.join`, :func:`~pyflink.table.Table.select`,
+    :func:`~pyflink.table.Table.where` and :func:`~pyflink.table.Table.group_by`
     take arguments in an expression string. Please refer to the documentation for
     the expression syntax.
     """
@@ -53,10 +54,12 @@ class Table(object):
 
     @property
     def table_name(self):
+        # type: () -> str
         return self._j_table.tableName()
 
     @table_name.setter
     def table_name(self, name):
+        # type: (str) -> None
         self._j_table.tableName(name)
 
     def select(self, col_list):
@@ -140,12 +143,12 @@ class Table(object):
 
     def join(self, right, join_predicate=None):
         """
-        Joins two ``Table``\ s. Similar to a SQL join. The fields of the two joined
-        operations must not overlap, use ``as_`` to rename fields if necessary. You can use
+        Joins two :class:`Table`\ s. Similar to a SQL join. The fields of the two joined
+        operations must not overlap, use :func:`~pyflink.table.Table.as_` to rename fields if necessary. You can use
         where and select clauses after a join to further specify the behaviour of the join.
 
         .. note::
-            Both tables must be bound to the same ``TableEnvironment`` .
+            Both tables must be bound to the same :class:`TableEnvironment` .
 
         Example:
         ::
@@ -163,12 +166,12 @@ class Table(object):
 
     def left_outer_join(self, right, join_predicate=None):
         """
-        Joins two ``Table``\ s. Similar to a SQL left outer join. The fields of the two joined
-        operations must not overlap, use ``as_`` to rename fields if necessary.
+        Joins two :class:`Table`\ s. Similar to a SQL left outer join. The fields of the two joined
+        operations must not overlap, use :func:`~pyflink.table.Table.as_` to rename fields if necessary.
 
         .. note::
-            Both tables must be bound to the same ``TableEnvironment`` and its
-            ``TableConfig`` must have null check enabled (default).
+            Both tables must be bound to the same :class:`TableEnvironment` and its
+            :class:`TableConfig` must have null check enabled (default).
 
         Example:
         ::
@@ -187,12 +190,12 @@ class Table(object):
 
     def right_outer_join(self, right, join_predicate):
         """
-        Joins two ``Table``\ s. Similar to a SQL right outer join. The fields of the two joined
-        operations must not overlap, use ``as_`` to rename fields if necessary.
+        Joins two :class:`Table`\ s. Similar to a SQL right outer join. The fields of the two joined
+        operations must not overlap, use :func:`~pyflink.table.Table.as_` to rename fields if necessary.
 
         .. note::
-            Both tables must be bound to the same ``TableEnvironment`` and its
-            ``TableConfig`` must have null check enabled (default).
+            Both tables must be bound to the same :class:`TableEnvironment` and its
+            :class:`TableConfig` must have null check enabled (default).
 
         Example:
         ::
@@ -207,12 +210,12 @@ class Table(object):
 
     def full_outer_join(self, right, join_predicate):
         """
-        Joins two ``Table``\ s. Similar to a SQL full outer join. The fields of the two joined
-        operations must not overlap, use ``as_`` to rename fields if necessary.
+        Joins two :class:`Table`\ s. Similar to a SQL full outer join. The fields of the two joined
+        operations must not overlap, use :func:`~pyflink.table.Table.as_` to rename fields if necessary.
 
         .. note::
-            Both tables must be bound to the same ``TableEnvironment`` and its
-            ``TableConfig`` must have null check enabled (default).
+            Both tables must be bound to the same :class:`TableEnvironment` and its
+            :class:`TableConfig` must have null check enabled (default).
 
         Example:
         ::
@@ -227,13 +230,13 @@ class Table(object):
 
     def minus(self, right):
         """
-        Minus of two ``Table``\ s with duplicate records removed.
+        Minus of two :class:`Table`\ s with duplicate records removed.
         Similar to a SQL EXCEPT clause. Minus returns records from the left table that do not
         exist in the right table. Duplicate records in the left table are returned
         exactly once, i.e., duplicates are removed. Both tables must have identical field types.
 
         .. note::
-            Both tables must be bound to the same ``TableEnvironment``.
+            Both tables must be bound to the same :class:`TableEnvironment`.
 
         Example:
         ::
@@ -246,14 +249,14 @@ class Table(object):
 
     def minus_all(self, right):
         """
-        Minus of two ``Table``\ s. Similar to a SQL EXCEPT ALL.
+        Minus of two :class:`Table`\ s. Similar to a SQL EXCEPT ALL.
         Similar to a SQL EXCEPT ALL clause. MinusAll returns the records that do not exist in
         the right table. A record that is present n times in the left table and m times
         in the right table is returned (n - m) times, i.e., as many duplicates as are present
         in the right table are removed. Both tables must have identical field types.
 
         .. note::
-            Both tables must be bound to the same ``TableEnvironment``.
+            Both tables must be bound to the same :class:`TableEnvironment`.
 
         Example:
         ::
@@ -266,11 +269,11 @@ class Table(object):
 
     def union(self, right):
         """
-        Unions two ``Table``\ s with duplicate records removed.
+        Unions two :class:`Table`\ s with duplicate records removed.
         Similar to a SQL UNION. The fields of the two union operations must fully overlap.
 
         .. note::
-            Both tables must be bound to the same ``TableEnvironment``.
+            Both tables must be bound to the same :class:`TableEnvironment`.
 
         Example:
         ::
@@ -283,11 +286,11 @@ class Table(object):
 
     def union_all(self, right):
         """
-        Unions two ``Table``\ s. Similar to a SQL UNION ALL. The fields of the two union
+        Unions two :class:`Table`\ s. Similar to a SQL UNION ALL. The fields of the two union
         operations must fully overlap.
 
         .. note::
-            Both tables must be bound to the same ``TableEnvironment``.
+            Both tables must be bound to the same :class:`TableEnvironment`.
 
         Example:
         ::
@@ -300,13 +303,13 @@ class Table(object):
 
     def intersect(self, right):
         """
-        Intersects two ``Table``\ s with duplicate records removed. Intersect returns records that
+        Intersects two :class:`Table`\ s with duplicate records removed. Intersect returns records that
         exist in both tables. If a record is present in one or both tables more than once, it is
         returned just once, i.e., the resulting table has no duplicate records. Similar to a
         SQL INTERSECT. The fields of the two intersect operations must fully overlap.
 
         .. note::
-            Both tables must be bound to the same ``TableEnvironment``.
+            Both tables must be bound to the same :class:`TableEnvironment`.
 
         Example:
         ::
@@ -319,13 +322,13 @@ class Table(object):
 
     def intersect_all(self, right):
         """
-        Intersects two ``Table``\ s. IntersectAll returns records that exist in both tables.
+        Intersects two :class:`Table`\ s. IntersectAll returns records that exist in both tables.
         If a record is present in both tables more than once, it is returned as many times as it
         is present in both tables, i.e., the resulting table might have duplicate records. Similar
         to an SQL INTERSECT ALL. The fields of the two intersect operations must fully overlap.
 
         .. note::
-            Both tables must be bound to the same ``TableEnvironment``.
+            Both tables must be bound to the same :class:`TableEnvironment`.
 
         Example:
         ::
@@ -338,7 +341,7 @@ class Table(object):
 
     def order_by(self, fields):
         """
-        Sorts the given ``Table``. Similar to SQL ORDER BY.
+        Sorts the given :class:`Table`. Similar to SQL ORDER BY.
         The resulting Table is sorted globally sorted across all parallel partitions.
 
         Example:
@@ -355,8 +358,8 @@ class Table(object):
         Limits a sorted result from an offset position.
         Similar to a SQL OFFSET clause. Offset is technically part of the Order By operator and
         thus must be preceded by it.
-        ``Table#offset(offset)`` can be combined with a subsequent
-        ``Table#fetch(fetch)`` call to return n rows after skipping the first o rows.
+        :func:`~pyflink.table.Table.offset` can be combined with a subsequent
+        :func:`~pyflink.table.Table.fetch` call to return n rows after skipping the first o rows.
 
         Example:
         ::
@@ -375,8 +378,8 @@ class Table(object):
         Limits a sorted result to the first n rows.
         Similar to a SQL FETCH clause. Fetch is technically part of the Order By operator and
         thus must be preceded by it.
-        ``Table#fetch(fetch)`` can be combined with a preceding
-        ``Table#offset(offset)`` call to return n rows after skipping the first o rows.
+        :func:`~pyflink.table.Table.offset` can be combined with a preceding
+        :func:`~pyflink.table.Table.fetch` call to return n rows after skipping the first o rows.
 
         Example:
 
@@ -395,13 +398,13 @@ class Table(object):
 
     def insert_into(self, table_name):
         """
-        Writes the ``Table`` to a ``TableSink`` that was registered under the specified name.
+        Writes the :class:`Table` to a :class:`TableSink` that was registered under the specified name.
 
         Example:
         ::
             >>> tab.insert_into("print")
 
-        :param table_name: Name of the ``TableSink`` to which the ``Table`` is written.
+        :param table_name: Name of the :class:`TableSink` to which the :class:`Table` is written.
         """
         self._j_table.insertInto(table_name)
 

@@ -16,7 +16,7 @@
 # limitations under the License.
 ################################################################################
 
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 
 from pyflink.java_gateway import ClassName
 from pyflink.table import Table
@@ -50,7 +50,7 @@ class TableEnvironment(object):
 
     def register_table(self, name, table):
         """
-        Registers a ``Table`` under a unique name in the TableEnvironment's catalog.
+        Registers a :class:`Table` under a unique name in the TableEnvironment's catalog.
         Registered tables can be referenced in SQL queries.
 
         :param name: The name under which the table will be registered.
@@ -60,24 +60,24 @@ class TableEnvironment(object):
 
     def register_table_source(self, name, table_source):
         """
-        Registers an external ``TableSource`` in this ``TableEnvironment``'s catalog.
+        Registers an external :class:`TableSource` in this :class:`TableEnvironment`'s catalog.
         Registered tables can be referenced in SQL queries.
 
-        :param name: The name under which the ``TableSource`` is registered.
-        :param table_source: The ``TableSource`` to register.
+        :param name: The name under which the :class:`TableSource` is registered.
+        :param table_source: The :class:`TableSource` to register.
         """
         self._j_tenv.registerTableSource(name, table_source._j_table_source)
 
     def register_table_sink(self, name, field_names, field_types, table_sink):
         """
-        Registers an external ``TableSink`` with given field names and types in this
-        ``TableEnvironment``\ 's catalog.
+        Registers an external :class:`TableSink` with given field names and types in this
+        :class:`TableEnvironment`\ 's catalog.
         Registered sink tables can be referenced in SQL DML statements.
 
-        :param name: The name under which the ``TableSink`` is registered.
-        :param field_names: The field names to register with the ``TableSink``.
-        :param field_types: The field types to register with the ``TableSink``.
-        :param table_sink: The ``TableSink`` to register.
+        :param name: The name under which the :class:`TableSink` is registered.
+        :param field_names: The field names to register with the :class:`TableSink`.
+        :param field_types: The field types to register with the :class:`TableSink`.
+        :param table_sink: The :class:`TableSink` to register.
         """
         j_field_names = TypesUtil.convert_py_list_to_java_array(ClassName.STRING, field_names)
         j_field_ypes = []
@@ -88,7 +88,7 @@ class TableEnvironment(object):
 
     def scan(self, *table_path):
         """
-        Scans a registered table and returns the resulting ``Table``.
+        Scans a registered table and returns the resulting :class:`Table`.
         A table to scan must be registered in the TableEnvironment. It can be either directly
         registered as TableSource or Table.
 
@@ -104,7 +104,7 @@ class TableEnvironment(object):
 
         :param table_path: The path of the table to scan.
         :throws: Exception if no table is found using the given table path.
-        :return: The resulting ``Table``
+        :return: The resulting :class:`Table`
         """
         j_varargs = TypesUtil.convert_py_list_to_java_array(ClassName.STRING, table_path)
         j_table = self._j_tenv.scan(j_varargs)
@@ -121,14 +121,29 @@ class TableEnvironment(object):
         else:
             self._j_tenv.execEnv().execute()
 
+    @abstractmethod
+    def from_collection(self, data, fields=None):
+        """
+        Creates a :class:`Table` from the given non-empty collection.
+
+        Exmaple:
+        ::
+            >>> t = t_env.from_collection([(1, "Bob"), (2, "Harry")], "a, b")
+
+        :param data: The collection of elements to create the :class:`Table` from.
+        :param fields: The field names of the resulting :class:`Table`.
+        :return: The resulting :class:`Table`.
+        """
+        pass
+
     @classmethod
     def get_table_environment(cls, table_config):
         """
-        Returns a ``StreamTableEnvironment`` or a ``BatchTableEnvironment``
-        which matches the ``TableConfig``'s content.
+        Returns a :class:`StreamTableEnvironment` or a :class:`BatchTableEnvironment`
+        which matches the :class:`TableConfig`'s content.
 
         :type table_config: The TableConfig for the new TableEnvironment.
-        :return: Desired ``TableEnvironment``.
+        :return: Desired :class:`TableEnvironment`.
         """
         if table_config.is_stream:
             t_env = TableEnvironment._get_stream_table_environment()
@@ -165,15 +180,15 @@ class StreamTableEnvironment(TableEnvironment):
 
     def from_collection(self, data, fields=None):
         """
-        Creates a ``Table`` from the given non-empty collection.
+        Creates a :class:`Table` from the given non-empty collection.
 
         Exmaple:
         ::
             >>> t = t_env.from_collection([(1, "Bob"), (2, "Harry")], "a, b")
 
-        :param data: The collection of elements to create the ``Table`` from.
-        :param fields: The field names of the resulting ``Table``.
-        :return: The resulting ``Table``.
+        :param data: The collection of elements to create the :class:`Table` from.
+        :param fields: The field names of the resulting :class:`Table`.
+        :return: The resulting :class:`Table`.
         """
         if type(data[0]) is tuple:
             java_list = TypesUtil.convert_tuple_list(data)
@@ -196,15 +211,15 @@ class BatchTableEnvironment(TableEnvironment):
 
     def from_collection(self, data, fields=None):
         """
-        Creates a ``Table`` from the given non-empty collection.
+        Creates a :class:`Table` from the given non-empty collection.
 
         Exmaple:
         ::
             >>> t = t_env.from_collection([(1, "Bob"), (2, "Harry")], "a, b")
 
-        :param data: The collection of elements to create the ``Table`` from.
-        :param fields: The field names of the resulting ``Table``.
-        :return: The resulting ``Table``.
+        :param data: The collection of elements to create the :class:`Table` from.
+        :param fields: The field names of the resulting :class:`Table`.
+        :return: The resulting :class:`Table`.
         """
         if type(data[0]) is tuple:
             java_list = TypesUtil.convert_tuple_list(data)
