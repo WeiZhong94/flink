@@ -24,40 +24,42 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.InetAddress;
 
 /**
  * The Py4j Gateway Server provides RPC service for user's python process.
  */
-public class PythonShellGatewayServer {
-
-	public static final String DEBUG_FLAG = "PYFLINK_SERVER_DEBUG";
+public class PythonGatewayServer {
 
 	/**
 	 * <p>
 	 * Main method to start a local GatewayServer on a ephemeral port.
-	 * It tell python side via a handshake socket.
+	 * It tells python side via a file.
 	 *
 	 * See: py4j.GatewayServer.main()
 	 * </p>
 	 */
-	public static void main(String[] args) throws IOException, InterruptedException {
-		if (System.getenv().containsKey(DEBUG_FLAG)) {
-			System.out.println("Debug flag detected, waiting for remote debug connection.");
-			Thread.sleep(30 * 1000);
-		}
-
-		GatewayServer gatewayServer = new GatewayServer(null, 0);
+	public static void main(String[] args) throws IOException {
+		InetAddress localhost = InetAddress.getLoopbackAddress();
+		GatewayServer gatewayServer = new GatewayServer.GatewayServerBuilder()
+			.javaPort(0)
+			.javaAddress(localhost)
+			.build();
 		gatewayServer.start();
 
-		int serverPort = gatewayServer.getListeningPort();
+		int boundPort = gatewayServer.getListeningPort();
+		if (boundPort == -1) {
+			System.out.println("GatewayServer failed to bind; exiting");
+			System.exit(1);
+		}
 
-		// Tell python side the port of our java rpc server
+		// Tells python side the port of our java rpc server
 		String handshakeFilePath = System.getenv("_PYFLINK_CONN_INFO_PATH");
 		File handshakeFile = new File(handshakeFilePath);
 		if (handshakeFile.createNewFile()) {
 			FileOutputStream fileOutputStream = new FileOutputStream(handshakeFile);
 			DataOutputStream stream = new DataOutputStream(fileOutputStream);
-			stream.writeInt(serverPort);
+			stream.writeInt(boundPort);
 			stream.close();
 			fileOutputStream.close();
 		} else {
