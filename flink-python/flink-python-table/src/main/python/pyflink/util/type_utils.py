@@ -21,23 +21,23 @@ from threading import RLock
 
 from py4j.java_gateway import JavaClass, JavaObject
 from pyflink.java_gateway import get_gateway, ClassName
-from pyflink.table.types import *
+from pyflink.table.types import DataTypes
 
 if sys.version > '3':
     xrange = range
 
-_sql_basic_types_py2j_map = None
+_data_types_mapping = None
 _init_lock = RLock()
 
 
-def to_java_sql_type(py_sql_type):
-    global _sql_basic_types_py2j_map
+def to_java_type(py_type):
+    global _data_types_mapping
     global _init_lock
 
-    if _sql_basic_types_py2j_map is None:
+    if _data_types_mapping is None:
         with _init_lock:
             TYPES = class_for_name(ClassName.TYPES)
-            _sql_basic_types_py2j_map = {
+            _data_types_mapping = {
                 DataTypes.STRING: TYPES.STRING,
                 DataTypes.BOOLEAN: TYPES.BOOLEAN,
                 DataTypes.BYTE: TYPES.BYTE,
@@ -52,15 +52,7 @@ def to_java_sql_type(py_sql_type):
                 DataTypes.TIMESTAMP: TYPES.SQL_TIMESTAMP
             }
 
-    if isinstance(py_sql_type, list):
-        j_types = [to_java_sql_type(pt) for pt in py_sql_type]
-        j_types_arr = convert_py_list_to_java_array(
-            ClassName.TYPE_INFORMATION,
-            j_types
-        )
-        return j_types_arr
-
-    return _sql_basic_types_py2j_map[py_sql_type]
+    return _data_types_mapping[py_type]
 
 
 def convert_py_list_to_java_array(arr_type, seq):

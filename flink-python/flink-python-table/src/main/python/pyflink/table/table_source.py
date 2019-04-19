@@ -48,5 +48,5 @@ class CsvTableSource(TableSource):
         j_csv_table_source = type_utils.class_for_name(ClassName.CSV_TABLE_SOURCE)
         j_field_names = utils.to_jarray(type_utils.class_for_name(ClassName.STRING), field_names)
         j_field_types = utils.to_jarray(type_utils.class_for_name(ClassName.TYPE_INFORMATION),
-                                        [type_utils.to_java_sql_type(field_type) for field_type in field_types])
+                                        [type_utils.to_java_type(field_type) for field_type in field_types])
         super(CsvTableSource, self).__init__(j_csv_table_source(source_path, j_field_names, j_field_types))
