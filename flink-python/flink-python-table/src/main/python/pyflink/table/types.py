@@ -40,7 +40,8 @@ __all__ = [
 
 
 class DataType(object):
-    """ Base class for data types.
+    """
+    Base class for data types.
     """
     @classmethod
     def type_name(cls):

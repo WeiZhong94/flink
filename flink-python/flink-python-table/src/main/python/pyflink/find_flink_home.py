@@ -21,7 +21,9 @@ import sys
 
 
 def _find_flink_home():
-    """Find the FLINK_HOME."""
+    """
+    Find the FLINK_HOME.
+    """
     # If the environment has set FLINK_HOME, trust it.
     if 'FLINK_HOME' in os.environ:
         return os.environ['FLINK_HOME']
