@@ -180,9 +180,9 @@
 
 		<!-- Python Table API -->
 		<file>
-			<source>../flink-python/flink-python-table/target/flink-python-table_${scala.binary.version}-${project.version}.jar</source>
+			<source>../flink-python/flink-python-table/target/flink-python-table-${project.version}.jar</source>
 			<outputDirectory>opt</outputDirectory>
-			<destName>flink-python-table_${scala.binary.version}-${project.version}.jar</destName>
+			<destName>flink-python-table-${project.version}.jar</destName>
 			<fileMode>0644</fileMode>
 		</file>
 	</files>
