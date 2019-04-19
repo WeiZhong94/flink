@@ -20,12 +20,14 @@ from datetime import date, datetime, time as datetime_time
 import time
 
 from threading import RLock
+from typing import Union
 
 from py4j.java_collections import ListConverter
-from py4j.java_gateway import JavaClass
+from py4j.java_gateway import JavaClass, JavaObject
 
 from pyflink.java_gateway import get_gateway, ClassName
 from pyflink.table.data_type import *
+from pyflink.table.data_type import DataType
 
 if sys.version > '3':
     xrange = range
@@ -75,9 +77,7 @@ class TypesUtil(object):
     def convert_pylist_to_java_list(py_list):
         # type: (list) -> JavaObject
         _gateway = get_gateway()
-        java_list = []
-        for item in py_list:
-            java_list.append(TypesUtil.python_value_to_java_value(item))
+        java_list = [TypesUtil.python_value_to_java_value(item) for item in py_list]
         j_list = ListConverter().convert(
             java_list, _gateway._gateway_client)
         return j_list
@@ -86,9 +86,7 @@ class TypesUtil(object):
     def convert_tuple_list(tuple_list):
         # type: (list[tuple]) -> JavaObject
         _gateway = get_gateway()
-        java_tuple_list = []
-        for item in tuple_list:
-            java_tuple_list.append(TypesUtil._tuple_to_java_tuple(item))
+        java_tuple_list = [TypesUtil._tuple_to_java_tuple(item) for item in tuple_list]
         return ListConverter().convert(
             java_tuple_list, _gateway._gateway_client)
 
@@ -96,9 +94,7 @@ class TypesUtil(object):
     def _tuple_to_java_tuple(data):
         # type: (tuple) -> JavaObject
         size = len(data)
-        java_data = []
-        for item in data:
-            java_data.append(TypesUtil.python_value_to_java_value(item))
+        java_data = [TypesUtil.python_value_to_java_value(item) for item in data]
         java_tuple = TypesUtil.class_for_name(ClassName.TUPLE + str(size))
         return java_tuple(*list(java_data))
 
