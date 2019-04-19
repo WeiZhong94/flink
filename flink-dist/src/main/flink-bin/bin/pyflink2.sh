@@ -27,7 +27,6 @@ FLINK_CLASSPATH=`constructFlinkClassPath`
 
 ARGS=()
 
-# if shell mode has been specified, use shell-driver
 while [[ $# -gt 0 ]]
 do
     key="$1"
@@ -47,5 +46,3 @@ done
 PYTHON_JAR_PATH=`echo "$FLINK_ROOT_DIR"/opt/flink-python-table*.jar`
 TABLE_JAR_PATH=`echo "$FLINK_ROOT_DIR"/opt/flink-table*.jar`
 exec $JAVA_RUN $JVM_ARGS -cp ${FLINK_CLASSPATH}:${TABLE_JAR_PATH}:${PYTHON_JAR_PATH} ${DRIVER} ${ARGS[@]}
-
-
