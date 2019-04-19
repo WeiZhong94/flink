@@ -57,9 +57,8 @@ def launch_gateway():
     FLINK_HOME = _find_flink_home()
     # TODO windows support
     script = "./bin/pyflink2.sh"
-    gateway_server = ClassName.PYTHON_SHELL_GATEWAY_SERVER
     command = [os.path.join(FLINK_HOME, script)]
-    command += ['-c', gateway_server]
+    command += ['-c', 'org.apache.flink.api.python.PythonShellGatewayServer']
 
     # Create a temporary directory where the gateway server should write the connection information.
     conn_info_dir = tempfile.mkdtemp()
