@@ -60,7 +60,7 @@ class TableConfig(object):
 
             :return: Builder
             """
-            self.is_stream = False
+            self._is_stream = False
             return self
 
         def set_parallelism(self, parallelism):
@@ -70,7 +70,6 @@ class TableConfig(object):
             :param parallelism: The parallelism.
             :return: Builder
             """
-            # type: int -> TableConfig.Builder
             self._parallelism = parallelism
             return self
 

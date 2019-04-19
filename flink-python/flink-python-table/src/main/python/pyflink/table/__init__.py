@@ -16,13 +16,12 @@
 # limitations under the License.
 ################################################################################
 
-from pyflink.table.types import DataType, StringType, BooleanType, ShortType, ByteType, CharType, IntegerType, \
-    LongType, FloatType, DoubleType, DateType, TimeType, TimestampType, DataTypes
-from pyflink.table.table_sink import TableSink, CsvTableSink
 from pyflink.table.table import Table, GroupedTable
-from pyflink.table.table_environment import TableEnvironment, StreamTableEnvironment, BatchTableEnvironment
 from pyflink.table.table_config import TableConfig
+from pyflink.table.table_environment import TableEnvironment, StreamTableEnvironment, BatchTableEnvironment
+from pyflink.table.table_sink import TableSink, CsvTableSink
 from pyflink.table.table_source import TableSource, CsvTableSource
+from pyflink.table.types import DataTypes
 
 __all__ = [
     'TableEnvironment',
@@ -35,20 +34,5 @@ __all__ = [
     'TableSource',
     'CsvTableSink',
     'CsvTableSource',
-
-    # data types
-    'DataType',
-    'StringType',
-    'BooleanType',
-    'ByteType',
-    'ShortType',
-    'CharType',
-    'IntegerType',
-    'LongType',
-    'FloatType',
-    'DoubleType',
-    'DateType',
-    'TimeType',
-    'TimestampType',
     'DataTypes'
 ]

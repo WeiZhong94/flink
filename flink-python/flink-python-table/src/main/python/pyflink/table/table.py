@@ -52,17 +52,7 @@ class Table(object):
     def __init__(self, j_table):
         self._j_table = j_table
 
-    @property
-    def table_name(self):
-        # type: () -> str
-        return self._j_table.tableName()
-
-    @table_name.setter
-    def table_name(self, name):
-        # type: (str) -> None
-        self._j_table.tableName(name)
-
-    def select(self, col_list):
+    def select(self, fields):
         """
         Performs a selection operation. Similar to a SQL SELECT statement. The field expressions
         can contain complex expressions and aggregations.
@@ -71,23 +61,23 @@ class Table(object):
         ::
             >>> t = tab.select("key, value.avg + ' The average' as average")
 
-        :param col_list: Expression string.
+        :param fields: Expression string.
         :return: Result table.
         """
-        return Table(self._j_table.select(col_list))
+        return Table(self._j_table.select(fields))
 
-    def as_(self, col_list):
+    def alias(self, fields):
         """
         Renames the fields of the expression result. Use this to disambiguate fields before
         joining to operations.
         Example:
         ::
-            >>> t = tab.as_("a, b")
+            >>> t = tab.alias("a, b")
 
-        :param col_list: Field list expression string.
+        :param fields: Field list expression string.
         :return: Result table.
         """
-        return Table(get_method(self._j_table, "as")(col_list))
+        return Table(get_method(self._j_table, "as")(fields))
 
     def filter(self, predicate):
         """
@@ -116,7 +106,7 @@ class Table(object):
         """
         return Table(self._j_table.where(predicate))
 
-    def group_by(self, key_list):
+    def group_by(self, fields):
         """
         Groups the elements on some grouping keys. Use this before a selection with aggregations
         to perform the aggregation on a per-group basis. Similar to a SQL GROUP BY statement.
@@ -125,10 +115,10 @@ class Table(object):
         ::
             >>> t = tab.group_by("key").select("key, value.avg")
 
-        :param key_list: Group keys.
+        :param fields: Group keys.
         :return: The grouped table.
         """
-        return GroupedTable(self._j_table.groupBy(key_list))
+        return GroupedTable(self._j_table.groupBy(fields))
 
     def distinct(self):
         """
@@ -144,7 +134,7 @@ class Table(object):
     def join(self, right, join_predicate=None):
         """
         Joins two :class:`Table`\ s. Similar to a SQL join. The fields of the two joined
-        operations must not overlap, use :func:`~pyflink.table.Table.as_` to rename fields if necessary. You can use
+        operations must not overlap, use :func:`~pyflink.table.Table.alias` to rename fields if necessary. You can use
         where and select clauses after a join to further specify the behaviour of the join.
 
         .. note::
@@ -373,7 +363,7 @@ class Table(object):
         """
         return Table(self._j_table.offset(offset))
 
-    def fetch(self, fetch_num):
+    def fetch(self, fetch):
         """
         Limits a sorted result to the first n rows.
         Similar to a SQL FETCH clause. Fetch is technically part of the Order By operator and
@@ -391,10 +381,10 @@ class Table(object):
         ::
             >>> t = tab.order_by("name.desc").offset(10).fetch(5)
 
-        :param fetch_num: The number of records to return. Fetch must be >= 0.
+        :param fetch: The number of records to return. Fetch must be >= 0.
         :return: Result table.
         """
-        return Table(self._j_table.fetch(fetch_num))
+        return Table(self._j_table.fetch(fetch))
 
     def insert_into(self, table_name):
         """
@@ -414,7 +404,7 @@ class GroupedTable(object):
     def __init__(self, java_table):
         self._j_table = java_table
 
-    def select(self, col_list):
+    def select(self, fields):
         """
         Performs a selection operation on a grouped table. Similar to an SQL SELECT statement.
         The field expressions can contain complex expressions and aggregations.
@@ -424,7 +414,7 @@ class GroupedTable(object):
             >>> t = tab.group_by("key").select("key, value.avg + ' The average' as average")
 
 
-        :param col_list: Expression string that contains group keys and aggregate function calls.
+        :param fields: Expression string that contains group keys and aggregate function calls.
         :return: Result table.
         """
-        return Table(self._j_table.select(col_list))
+        return Table(self._j_table.select(fields))

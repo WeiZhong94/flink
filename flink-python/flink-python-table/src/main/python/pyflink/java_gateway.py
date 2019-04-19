@@ -103,9 +103,3 @@ def launch_gateway():
     java_import(gateway.jvm, "org.apache.flink.streaming.api.environment.StreamExecutionEnvironment")
 
     return gateway
-
-
-class ClassName(object):
-    TUPLE = "org.apache.flink.api.java.tuple.Tuple"
-    WRITE_MODE = "org.apache.flink.core.fs.FileSystem.WriteMode"
-    PYTHON_SHELL_GATEWAY_SERVER = "org.apache.flink.api.python.PythonShellGatewayServer"

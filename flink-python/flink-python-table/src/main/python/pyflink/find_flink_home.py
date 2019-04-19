@@ -29,8 +29,8 @@ def _find_flink_home():
         return os.environ['FLINK_HOME']
     else:
         try:
-            flink_dev_root = os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + "/../../../../../../")
-            build_target = flink_dev_root + "/build-target"
+            flink_root_dir = os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + "/../../../../../../")
+            build_target = flink_root_dir + "/build-target"
             pyflink_file = build_target + "/bin/pyflink2.sh"
             if os.path.isfile(pyflink_file):
                 return build_target
