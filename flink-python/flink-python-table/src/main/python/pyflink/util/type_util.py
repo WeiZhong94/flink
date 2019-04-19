@@ -33,12 +33,12 @@ if sys.version > '3':
 
 class TypesUtil(object):
     _sql_basic_types_py2j_map = None
-    _sql_complex_type_py2j_map = None
     _init_lock = RLock()
 
     @staticmethod
     def to_java_sql_type(py_sql_type):
-        if (TypesUtil._sql_basic_types_py2j_map is None) or (TypesUtil._sql_complex_type_py2j_map is None):
+        # type: (Union[list[DataType],DataType]) -> JavaObject
+        if TypesUtil._sql_basic_types_py2j_map is None:
             with TypesUtil._init_lock:
                 j_sql_types = TypesUtil.class_for_name(ClassName.TYPES)
                 TypesUtil._sql_basic_types_py2j_map = {
@@ -58,12 +58,7 @@ class TypesUtil(object):
                     DataTypes.ROWTIME_INDICATOR:
                         TypesUtil.class_for_name(ClassName.TIME_INDICATOR_TYPE_INFO).ROWTIME_INDICATOR(),
                     DataTypes.PROCTIME_INDICATOR:
-                        TypesUtil.class_for_name(ClassName.TIME_INDICATOR_TYPE_INFO).PROCTIME_INDICATOR(),
-                    DataTypes.DECIMAL: j_sql_types.BIG_DEC
-                }
-
-                TypesUtil._sql_complex_type_py2j_map = {
-                    RowType: TypesUtil.class_for_name(ClassName.ROW_TYPE_INFO)
+                        TypesUtil.class_for_name(ClassName.TIME_INDICATOR_TYPE_INFO).PROCTIME_INDICATOR()
                 }
 
         if isinstance(py_sql_type, list):
@@ -74,25 +69,11 @@ class TypesUtil(object):
             )
             return j_types_arr
 
-        if isinstance(py_sql_type, DecimalType):
-            return TypesUtil._sql_complex_type_py2j_map.get(type(py_sql_type))
-        if isinstance(py_sql_type, RowType):
-            j_types = [TypesUtil._sql_basic_types_py2j_map[pt] for pt in py_sql_type.data_types]
-            j_types_arr = TypesUtil.convert_py_list_to_java_array(
-                ClassName.TYPE_INFORMATION,
-                j_types
-            )
-            j_names_arr = TypesUtil.convert_py_list_to_java_array(
-                ClassName.STRING,
-                py_sql_type.fields_names
-            )
-            j_clz = TypesUtil._sql_complex_type_py2j_map.get(type(py_sql_type))
-            return j_clz(j_types_arr, j_names_arr)
-
         return TypesUtil._sql_basic_types_py2j_map.get(py_sql_type)
 
     @staticmethod
     def convert_pylist_to_java_list(py_list):
+        # type: (list) -> JavaObject
         _gateway = get_gateway()
         java_list = []
         for item in py_list:
@@ -103,6 +84,7 @@ class TypesUtil(object):
 
     @staticmethod
     def convert_tuple_list(tuple_list):
+        # type: (list[tuple]) -> JavaObject
         _gateway = get_gateway()
         java_tuple_list = []
         for item in tuple_list:
@@ -112,6 +94,7 @@ class TypesUtil(object):
 
     @staticmethod
     def _tuple_to_java_tuple(data):
+        # type: (tuple) -> JavaObject
         size = len(data)
         java_data = []
         for item in data:
@@ -121,6 +104,7 @@ class TypesUtil(object):
 
     @staticmethod
     def convert_py_list_to_java_array(arr_type, seq):
+        # type: (str, Union[list,tuple]) -> JavaObject
         _gateway = get_gateway()
         ns = TypesUtil.class_for_name(arr_type)
         size = len(seq)
@@ -132,11 +116,12 @@ class TypesUtil(object):
 
     @staticmethod
     def class_for_name(class_name):
+        # type: (str) -> JavaClass
         _gateway = get_gateway()
         # e.g.: org.apache.flink.streaming.api.TimeCharacteristic
         clz = getattr(_gateway.jvm, class_name)
         if not isinstance(clz, JavaClass):
-            # py4j bug, can't recognize internal class from canonical name
+            # a workaround to access nested class
             attrs = class_name.split('.')
             for i in reversed(xrange(len(attrs) - 1)):
                 outer_class_name = ''

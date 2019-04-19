@@ -20,8 +20,8 @@ sys.path.insert(0, os.path.abspath('../src/main/python'))
 # -- Project information -----------------------------------------------------
 
 project = u'Flink Python Table API'
-copyright = u'2019, Wei Zhong'
-author = u'Wei Zhong'
+copyright = u''
+author = u''
 
 # The short X.Y version
 version = u''

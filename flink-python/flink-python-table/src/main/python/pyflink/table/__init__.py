@@ -17,7 +17,7 @@
 ################################################################################
 
 from pyflink.table.data_type import StringType, BooleanType, ShortType, ByteType, CharType, IntegerType, LongType, \
-    FloatType, DoubleType, BinaryType, DateType, TimeType, TimestampType, DecimalType, RowType, DataTypes
+    FloatType, DoubleType, BinaryType, DateType, TimeType, TimestampType, DataTypes
 from pyflink.table.table_sink import TableSink, CsvTableSink
 from pyflink.table.table import Table, GroupedTable
 from pyflink.table.table_environment import TableEnvironment, StreamTableEnvironment, BatchTableEnvironment
@@ -50,7 +50,5 @@ __all__ = [
     'DateType',
     'TimeType',
     'TimestampType',
-    'DecimalType',
-    'RowType',
     'DataTypes'
 ]

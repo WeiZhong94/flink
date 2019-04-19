@@ -23,14 +23,26 @@ __all__ = ['TableSource', 'CsvTableSource']
 
 
 class TableSource(object):
+    """
+    Defines an table from an external system or location.
+    """
 
     def __init__(self, j_table_source):
         self._j_table_source = j_table_source
 
 
 class CsvTableSource(TableSource):
+    """
+    A :class:`TableSource` for simple CSV files with a
+    (logically) unlimited number of fields.
+
+    :param source_path: The path to the CSV file.
+    :param field_names: The names of the table fields.
+    :param field_types: The types of the table fields.
+    """
 
     def __init__(self, source_path, field_names, field_types):
+        # type: (str, list[str], list[DataType]) -> None
         self._source_path = source_path
         self._field_names = field_names
         self._field_types = field_types

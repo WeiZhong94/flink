@@ -1,17 +1,20 @@
-pyflink package
+Welcome to Flink Python Table API Docs!
 ===============
 
-Subpackages
------------
+Contents:
 
 .. toctree::
 
     pyflink.table
 
-Module contents
----------------
+Core Class
+----------
 
-.. automodule:: pyflink
-    :members:
-    :undoc-members:
-    :show-inheritance:
+    :class:`pyflink.table.TableEnvironment`
+
+    Main entry point for Flink functionality.
+
+    :class:`pyflink.table.Table`
+
+    Core component of the Flink Table API. The Flink Table API is built around ``Table``.
+

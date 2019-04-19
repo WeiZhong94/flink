@@ -30,6 +30,7 @@ _gateway = None
 _lock = RLock()
 
 def get_gateway():
+    # type: () -> JavaGateway
     global _gateway
     global _lock
     with _lock:
@@ -44,6 +45,7 @@ def get_gateway():
 
 
 def launch_java_gateway():
+    # type: () -> JavaGateway
     conn_info_dir = tempfile.mkdtemp()
     try:
         fd, conn_info_file = tempfile.mkstemp(dir=conn_info_dir)
@@ -64,6 +66,7 @@ def launch_java_gateway():
 
 
 def launch_java_process(conn_info_file):
+    # type: (str) -> Popen
     flink_home = None
     if 'FLINK_ROOT_DIR' in os.environ:
         flink_home = os.environ['FLINK_ROOT_DIR']

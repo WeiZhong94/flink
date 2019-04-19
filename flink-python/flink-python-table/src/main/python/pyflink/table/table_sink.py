@@ -23,6 +23,9 @@ __all__ = ['TableSink', 'CsvTableSink']
 
 
 class TableSink(object):
+    """
+    A :class:`TableSink` specifies how to emit a table to an external system or location.
+    """
 
     def __init__(self, j_sink):
         self._j_table_sink = j_sink
@@ -34,8 +37,17 @@ class WriteMode(object):
 
 
 class CsvTableSink(TableSink):
+    """
+    A simple :class:`TableSink` to emit data as CSV files.
+
+    :param path: The output path to write the Table to.
+    :param field_delimiter: The field delimiter.
+    :param num_files: The number of files to write to.
+    :param write_mode: The write mode to specify whether existing files are overwritten or not.
+    """
 
     def __init__(self, path, field_delimiter=',', num_files=1, write_mode=WriteMode.NO_OVERWRITE):
+        # type: (str, str, int, int) -> None
         self._path = path
         self._field_delimiter = field_delimiter
         self._num_files = num_files

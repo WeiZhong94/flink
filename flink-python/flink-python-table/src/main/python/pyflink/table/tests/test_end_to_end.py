@@ -30,9 +30,8 @@ def test_end_to_end():
     if os.path.isfile(source_path):
         os.remove(source_path)
     with open(source_path, 'w') as f:
-        lines = '1,KE RUOPU,hello\n' + '2,KE RUOCHONG,hello\n'
+        lines = '1,hi,hello\n' + '2,hi,hello\n'
         f.write(lines)
-        print (lines)
         f.close()
 
     t_config = TableConfig.Builder().as_streaming_execution().set_parallelism(1).build()
@@ -67,7 +66,7 @@ def test_end_to_end():
     t_env.execute()
     with open(tmp_csv, 'r') as f:
         lines = f.read()
-        print (lines)
+        assert lines == '2,hi,hello\n' + '3,hi,hello\n'
 
 
 if __name__ == '__main__':
