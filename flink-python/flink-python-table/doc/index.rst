@@ -13,7 +13,7 @@ Welcome to Flink Python Table API's documentation!
 
    pyflink
 
-Core Class
+Core Classes:
 ----------
 
     :class:`pyflink.table.TableEnvironment`
