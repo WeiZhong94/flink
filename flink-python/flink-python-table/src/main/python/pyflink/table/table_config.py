@@ -24,18 +24,25 @@ class TableConfig(object):
     A config to define the runtime behavior of the Table API.
     """
 
-    def __init__(self, is_stream, parallelism):
-        # type: (bool, int) -> None
-        self._is_stream = is_stream
-        self._parallelism = parallelism
+    def __init__(self):
+        self._is_stream = None
+        self._parallelism = None
 
     @property
     def is_stream(self):
         return self._is_stream
 
+    @is_stream.setter
+    def is_stream(self, is_stream):
+        self._is_stream = is_stream
+
     @property
     def parallelism(self):
         return self._parallelism
+
+    @parallelism.setter
+    def parallelism(self, parallelism):
+        self._parallelism = parallelism
 
     class Builder(object):
 
@@ -79,4 +86,7 @@ class TableConfig(object):
 
             :return: TableConfig
             """
-            return TableConfig(self._is_stream, self._parallelism)
+            config = TableConfig()
+            config.parallelism = self._parallelism
+            config.is_stream = self._is_stream
+            return config
