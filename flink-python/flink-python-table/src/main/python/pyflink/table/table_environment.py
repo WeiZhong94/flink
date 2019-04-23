@@ -133,11 +133,11 @@ class TableEnvironment(object):
         gateway = get_gateway()
         if table_config.is_stream:
             j_execution_env = gateway.jvm.StreamExecutionEnvironment.getExecutionEnvironment()
-            j_tenv = gateway.jvm.TableEnvironment.getTableEnvironment(j_execution_env)
+            j_tenv = gateway.jvm.TableEnvironment.getTableEnvironment(j_execution_env, table_config._j_table_config)
             t_env = StreamTableEnvironment(j_tenv)
         else:
             j_execution_env = gateway.jvm.ExecutionEnvironment.getExecutionEnvironment()
-            j_tenv = gateway.jvm.TableEnvironment.getTableEnvironment(j_execution_env)
+            j_tenv = gateway.jvm.TableEnvironment.getTableEnvironment(j_execution_env, table_config._j_table_config)
             t_env = BatchTableEnvironment(j_tenv)
 
         if table_config.parallelism is not None:

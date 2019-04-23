@@ -15,6 +15,7 @@
 #  See the License for the specific language governing permissions and
 # limitations under the License.
 ################################################################################
+from pyflink.java_gateway import get_gateway
 
 __all__ = ['TableConfig']
 
@@ -25,8 +26,10 @@ class TableConfig(object):
     """
 
     def __init__(self):
-        self._is_stream = None
-        self._parallelism = None
+        self._jvm = get_gateway().jvm
+        self._j_table_config = self._jvm.TableConfig()
+        self._is_stream = None  # type: bool
+        self._parallelism = None  # type: int
 
     @property
     def is_stream(self):
@@ -44,12 +47,46 @@ class TableConfig(object):
     def parallelism(self, parallelism):
         self._parallelism = parallelism
 
+    @property
+    def timezone(self):
+        return self._j_table_config.getTimeZone().getID()
+
+    @timezone.setter
+    def timezone(self, timezone_id):
+        if timezone_id is not None and isinstance(timezone_id, str):
+            j_timezone = self._jvm.java.util.TimeZone.getTimeZone(timezone_id)
+            self._j_table_config.setTimeZone(j_timezone)
+        else:
+            raise Exception("TableConfig.timezone should be a string!")
+
+    @property
+    def null_check(self):
+        return self._j_table_config.getNullCheck()
+
+    @null_check.setter
+    def null_check(self, null_check):
+        if null_check is not None and isinstance(null_check, bool):
+            self._j_table_config.setNullCheck(null_check)
+        else:
+            raise Exception("TableConfig.null_check should be a bool value!")
+
+    @property
+    def max_generated_code_length(self):
+        return self._j_table_config.getMaxGeneratedCodeLength()
+
+    @max_generated_code_length.setter
+    def max_generated_code_length(self, max_generated_code_length):
+        if max_generated_code_length is not None and isinstance(max_generated_code_length, int):
+            self._j_table_config.setMaxGeneratedCodeLength(max_generated_code_length)
+        else:
+            raise Exception("TableConfig.max_generated_code_length should be a int value!")
+
     class Builder(object):
 
         def __init__(self):
             self._is_stream = None  # type: bool
             self._parallelism = None  # type: int
-            self._time_zone_id = None  # type: str
+            self._timezone_id = None  # type: str
             self._null_check = None  # type: bool
             self._max_generated_code_length = None  # type: int
 
@@ -83,7 +120,7 @@ class TableConfig(object):
             self._parallelism = parallelism
             return self
 
-        def set_time_zone(self, time_zone_id):
+        def set_timezone(self, time_zone_id):
             """
             Sets the timezone for date/time/timestamp conversions.
 
@@ -92,7 +129,7 @@ class TableConfig(object):
                                  ID such as "GMT-8:00".
             :return: :class:`TableConfig.Builder`
             """
-            self._time_zone_id = time_zone_id
+            self._timezone_id = time_zone_id
             return self
 
         def set_null_check(self, null_check):
@@ -124,6 +161,14 @@ class TableConfig(object):
             :return: TableConfig
             """
             config = TableConfig()
-            config.parallelism = self._parallelism
-            config.is_stream = self._is_stream
+            if self._parallelism is not None:
+                config.parallelism = self._parallelism
+            if self._is_stream is not None:
+                config.is_stream = self._is_stream
+            if self._timezone_id is not None:
+                config.timezone = self._timezone_id
+            if self._null_check is not None:
+                config.null_check = self._null_check
+            if self._max_generated_code_length is not None:
+                config.max_generated_code_length = self._max_generated_code_length
             return config
