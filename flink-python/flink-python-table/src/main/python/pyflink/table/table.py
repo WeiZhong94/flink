@@ -398,6 +398,9 @@ class Table(object):
         """
         self._j_table.insertInto(table_name)
 
+    def __str__(self):
+        return self._j_table.toString()
+
 
 class GroupedTable(object):
 

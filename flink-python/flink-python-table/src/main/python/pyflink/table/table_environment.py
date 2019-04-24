@@ -20,6 +20,7 @@ from abc import ABCMeta
 
 from pyflink.java_gateway import get_gateway
 from pyflink.table import Table, TableConfig
+from pyflink.table.query_config import QueryConfig, StreamQueryConfig, BatchQueryConfig
 from pyflink.util import type_utils, utils
 
 __all__ = [
@@ -111,15 +112,73 @@ class TableEnvironment(object):
         return Table(j_table)
 
     def list_tables(self):
+        """
+        Gets the names of all tables registered in this environment.
+
+        :return: List of table names.
+        """
         j_table_name_array = self._j_tenv.listTables()
         return [item for item in j_table_name_array]
 
     def explain(self, table):
+        """
+        Returns the AST of the specified Table API and SQL queries and the execution plan to compute
+        the result of the given :class:`Table`.
+
+        :param table: The table to be explained.
+        :return: The table for which the AST and execution plan will be returned.
+        """
         return self._j_tenv.explain(table._java_table)
 
     def sql_query(self, query):
+        """
+        Evaluates a SQL query on registered tables and retrieves the result as a :class:`Table`.
+
+        All tables referenced by the query must be registered in the TableEnvironment.
+
+        A :class:`Table` is automatically registered when its :func:`~Table.__str__` method is called, for example
+        when it is embedded into a String.
+
+        Hence, SQL queries can directly reference a :class:`Table` as follows:
+
+        ::
+            >>> table = ...
+            # the table is not registered to the table environment
+            >>> t_env.sql_query("SELECT * FROM %s" % table)
+
+        :param query: The sql query string.
+        :return: The result :class:`Table`.
+        """
         j_table = self._j_tenv.sqlQuery(query)
         return Table(j_table)
+
+    def sql_update(self, stmt, query_config=None):
+        """
+        Evaluates a SQL statement such as INSERT, UPDATE or DELETE or a DDL statement
+
+        ..note::
+            Currently only SQL INSERT statements are supported.
+
+        All tables referenced by the query must be registered in the TableEnvironment.
+        A :class:`Table` is automatically registered when its :func:`~Table.__str__` method is called, for example
+        when it is embedded into a String.
+        Hence, SQL queries can directly reference a :class:`Table` as follows:
+
+        ::
+            # register the table sink into which the result is inserted.
+            >>> t_env.register_table_sink("sink_table", field_names, fields_types, table_sink)
+            >>> source_table = ...
+            # source_table is not registered to the table environment
+            >>> tEnv.sql_update(s"INSERT INTO sink_table SELECT * FROM %s" % source_table)
+
+        :param stmt: The SQL statement to evaluate.
+        :param query_config: The :class:`QueryConfig` to use.
+        """
+        # type: (str, QueryConfig) -> None
+        if query_config is not None:
+            self._j_tenv.sqlUpdate(stmt, query_config._j_query_config)
+        else:
+            self._j_tenv.sqlUpdate(stmt)
 
     def execute(self, job_name=None):
         """
@@ -164,10 +223,23 @@ class StreamTableEnvironment(TableEnvironment):
         super(StreamTableEnvironment, self).__init__(j_tenv)
 
     def get_config(self):
+        """
+        Returns the table config to define the runtime behavior of the Table API.
+
+        :return: Current :class:`TableConfig`.
+        """
         table_config = TableConfig(self._j_tenv.getConfig())
         table_config.is_stream = True
         table_config.parallelism = self._j_tenv.execEnv().getParallelism()
         return table_config
+
+    def query_config(self):
+        """
+        Returns a :class:`StreamQueryConfig` that holds parameters to configure the behavior of streaming queries.
+
+        :return: A new :class:`StreamQueryConfig`.
+        """
+        return StreamQueryConfig(self._j_tenv.queryConfig())
 
 
 class BatchTableEnvironment(TableEnvironment):
@@ -177,7 +249,20 @@ class BatchTableEnvironment(TableEnvironment):
         super(BatchTableEnvironment, self).__init__(j_tenv)
 
     def get_config(self):
+        """
+        Returns the table config to define the runtime behavior of the Table API.
+
+        :return: Current :class:`TableConfig`.
+        """
         table_config = TableConfig(self._j_tenv.getConfig())
         table_config.is_stream = False
         table_config.parallelism = self._j_tenv.execEnv().getParallelism()
         return table_config
+
+    def query_config(self):
+        """
+        Returns the :class:`BatchQueryConfig` that holds parameters to configure the behavior of batch queries.
+
+        :return: A new :class:`BatchQueryConfig`.
+        """
+        return BatchQueryConfig(self._j_tenv.queryConfig())
