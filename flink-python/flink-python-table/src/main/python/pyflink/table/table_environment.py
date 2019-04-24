@@ -19,7 +19,7 @@
 from abc import ABCMeta
 
 from pyflink.java_gateway import get_gateway
-from pyflink.table import Table
+from pyflink.table import Table, TableConfig
 from pyflink.util import type_utils, utils
 
 __all__ = [
@@ -110,6 +110,17 @@ class TableEnvironment(object):
         j_table = self._j_tenv.scan(j_table_paths)
         return Table(j_table)
 
+    def list_tables(self):
+        j_table_name_array = self._j_tenv.listTables()
+        return [item for item in j_table_name_array]
+
+    def explain(self, table):
+        return self._j_tenv.explain(table._java_table)
+
+    def sql_query(self, query):
+        j_table = self._j_tenv.sqlQuery(query)
+        return Table(j_table)
+
     def execute(self, job_name=None):
         """
         Triggers the program execution.
@@ -152,9 +163,21 @@ class StreamTableEnvironment(TableEnvironment):
         self._j_tenv = j_tenv
         super(StreamTableEnvironment, self).__init__(j_tenv)
 
+    def get_config(self):
+        table_config = TableConfig(self._j_tenv.getConfig())
+        table_config.is_stream = True
+        table_config.parallelism = self._j_tenv.execEnv().getParallelism()
+        return table_config
+
 
 class BatchTableEnvironment(TableEnvironment):
 
     def __init__(self, j_tenv):
         self._j_tenv = j_tenv
         super(BatchTableEnvironment, self).__init__(j_tenv)
+
+    def get_config(self):
+        table_config = TableConfig(self._j_tenv.getConfig())
+        table_config.is_stream = False
+        table_config.parallelism = self._j_tenv.execEnv().getParallelism()
+        return table_config

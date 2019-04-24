@@ -55,6 +55,7 @@ def test_end_to_end():
         "Results",
         field_names, field_types, CsvTableSink(tmp_csv))
 
+    print(t_env.list_tables())
     t_env.scan("Orders") \
          .where("a > 0") \
          .select("a + 1, b, c") \
