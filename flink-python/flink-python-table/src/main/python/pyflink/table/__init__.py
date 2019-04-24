@@ -16,7 +16,7 @@
 # limitations under the License.
 ################################################################################
 
-from pyflink.table.table import Table, GroupedTable
+from pyflink.table.table import Table
 from pyflink.table.table_config import TableConfig
 from pyflink.table.table_environment import TableEnvironment, StreamTableEnvironment, BatchTableEnvironment
 from pyflink.table.table_sink import TableSink, CsvTableSink
@@ -28,7 +28,6 @@ __all__ = [
     'StreamTableEnvironment',
     'BatchTableEnvironment',
     'Table',
-    'GroupedTable',
     'TableConfig',
     'TableSink',
     'TableSource',
