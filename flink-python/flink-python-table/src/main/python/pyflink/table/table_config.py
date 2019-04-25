@@ -25,12 +25,9 @@ class TableConfig(object):
     A config to define the runtime behavior of the Table API.
     """
 
-    def __init__(self, j_table_config=None):
+    def __init__(self):
         self._jvm = get_gateway().jvm
-        if j_table_config is None:
-            self._j_table_config = self._jvm.TableConfig()
-        else:
-            self._j_table_config = j_table_config
+        self._j_table_config = self._jvm.TableConfig()
         self._is_stream = None  # type: bool
         self._parallelism = None  # type: int
 

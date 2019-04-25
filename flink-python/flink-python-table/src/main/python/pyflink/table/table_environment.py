@@ -228,7 +228,8 @@ class StreamTableEnvironment(TableEnvironment):
 
         :return: Current :class:`TableConfig`.
         """
-        table_config = TableConfig(self._j_tenv.getConfig())
+        table_config = TableConfig()
+        table_config._j_table_config = self._j_tenv.getConfig()
         table_config.is_stream = True
         table_config.parallelism = self._j_tenv.execEnv().getParallelism()
         return table_config
@@ -254,7 +255,8 @@ class BatchTableEnvironment(TableEnvironment):
 
         :return: Current :class:`TableConfig`.
         """
-        table_config = TableConfig(self._j_tenv.getConfig())
+        table_config = TableConfig()
+        table_config._j_table_config = self._j_tenv.getConfig()
         table_config.is_stream = False
         table_config.parallelism = self._j_tenv.execEnv().getParallelism()
         return table_config
