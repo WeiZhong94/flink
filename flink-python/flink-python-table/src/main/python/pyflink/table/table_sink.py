@@ -54,8 +54,10 @@ class CsvTableSink(TableSink):
         elif write_mode == WriteMode.OVERWRITE:
             j_write_mode = gateway.jvm.scala.Option.apply(
                 gateway.jvm.org.apache.flink.core.fs.FileSystem.WriteMode.OVERWRITE)
-        else:
+        elif write_mode is None:
             j_write_mode = gateway.jvm.scala.Option.empty()
+        else:
+            raise Exception('Unsupported write_mode: %s' % write_mode)
         j_some_field_delimiter = gateway.jvm.scala.Option.apply(field_delimiter)
         j_some_num_files = gateway.jvm.scala.Option.apply(num_files)
         j_csv_table_sink = gateway.jvm.CsvTableSink(
