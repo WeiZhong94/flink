@@ -1375,8 +1375,6 @@ under the License.
 
 						<!-- Py4j -->
 						<exclude>flink-python/flink-python-table/lib/py4j-LICENSE.txt</exclude>
-						<!-- python doc -->
-						<exclude>flink-python/flink-python-table/doc/**/*</exclude>
 					</excludes>
 				</configuration>
 			</plugin>
