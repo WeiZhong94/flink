@@ -48,9 +48,16 @@ class CsvTableSink(TableSink):
     def __init__(self, path, field_delimiter=',', num_files=1, write_mode=None):
         # type: (str, str, int, int) -> None
         gateway = get_gateway()
-        if write_mode is None:
-            j_write_mode = gateway.jvm.org.apache.flink.core.fs.FileSystem.WriteMode.NO_OVERWRITE
+        if write_mode == WriteMode.NO_OVERWRITE:
+            j_write_mode = gateway.jvm.scala.Option.apply(
+                gateway.jvm.org.apache.flink.core.fs.FileSystem.WriteMode.NO_OVERWRITE)
+        elif write_mode == WriteMode.OVERWRITE:
+            j_write_mode = gateway.jvm.scala.Option.apply(
+                gateway.jvm.org.apache.flink.core.fs.FileSystem.WriteMode.OVERWRITE)
         else:
-            j_write_mode = gateway.jvm.org.apache.flink.core.fs.FileSystem.WriteMode.OVERWRITE
-        j_csv_table_sink = gateway.jvm.CsvTableSink(path, field_delimiter, num_files, j_write_mode)
+            j_write_mode = gateway.jvm.scala.Option.empty()
+        j_some_field_delimiter = gateway.jvm.scala.Option.apply(field_delimiter)
+        j_some_num_files = gateway.jvm.scala.Option.apply(num_files)
+        j_csv_table_sink = gateway.jvm.CsvTableSink(
+            path, j_some_field_delimiter, j_some_num_files, j_write_mode)
         super(CsvTableSink, self).__init__(j_csv_table_sink)
