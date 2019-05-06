@@ -16,6 +16,7 @@
 # limitations under the License.
 ################################################################################
 import os
+import sys
 import tempfile
 
 from pyflink.find_flink_home import _find_flink_home
@@ -36,6 +37,7 @@ def test_end_to_end():
         f.close()
     _find_flink_home()
     print("using %s as FLINK_HOME..." % os.environ["FLINK_HOME"])
+    print("python version: %s" % sys.version)
 
     t_config = TableConfig.Builder().as_streaming_execution().set_parallelism(1).build()
     t_env = TableEnvironment.get_table_environment(t_config)
