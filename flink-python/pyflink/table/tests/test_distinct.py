@@ -60,9 +60,10 @@ class BatchTableDistinctTests(PyFlinkBatchTableTestCase):
         t_env = self.t_env
         t_env.register_table_source("Source", csv_source)
         source = t_env.scan("Source")
-        result = source.distinct().select("a, c as b")
 
+        result = source.distinct().select("a, c as b")
         actual = self.collect(result)
+
         expected = ['1,Hello', '2,Hello']
         self.assert_equals(actual, expected)
 
