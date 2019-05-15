@@ -43,6 +43,8 @@ MAX_NO_OUTPUT=${1:-300}
 # Number of seconds to sleep before checking the output again
 SLEEP_TIME=20
 
+ls ./build-target/opt/
+
 LOG4J_PROPERTIES=${HERE}/log4j-travis.properties
 
 PYTHON_TEST="./flink-python/dev/lint-python.sh"
