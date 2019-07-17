@@ -213,7 +213,8 @@ function install_tox() {
         fi
     fi
 
-    $CONDA_PATH install -p $CONDA_HOME tox -y -q 2>&1 >/dev/null
+    $CONDA_PATH install -p $CONDA_HOME virtualenv -y -q 2>&1 >/dev/null
+    $CONDA_PATH install -p $CONDA_HOME -c conda-forge tox -y -q 2>&1 >/dev/null
     if [ $? -ne 0 ]; then
         echo "conda install tox failed \
         please try to exec the script again.\
