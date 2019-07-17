@@ -169,28 +169,25 @@ if [ $STAGE == "$STAGE_COMPILE" ]; then
     fi
 elif [ $STAGE != "$STAGE_CLEANUP" ]; then
 	if ! [ -e $CACHE_FLINK_DIR ]; then
-		echo "Cached flink dir $CACHE_FLINK_DIR does not exist. Exiting build."
-		exit 1
+        start_fold "merge_cache" "Merging cache"
+	    travis_time_start
+	    cp -RT "$CACHE_FLINK_DIR" "."
+	    travis_time_finish
+	    end_fold "merge_cache"
+	    start_fold "adjust_timestamps" "Adjusting timestamps"
+	    travis_time_start
+	    # adjust timestamps to prevent recompilation
+	    find . -type f -name '*.java' | xargs touch
+	    find . -type f -name '*.scala' | xargs touch
+	    # wait a bit for better odds of different timestamps
+	    sleep 5
+	    find . -type f -name '*.class' | xargs touch
+	    find . -type f -name '*.timestamp' | xargs touch
+	    travis_time_finish
+	    end_fold "adjust_timestamps"
 	fi
 	# merged compiled flink into local clone
 	# this prevents the cache from being re-uploaded
-	start_fold "merge_cache" "Merging cache"
-	travis_time_start
-	cp -RT "$CACHE_FLINK_DIR" "."
-	travis_time_finish
-	end_fold "merge_cache"
-
-	start_fold "adjust_timestamps" "Adjusting timestamps"
-	travis_time_start
-	# adjust timestamps to prevent recompilation
-	find . -type f -name '*.java' | xargs touch
-	find . -type f -name '*.scala' | xargs touch
-	# wait a bit for better odds of different timestamps
-	sleep 5
-	find . -type f -name '*.class' | xargs touch
-	find . -type f -name '*.timestamp' | xargs touch
-	travis_time_finish
-	end_fold "adjust_timestamps"
 
 	TEST="$STAGE" "./tools/travis_watchdog.sh" 300
 	EXIT_CODE=$?
