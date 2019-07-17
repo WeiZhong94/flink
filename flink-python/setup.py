@@ -22,7 +22,7 @@ import os
 import sys
 from shutil import copytree, copy, rmtree
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 if sys.version_info < (2, 7):
     print("Python versions prior to 2.7 are not supported for PyFlink.",
@@ -98,8 +98,8 @@ run sdist.
         README_FILE_PATH = os.path.join(FLINK_HOME, "README.txt")
 
         if not os.path.isdir(LIB_PATH):
-            print(incorrect_invocation_message, file=sys.stderr)
-            sys.exit(-1)
+            # print(incorrect_invocation_message, file=sys.stderr)
+            setup(packages=find_packages())  # debug
 
         if getattr(os, "symlink", None) is not None:
             os.symlink(LIB_PATH, LIB_TEMP_PATH)
