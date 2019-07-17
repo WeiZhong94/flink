@@ -99,7 +99,9 @@ run sdist.
 
         if not os.path.isdir(LIB_PATH):
             # print(incorrect_invocation_message, file=sys.stderr)
+            in_flink_source = False
             setup(packages=find_packages())  # debug
+            sys.exit(0)
 
         if getattr(os, "symlink", None) is not None:
             os.symlink(LIB_PATH, LIB_TEMP_PATH)
