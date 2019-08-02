@@ -18,7 +18,8 @@
 from pyflink.java_gateway import get_gateway
 
 from pyflink.table import EnvironmentSettings
-from pyflink.testing.test_case_utils import PyFlinkTestCase, get_private_field
+from pyflink.testing.test_case_utils import PyFlinkTestCase
+from pyflink.util.utils import get_private_field
 
 
 class EnvironmentSettingsTests(PyFlinkTestCase):

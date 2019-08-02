@@ -18,6 +18,8 @@
 import sys
 from datetime import timedelta
 
+from py4j.protocol import Py4JJavaError
+
 from pyflink.java_gateway import get_gateway
 
 if sys.version >= '3':
@@ -60,3 +62,20 @@ def load_java_class(class_name):
     gateway = get_gateway()
     context_classloader = gateway.jvm.Thread.currentThread().getContextClassLoader()
     return context_classloader.loadClass(class_name)
+
+
+def get_private_field(java_obj, field_name):
+    try:
+        field = java_obj.getClass().getDeclaredField(field_name)
+        field.setAccessible(True)
+        return field.get(java_obj)
+    except Py4JJavaError:
+        cls = java_obj.getClass()
+        while cls.getSuperclass() is not None:
+            cls = cls.getSuperclass()
+            try:
+                field = cls.getDeclaredField(field_name)
+                field.setAccessible(True)
+                return field.get(java_obj)
+            except Py4JJavaError:
+                pass

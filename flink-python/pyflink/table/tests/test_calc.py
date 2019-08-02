@@ -101,7 +101,7 @@ class StreamTableCalcTests(PyFlinkStreamTableTestCase):
         actual = source_sink_utils.results()
 
         expected = ['1,1.0,hi,hello,1970-01-02,01:00:00,1970-01-02 00:00:00.0,'
-                    '1970-01-02 00:00:00.0,86400000010,[1.0, null],[1.0, 2.0],[abc],[1970-01-02],'
+                    '1970-01-02 00:00:00.0,86400000,[1.0, null],[1.0, 2.0],[abc],[1970-01-02],'
                     '1,1,2.0,{key=1.0},[65, 66, 67, 68],[1.0, 2.0],[3.0, 4.0]']
         self.assert_equals(actual, expected)
 
