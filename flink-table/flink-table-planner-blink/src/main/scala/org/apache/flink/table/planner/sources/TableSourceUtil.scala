@@ -29,7 +29,7 @@ import org.apache.flink.table.planner.expressions.RexNodeConverter
 import org.apache.flink.table.runtime.types.LogicalTypeDataTypeConverter
 import org.apache.flink.table.runtime.types.TypeInfoLogicalTypeConverter.fromTypeInfoToLogicalType
 import org.apache.flink.table.sources.{DefinedFieldMapping, DefinedProctimeAttribute, DefinedRowtimeAttributes, RowtimeAttributeDescriptor, TableSource}
-import org.apache.flink.table.types.logical.{LogicalType, TimestampKind, TimestampType, TinyIntType}
+import org.apache.flink.table.types.logical.{LogicalType, TimestampKind, TimestampType, TinyIntType, LegacyTypeInformationType}
 import org.apache.flink.table.types.utils.TypeConversions.fromDataTypeToLegacyInfo
 import org.apache.flink.table.typeutils.TimeIndicatorTypeInfo
 
@@ -116,7 +116,9 @@ object TableSourceUtil {
 
         val (physicalName, idx, tpe) = resolveInputField(name, tableSource)
         // validate that mapped fields are are same type
-        if (fromTypeInfoToLogicalType(tpe) != t) {
+        if (fromTypeInfoToLogicalType(tpe) != t &&
+          !(t.isInstanceOf[LegacyTypeInformationType[_]] &&
+            t.asInstanceOf[LegacyTypeInformationType[_]].getTypeInformation.equals(tpe))) {
           throw new ValidationException(s"Type $t of table field '$name' does not " +
             s"match with type $tpe of the field '$physicalName' of the TableSource return type.")
         }
