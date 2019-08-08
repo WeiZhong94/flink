@@ -89,9 +89,30 @@ make_binary_release() {
   cd ${FLINK_DIR}
 }
 
+make_python_release() {
+  cd flink-python/
+  python setup.py sdist
+  cd dist/
+  pyflink_name=`echo *.tar.gz`
+
+  cp ${pyflink_name} ${RELEASE_DIR}
+
+  cd ${RELEASE_DIR}
+
+  # Sign sha the tgz
+  if [ "$SKIP_GPG" == "false" ] ; then
+    gpg --armor --detach-sig "${pyflink_name}"
+  fi
+  $SHASUM "${pyflink_name}" > "${pyflink_name}.sha512"
+
+  cd ${FLINK_DIR}
+}
+
 if [ "$SCALA_VERSION" == "none" ]; then
   make_binary_release "2.12"
   make_binary_release "2.11"
+  make_python_release
 else
   make_binary_release "$SCALA_VERSION"
+  make_python_release
 fi
