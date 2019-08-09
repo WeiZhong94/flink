@@ -93,17 +93,23 @@ make_python_release() {
   cd flink-python/
   python setup.py sdist
   cd dist/
-  pyflink_name=`echo *.tar.gz`
+  pyflink_actual_name=`echo *.tar.gz`
+  PYFLINK_VERSION=${RELEASE_VERSION/-SNAPSHOT/.dev0}
+  pyflink_release_name="apache-flink-${PYFLINK_VERSION}.tar.gz"
 
-  cp ${pyflink_name} ${RELEASE_DIR}
+  if [[ "$pyflink_actual_name" != "$pyflink_release_name" ]] ; then
+    echo -e "\033[31;1mThe file name of the python package: ${pyflink_actual_name} is not consistent with given release version: ${PYFLINK_VERSION}!\033[0m"
+  fi
+
+  cp ${pyflink_actual_name} "${RELEASE_DIR}/${pyflink_release_name}"
 
   cd ${RELEASE_DIR}
 
   # Sign sha the tgz
   if [ "$SKIP_GPG" == "false" ] ; then
-    gpg --armor --detach-sig "${pyflink_name}"
+    gpg --armor --detach-sig "${pyflink_release_name}"
   fi
-  $SHASUM "${pyflink_name}" > "${pyflink_name}.sha512"
+  $SHASUM "${pyflink_release_name}" > "${pyflink_release_name}.sha512"
 
   cd ${FLINK_DIR}
 }
