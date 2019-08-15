@@ -99,6 +99,7 @@ make_python_release() {
 
   if [[ "$pyflink_actual_name" != "$pyflink_release_name" ]] ; then
     echo -e "\033[31;1mThe file name of the python package: ${pyflink_actual_name} is not consistent with given release version: ${PYFLINK_VERSION}!\033[0m"
+    exit 1
   fi
 
   cp ${pyflink_actual_name} "${RELEASE_DIR}/${pyflink_release_name}"
