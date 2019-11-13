@@ -75,8 +75,8 @@ try:
             print("Temp path for symlink to parent already exists {0}".format(TEMP_PATH),
                   file=sys.stderr)
             sys.exit(-1)
-
-        FLINK_HOME = os.path.abspath("../build-target")
+        java_version = VERSION.replace(".dev0", "-SNAPSHOT")
+        FLINK_HOME = os.path.abspath("../flink-dist/target/flink-%s-bin/flink-%s" % (java_version, java_version))
 
         incorrect_invocation_message = """
 If you are installing pyflink from flink source, you must first build Flink and
