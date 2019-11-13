@@ -76,7 +76,8 @@ try:
                   file=sys.stderr)
             sys.exit(-1)
         java_version = VERSION.replace(".dev0", "-SNAPSHOT")
-        FLINK_HOME = os.path.abspath("../flink-dist/target/flink-%s-bin/flink-%s" % (java_version, java_version))
+        FLINK_HOME = os.path.abspath(
+            "../flink-dist/target/flink-%s-bin/flink-%s" % (java_version, java_version))
 
         incorrect_invocation_message = """
 If you are installing pyflink from flink source, you must first build Flink and
