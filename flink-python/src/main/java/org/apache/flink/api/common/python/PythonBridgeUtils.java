@@ -19,6 +19,8 @@ package org.apache.flink.api.common.python;
 
 import org.apache.flink.api.common.python.pickle.ArrayConstructor;
 import org.apache.flink.api.common.python.pickle.ByteArrayConstructor;
+import org.apache.flink.api.common.python.pickle.GlobalPythonFunction;
+import org.apache.flink.api.common.python.pickle.GlobalPythonFunctionPickler;
 
 import net.razorvine.pickle.Pickler;
 import net.razorvine.pickle.Unpickler;
@@ -36,7 +38,7 @@ import java.util.List;
 
 /**
  * Utility class that contains helper methods to create a TableSource from
- * a file which contains Python objects.
+ * a file which contains Python objects and serialize global Python functions.
  */
 public final class PythonBridgeUtils {
 
@@ -45,6 +47,22 @@ public final class PythonBridgeUtils {
 			return (Object[]) input;
 		} else {
 			return ((ArrayList<Object>) input).toArray(new Object[0]);
+		}
+	}
+
+	public static byte[] getPickledGlobalPythonFunction(String fullName) throws IOException {
+		int splitIndex = fullName.lastIndexOf(".");
+		if (splitIndex > 0) {
+			String moduleName = fullName.substring(0, splitIndex);
+			String funcName = fullName.substring(splitIndex + 1);
+			Pickler pickler = new Pickler();
+			if (!initialized) {
+				initialize();
+			}
+			return pickler.dumps(new GlobalPythonFunction(moduleName, funcName));
+		} else {
+			throw new IllegalArgumentException(
+				"The input string is not a full python function name ({module_name}.{func_name}) !");
 		}
 	}
 
@@ -171,6 +189,7 @@ public final class PythonBridgeUtils {
 				Unpickler.registerConstructor("builtins", "bytearray", new ByteArrayConstructor());
 				Unpickler.registerConstructor("__builtin__", "bytes", new ByteArrayConstructor());
 				Unpickler.registerConstructor("_codecs", "encode", new ByteArrayConstructor());
+				Pickler.registerCustomPickler(GlobalPythonFunction.class, new GlobalPythonFunctionPickler());
 				initialized = true;
 			}
 		}

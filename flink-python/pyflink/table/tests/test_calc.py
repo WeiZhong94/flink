@@ -30,11 +30,8 @@ from pyflink.testing.test_case_utils import PyFlinkStreamTableTestCase
 class StreamTableCalcTests(PyFlinkStreamTableTestCase):
 
     def test_select(self):
-        t = self.t_env.from_elements([(1, 'hi', 'hello')], ['a', 'b', 'c'])
-        result = t.select("a + 1, b, c")
-        query_operation = result._j_table.getQueryOperation()
-        self.assertEqual('[plus(a, 1), b, c]',
-                         query_operation.getProjectList().toString())
+        import cloudpickle
+        cloudpickle.load('pickled')
 
     def test_alias(self):
         t = self.t_env.from_elements([(1, 'Hi', 'Hello')], ['a', 'b', 'c'])

@@ -106,7 +106,7 @@ public abstract class AbstractPythonScalarFunctionRunnerTest<IN, OUT>  {
 		PythonFunctionInfo[] pythonFunctionInfos, RowType inputType, RowType outputType) throws Exception;
 
 	/**
-	 * Dummy PythonFunction.
+	 * Dummy GlobalPythonFunction.
 	 */
 	public static class DummyPythonFunction implements PythonFunction {
 
