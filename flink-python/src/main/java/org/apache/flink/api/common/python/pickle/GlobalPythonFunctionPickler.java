@@ -22,8 +22,6 @@ import net.razorvine.pickle.Opcodes;
 import net.razorvine.pickle.PickleException;
 import net.razorvine.pickle.Pickler;
 
-import java.io.DataOutputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -34,24 +32,22 @@ public class GlobalPythonFunctionPickler implements IObjectPickler {
 	@Override
 	public void pickle(Object o, OutputStream out, Pickler currentPickler) throws PickleException, IOException {
 		GlobalPythonFunction globalPythonFunction = (GlobalPythonFunction) o;
-		try (DataOutputStream dataOut = new DataOutputStream(out)){
-			dataOut.writeByte(Opcodes.GLOBAL);
-			dataOut.write("pyflink.table.udf\nDelegatingScalarFunction\n".getBytes());
-			dataOut.writeByte(Opcodes.EMPTY_TUPLE);
-			dataOut.writeByte(Opcodes.NEWOBJ);
-			dataOut.writeByte(Opcodes.EMPTY_DICT);
-			dataOut.writeByte(Opcodes.BINUNICODE);
-			String paramName = "func";
-			dataOut.write(intToBytesLittleEndian(paramName.length()));
-			dataOut.write(paramName.getBytes());
-			dataOut.writeByte(Opcodes.GLOBAL);
-			dataOut.write(globalPythonFunction.getModuleName().getBytes());
-			dataOut.write("\n".getBytes());
-			dataOut.write(globalPythonFunction.getFunctionName().getBytes());
-			dataOut.write("\n".getBytes());
-			dataOut.writeByte(Opcodes.SETITEM);
-			dataOut.writeByte(Opcodes.BUILD);
-		}
+		out.write(Opcodes.GLOBAL);
+		out.write("pyflink.table.udf\nDelegatingScalarFunction\n".getBytes());
+		out.write(Opcodes.EMPTY_TUPLE);
+		out.write(Opcodes.NEWOBJ);
+		out.write(Opcodes.EMPTY_DICT);
+		out.write(Opcodes.BINUNICODE);
+		String paramName = "func";
+		out.write(intToBytesLittleEndian(paramName.length()));
+		out.write(paramName.getBytes());
+		out.write(Opcodes.GLOBAL);
+		out.write(globalPythonFunction.getModuleName().getBytes());
+		out.write("\n".getBytes());
+		out.write(globalPythonFunction.getFunctionName().getBytes());
+		out.write("\n".getBytes());
+		out.write(Opcodes.SETITEM);
+		out.write(Opcodes.BUILD);
 	}
 
 	private static byte[] intToBytesLittleEndian(int value) {

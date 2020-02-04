@@ -42,11 +42,6 @@ public class GlobalPythonScalarFunction extends ScalarFunction implements Python
 	public GlobalPythonScalarFunction(String fullName, TypeInformation<?> resultType, boolean deterministic)
 			throws IOException {
 		this.serializedPythonFunction = PythonBridgeUtils.getPickledGlobalPythonFunction(fullName);
-
-		try(OutputStream out = new FileOutputStream("./pickled");) {
-			out.write(this.serializedPythonFunction);
-		}
-
 		this.resultType = resultType;
 		this.deterministic = deterministic;
 	}
