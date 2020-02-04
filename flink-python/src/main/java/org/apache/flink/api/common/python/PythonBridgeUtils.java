@@ -55,7 +55,7 @@ public final class PythonBridgeUtils {
 		if (splitIndex > 0) {
 			String moduleName = fullName.substring(0, splitIndex);
 			String funcName = fullName.substring(splitIndex + 1);
-			Pickler pickler = new Pickler();
+			Pickler pickler = new Pickler(false);
 			if (!initialized) {
 				initialize();
 			}

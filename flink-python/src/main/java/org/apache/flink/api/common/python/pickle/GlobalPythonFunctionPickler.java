@@ -22,6 +22,8 @@ import net.razorvine.pickle.Opcodes;
 import net.razorvine.pickle.PickleException;
 import net.razorvine.pickle.Pickler;
 
+import java.io.DataOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -32,10 +34,32 @@ public class GlobalPythonFunctionPickler implements IObjectPickler {
 	@Override
 	public void pickle(Object o, OutputStream out, Pickler currentPickler) throws PickleException, IOException {
 		GlobalPythonFunction globalPythonFunction = (GlobalPythonFunction) o;
-		out.write(Opcodes.GLOBAL);
-		out.write(globalPythonFunction.getModuleName().getBytes());
-		out.write("\n".getBytes());
-		out.write(globalPythonFunction.getFunctionName().getBytes());
-		out.write("\n".getBytes());
+		try (DataOutputStream dataOut = new DataOutputStream(out)){
+			dataOut.writeByte(Opcodes.GLOBAL);
+			dataOut.write("pyflink.table.udf\nDelegatingScalarFunction\n".getBytes());
+			dataOut.writeByte(Opcodes.EMPTY_TUPLE);
+			dataOut.writeByte(Opcodes.NEWOBJ);
+			dataOut.writeByte(Opcodes.EMPTY_DICT);
+			dataOut.writeByte(Opcodes.BINUNICODE);
+			String paramName = "func";
+			dataOut.write(intToBytesLittleEndian(paramName.length()));
+			dataOut.write(paramName.getBytes());
+			dataOut.writeByte(Opcodes.GLOBAL);
+			dataOut.write(globalPythonFunction.getModuleName().getBytes());
+			dataOut.write("\n".getBytes());
+			dataOut.write(globalPythonFunction.getFunctionName().getBytes());
+			dataOut.write("\n".getBytes());
+			dataOut.writeByte(Opcodes.SETITEM);
+			dataOut.writeByte(Opcodes.BUILD);
+		}
+	}
+
+	private static byte[] intToBytesLittleEndian(int value) {
+		byte[] src = new byte[4];
+		src[0] = (byte) (value & 0xFF);
+		src[1] = (byte) ((value >> 8) & 0xFF);
+		src[2] = (byte) ((value >> 16) & 0xFF);
+		src[3] = (byte) ((value >> 24) & 0xFF);
+		return src;
 	}
 }
