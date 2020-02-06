@@ -595,6 +595,8 @@ function sphinx_check() {
 }
 ###############################################################All Checks Definitions###############################################################
 
+export PYTHONFAULTHANDLER=true
+
 # CURRENT_DIR is "flink/flink-python/dev/"
 CURRENT_DIR="$(cd "$( dirname "$0" )" && pwd)"
 

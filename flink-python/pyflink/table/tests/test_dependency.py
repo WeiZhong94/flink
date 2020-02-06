@@ -33,6 +33,7 @@ from pyflink.testing.test_case_utils import (PyFlinkBlinkStreamTableTestCase,
 class DependencyTests(object):
 
     def test_add_python_file(self):
+        print("test_add_python_file")
         python_file_dir = os.path.join(self.tempdir, "python_file_dir_" + str(uuid.uuid4()))
         os.mkdir(python_file_dir)
         python_file_path = os.path.join(python_file_dir, "test_dependency_manage_lib.py")
@@ -70,6 +71,7 @@ class BlinkBatchDependencyTests(DependencyTests, PyFlinkBlinkBatchTableTestCase)
 class BlinkStreamDependencyTests(DependencyTests, PyFlinkBlinkStreamTableTestCase):
 
     def test_set_requirements_without_cached_directory(self):
+        print("test_set_requirements_without_cached_directory")
         requirements_txt_path = os.path.join(self.tempdir, str(uuid.uuid4()))
         with open(requirements_txt_path, 'w') as f:
             f.write("cloudpickle==1.2.2")
@@ -95,6 +97,7 @@ class BlinkStreamDependencyTests(DependencyTests, PyFlinkBlinkStreamTableTestCas
         self.assert_equals(actual, ["1,1", "2,2", "3,3"])
 
     def test_set_requirements_with_cached_directory(self):
+        print("test_set_requirements_with_cached_directory")
         tmp_dir = self.tempdir
         requirements_txt_path = os.path.join(tmp_dir, "requirements_txt_" + str(uuid.uuid4()))
         with open(requirements_txt_path, 'w') as f:
@@ -127,6 +130,7 @@ class BlinkStreamDependencyTests(DependencyTests, PyFlinkBlinkStreamTableTestCas
         self.assert_equals(actual, ["2,1", "3,2", "4,3"])
 
     def test_add_python_archive(self):
+        print("test_add_python_archive")
         tmp_dir = self.tempdir
         archive_dir_path = os.path.join(tmp_dir, "archive_" + str(uuid.uuid4()))
         os.mkdir(archive_dir_path)
@@ -154,6 +158,7 @@ class BlinkStreamDependencyTests(DependencyTests, PyFlinkBlinkStreamTableTestCas
         self.assert_equals(actual, ["3,1", "4,2", "5,3"])
 
     def test_set_python_exec(self):
+        print("test_set_python_exec")
         if getattr(os, "symlink", None) is None:
             self.skipTest("Symbolic link is not supported, skip testing 'test_set_python_exec'...")
 
