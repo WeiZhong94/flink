@@ -17,6 +17,7 @@
 
 package org.apache.flink.api.common.pickle;
 
+import org.apache.flink.api.common.python.DependencyManager;
 import org.apache.flink.api.common.python.GlobalPythonScalarFunction;
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.ExecutionEnvironment;
@@ -37,7 +38,7 @@ public class GlobalPythonScalarFunctionTest {
 
 	@Test
 	public void testGlobalPythonScalarFunction() throws Exception {
-		try (OutputStream out = new FileOutputStream("./test1.py")) {
+		try (OutputStream out = new FileOutputStream("../test1.py")) {
 			String code = "def func1(str):\n    return str + str\n";
 			out.write(code.getBytes());
 		}
@@ -45,9 +46,11 @@ public class GlobalPythonScalarFunctionTest {
 		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 		env.setParallelism(1);
 		BatchTableEnvironment tEnv = BatchTableEnvironment.create(env);
+		DependencyManager dependencyManager = new DependencyManager(tEnv.getConfig().getConfiguration(), env);
+		dependencyManager.addPythonFile("../test1.py");
 		tEnv.registerFunction("func1", func);
 		Table t = tEnv.fromDataSet(env.fromElements("1", "2", "3")).as("str").select("func1(str)");
 		System.out.println(tEnv.toDataSet(t, String.class).collect());
-		new File("./test1.py").delete();
+		new File("../test1.py").delete();
 	}
 }
