@@ -182,6 +182,7 @@ SqlCreate SqlCreateFunction(Span s, boolean replace) :
     SqlIdentifier functionIdentifier = null;
     SqlCharStringLiteral functionClassName = null;
     String functionLanguage = null;
+    SqlDataTypeSpec pythonReturnType = null;
     boolean ifNotExists = false;
     boolean isTemporary = false;
     boolean isSystemFunction = false;
@@ -208,10 +209,12 @@ SqlCreate SqlCreateFunction(Span s, boolean replace) :
             <SCALA> { functionLanguage = "SCALA"; }
         |
             <SQL>   { functionLanguage = "SQL"; }
+        |
+            <PYTHON> <RETURNS> { functionLanguage = "PYTHON"; pythonReturnType = ExtendedDataType(); }
         )
     ]
     {
-        return new SqlCreateFunction(s.pos(), functionIdentifier, functionClassName, functionLanguage,
+        return new SqlCreateFunction(s.pos(), functionIdentifier, functionClassName, functionLanguage, pythonReturnType,
                 ifNotExists, isTemporary, isSystemFunction);
     }
 }

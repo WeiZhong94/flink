@@ -48,7 +48,8 @@ public class GlobalPythonScalarFunctionTest {
 		BatchTableEnvironment tEnv = BatchTableEnvironment.create(env);
 		DependencyManager dependencyManager = new DependencyManager(tEnv.getConfig().getConfiguration(), env);
 		dependencyManager.addPythonFile("../test1.py");
-		tEnv.registerFunction("func1", func);
+		//tEnv.registerFunction("func1", func);
+		tEnv.sqlUpdate("CREATE TEMPORARY SYSTEM FUNCTION func1 as 'test1.func1' LANGUAGE PYTHON RETURNS VARCHAR");
 		Table t = tEnv.fromDataSet(env.fromElements("1", "2", "3")).as("str").select("func1(str)");
 		System.out.println(tEnv.toDataSet(t, String.class).collect());
 		new File("../test1.py").delete();

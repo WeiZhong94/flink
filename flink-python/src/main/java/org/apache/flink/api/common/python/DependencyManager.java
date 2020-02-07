@@ -23,10 +23,11 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessingException;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.util.Preconditions;
+
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessingException;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.File;
 import java.lang.reflect.Field;
@@ -40,19 +41,19 @@ import java.util.UUID;
  */
 public class DependencyManager {
 
-	public final String PYTHON_FILE_PREFIX = "python_file";
-	public final String PYTHON_REQUIREMENTS_FILE_PREFIX = "python_requirements_file";
-	public final String PYTHON_REQUIREMENTS_CACHE_PREFIX = "python_requirements_cache";
-	public final String PYTHON_ARCHIVE_PREFIX = "python_archive";
+	public static final String PYTHON_FILE_PREFIX = "python_file";
+	public static final String PYTHON_REQUIREMENTS_FILE_PREFIX = "python_requirements_file";
+	public static final String PYTHON_REQUIREMENTS_CACHE_PREFIX = "python_requirements_cache";
+	public static final String PYTHON_ARCHIVE_PREFIX = "python_archive";
 
-	public final ConfigOption<String> PYTHON_FILES = ConfigOptions.key("python.files").stringType().defaultValue("");
-	public final ConfigOption<String> PYTHON_REQUIREMENTS_FILE =
+	public static final ConfigOption<String> PYTHON_FILES = ConfigOptions.key("python.files").stringType().defaultValue("");
+	public static final ConfigOption<String> PYTHON_REQUIREMENTS_FILE =
 		ConfigOptions.key("python.requirements-file").stringType().defaultValue("");
-	public final ConfigOption<String> PYTHON_REQUIREMENTS_CACHE =
+	public static final ConfigOption<String> PYTHON_REQUIREMENTS_CACHE =
 		ConfigOptions.key("python.requirements-cache").stringType().defaultValue("");
-	public final ConfigOption<String> PYTHON_ARCHIVES =
+	public static final ConfigOption<String> PYTHON_ARCHIVES =
 		ConfigOptions.key("python.archives").stringType().defaultValue("");
-	public final ConfigOption<String> PYTHON_EXEC = ConfigOptions.key("python.exec").stringType().defaultValue("");
+	public static final ConfigOption<String> PYTHON_EXEC = ConfigOptions.key("python.exec").stringType().defaultValue("");
 
 	private final Configuration config;
 	private ExecutionEnvironment env = null;
