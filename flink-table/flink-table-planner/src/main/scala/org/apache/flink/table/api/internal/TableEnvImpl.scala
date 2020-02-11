@@ -843,8 +843,19 @@ abstract class TableEnvImpl(
       val exist = functionCatalog.hasTemporarySystemFunction(
         createFunctionOperation.getFunctionName)
       if (!exist) {
-        val functionDefinition = FunctionDefinitionUtil.createFunctionDefinition(
-          createFunctionOperation.getFunctionName, createFunctionOperation.getFunctionClass)
+        val functionDefinition = if (
+          createFunctionOperation.getFunctionLanguage != FunctionLanguage.PYTHON) {
+
+          FunctionDefinitionUtil.createFunctionDefinition(
+            createFunctionOperation.getFunctionName,
+            createFunctionOperation.getFunctionClass)
+        }
+        else {
+          FunctionDefinitionUtil.createPythonFunctionDefinition(
+            createFunctionOperation.getFunctionName,
+            createFunctionOperation.getFunctionClass,
+            createFunctionOperation.getPythonReturnType)
+        }
         registerSystemFunctionInFunctionCatalog(
           createFunctionOperation.getFunctionName,
           functionDefinition)

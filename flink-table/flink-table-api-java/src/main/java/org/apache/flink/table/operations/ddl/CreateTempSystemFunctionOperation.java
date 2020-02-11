@@ -18,6 +18,8 @@
 
 package org.apache.flink.table.operations.ddl;
 
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.table.catalog.FunctionLanguage;
 import org.apache.flink.table.operations.Operation;
 import org.apache.flink.table.operations.OperationUtils;
 
@@ -32,14 +34,20 @@ public class CreateTempSystemFunctionOperation implements CreateOperation {
 	private final String functionName;
 	private String functionClass;
 	private boolean ignoreIfExists;
+	private FunctionLanguage functionLanguage;
+	private final TypeInformation pythonReturnType;
 
 	public CreateTempSystemFunctionOperation(
 		String functionName,
 		String functionClass,
-		boolean ignoreIfExists) {
+		boolean ignoreIfExists,
+		FunctionLanguage functionLanguage,
+		TypeInformation pythonReturnType) {
 		this.functionName = functionName;
 		this.functionClass = functionClass;
 		this.ignoreIfExists = ignoreIfExists;
+		this.functionLanguage = functionLanguage;
+		this.pythonReturnType = pythonReturnType;
 	}
 
 	public String getFunctionName() {
@@ -52,6 +60,14 @@ public class CreateTempSystemFunctionOperation implements CreateOperation {
 
 	public boolean isIgnoreIfExists() {
 		return this.ignoreIfExists;
+	}
+
+	public FunctionLanguage getFunctionLanguage() {
+		return functionLanguage;
+	}
+
+	public TypeInformation getPythonReturnType() {
+		return pythonReturnType;
 	}
 
 	@Override

@@ -82,7 +82,8 @@
     "EXTENDED",
     "SCALA",
     "TABLES",
-    "RENAME"
+    "RENAME",
+    "PYTHON"
   ]
 
   # List of keywords from "keywords" section that are not reserved.
@@ -261,6 +262,7 @@
     "PRIOR"
     "PRIVILEGES"
     "PUBLIC"
+    "PYTHON"
     "QUARTER"
     "READ"
     "RELATIVE"

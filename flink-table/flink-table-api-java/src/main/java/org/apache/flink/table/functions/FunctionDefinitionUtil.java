@@ -18,10 +18,32 @@
 
 package org.apache.flink.table.functions;
 
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+
+import java.lang.reflect.InvocationTargetException;
+
 /**
  * A util to instantiate {@link FunctionDefinition} in the default way.
  */
 public class FunctionDefinitionUtil {
+
+	public static FunctionDefinition createPythonFunctionDefinition(String name, String fullName, TypeInformation returnType) {
+
+		Object func;
+		try {
+			Class globalPythonScalarFunctionClazz = Thread.currentThread().getContextClassLoader().loadClass(
+				"org.apache.flink.api.common.python.GlobalPythonScalarFunction");
+			func = globalPythonScalarFunctionClazz.getMethod("create", String.class, TypeInformation.class)
+				.invoke(null, fullName, returnType);
+		} catch (IllegalAccessException | ClassNotFoundException | NoSuchMethodException | InvocationTargetException e) {
+			throw new IllegalStateException(
+				String.format("Failed instantiating '%s'", fullName), e);
+		}
+
+		UserDefinedFunction udf = (UserDefinedFunction) func;
+
+		return createFunctionDefinition(name, udf);
+	}
 
 	public static FunctionDefinition createFunctionDefinition(String name, String className) {
 		// Currently only handles Java class-based functions
@@ -34,6 +56,11 @@ public class FunctionDefinitionUtil {
 		}
 
 		UserDefinedFunction udf = (UserDefinedFunction) func;
+
+		return createFunctionDefinition(name, udf);
+	}
+
+	public static FunctionDefinition createFunctionDefinition(String name, UserDefinedFunction udf) {
 
 		if (udf instanceof ScalarFunction) {
 			return new ScalarFunctionDefinition(
@@ -67,7 +94,7 @@ public class FunctionDefinitionUtil {
 			);
 		} else {
 			throw new UnsupportedOperationException(
-				String.format("Function %s should be of ScalarFunction, TableFunction, AggregateFunction, or TableAggregateFunction", className)
+				String.format("Function %s should be of ScalarFunction, TableFunction, AggregateFunction, or TableAggregateFunction", udf.getClass().getName())
 			);
 		}
 	}

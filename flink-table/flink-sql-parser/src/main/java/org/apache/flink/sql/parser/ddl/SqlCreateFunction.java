@@ -23,6 +23,7 @@ import org.apache.flink.sql.parser.error.SqlValidateException;
 
 import org.apache.calcite.sql.SqlCharStringLiteral;
 import org.apache.calcite.sql.SqlCreate;
+import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
@@ -51,6 +52,8 @@ public class SqlCreateFunction extends SqlCreate implements ExtendedSqlNode {
 
 	private final String functionLanguage;
 
+	private final SqlDataTypeSpec pythonReturnType;
+
 	private final boolean isTemporary;
 
 	private final boolean isSystemFunction;
@@ -60,6 +63,7 @@ public class SqlCreateFunction extends SqlCreate implements ExtendedSqlNode {
 			SqlIdentifier functionIdentifier,
 			SqlCharStringLiteral functionClassName,
 			String functionLanguage,
+			SqlDataTypeSpec pythonReturnType,
 			boolean ifNotExists,
 			boolean isTemporary,
 			boolean isSystemFunction) {
@@ -69,6 +73,7 @@ public class SqlCreateFunction extends SqlCreate implements ExtendedSqlNode {
 		this.isSystemFunction = requireNonNull(isSystemFunction);
 		this.isTemporary = isTemporary;
 		this.functionLanguage = functionLanguage;
+		this.pythonReturnType = pythonReturnType;
 	}
 
 	@Override
@@ -131,5 +136,9 @@ public class SqlCreateFunction extends SqlCreate implements ExtendedSqlNode {
 
 	public String[] getFunctionIdentifier() {
 		return functionIdentifier.names.toArray(new String[0]);
+	}
+
+	public SqlDataTypeSpec getPythonReturnType() {
+		return pythonReturnType;
 	}
 }

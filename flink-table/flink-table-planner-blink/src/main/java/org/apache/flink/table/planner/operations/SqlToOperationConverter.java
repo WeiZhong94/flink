@@ -18,6 +18,7 @@
 
 package org.apache.flink.table.planner.operations;
 
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.sql.parser.ddl.SqlAlterDatabase;
 import org.apache.flink.sql.parser.ddl.SqlAlterFunction;
 import org.apache.flink.sql.parser.ddl.SqlAlterTable;
@@ -74,6 +75,7 @@ import org.apache.flink.util.StringUtils;
 import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlBasicCall;
+import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
@@ -243,10 +245,20 @@ public class SqlToOperationConverter {
 			UnresolvedIdentifier.of(sqlCreateFunction.getFunctionIdentifier());
 
 		if (sqlCreateFunction.isSystemFunction()) {
+			TypeInformation pythonReturnType = null;
+			SqlDataTypeSpec typeSpec = sqlCreateFunction.getPythonReturnType();
+			if (typeSpec != null) {
+				pythonReturnType = TypeConversions.fromDataTypeToLegacyInfo(
+					TypeConversions.fromLogicalToDataType(
+						FlinkTypeFactory.toLogicalType(
+							typeSpec.deriveType(flinkPlanner.getOrCreateSqlValidator(), typeSpec.getNullable()))));
+			}
 			return new CreateTempSystemFunctionOperation(
 				unresolvedIdentifier.getObjectName(),
 				sqlCreateFunction.getFunctionClassName().getValueAs(String.class),
-				sqlCreateFunction.isIfNotExists()
+				sqlCreateFunction.isIfNotExists(),
+				parseLanguage(sqlCreateFunction.getFunctionLanguage()),
+				pythonReturnType
 			);
 		} else {
 			FunctionLanguage language = parseLanguage(sqlCreateFunction.getFunctionLanguage());

@@ -36,6 +36,7 @@ import org.apache.flink.table.catalog.CatalogFunction;
 import org.apache.flink.table.catalog.CatalogManager;
 import org.apache.flink.table.catalog.ConnectorCatalogTable;
 import org.apache.flink.table.catalog.FunctionCatalog;
+import org.apache.flink.table.catalog.FunctionLanguage;
 import org.apache.flink.table.catalog.GenericInMemoryCatalog;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.catalog.QueryOperationCatalogView;
@@ -920,9 +921,17 @@ public class TableEnvironmentImpl implements TableEnvironment {
 		try {
 				boolean exist = functionCatalog.hasTemporarySystemFunction(operation.getFunctionName());
 				if (!exist) {
-					FunctionDefinition functionDefinition = FunctionDefinitionUtil.createFunctionDefinition(
-						operation.getFunctionName(),
-						operation.getFunctionClass());
+					FunctionDefinition functionDefinition;
+					if (operation.getFunctionLanguage() != FunctionLanguage.PYTHON) {
+						functionDefinition = FunctionDefinitionUtil.createFunctionDefinition(
+							operation.getFunctionName(),
+							operation.getFunctionClass());
+					} else {
+						functionDefinition = FunctionDefinitionUtil.createPythonFunctionDefinition(
+							operation.getFunctionName(),
+							operation.getFunctionClass(),
+							operation.getPythonReturnType());
+					}
 					registerSystemFunctionInFunctionCatalog(operation.getFunctionName(), functionDefinition);
 
 				} else if (!operation.isIgnoreIfExists()) {
