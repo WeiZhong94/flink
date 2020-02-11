@@ -18,6 +18,7 @@
 
 package org.apache.flink.table.client.cli;
 
+import org.apache.flink.client.python.PythonDependencyOptionsParserFactory;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.table.client.SqlClientException;
 
@@ -33,6 +34,11 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static org.apache.flink.client.python.PythonDriverOptionsParserFactory.PYARCHIVE_OPTION;
+import static org.apache.flink.client.python.PythonDriverOptionsParserFactory.PYEXEC_OPTION;
+import static org.apache.flink.client.python.PythonDriverOptionsParserFactory.PYFILES_OPTION;
+import static org.apache.flink.client.python.PythonDriverOptionsParserFactory.PYREQUIREMENTS_OPTION;
 
 /**
  * Parser for command line options.
@@ -133,6 +139,10 @@ public class CliOptionsParser {
 		options.addOption(OPTION_JAR);
 		options.addOption(OPTION_LIBRARY);
 		options.addOption(OPTION_UPDATE);
+		options.addOption(PYFILES_OPTION);
+		options.addOption(PYREQUIREMENTS_OPTION);
+		options.addOption(PYARCHIVE_OPTION);
+		options.addOption(PYEXEC_OPTION);
 		return options;
 	}
 
@@ -141,6 +151,10 @@ public class CliOptionsParser {
 		options.addOption(OPTION_SESSION);
 		options.addOption(OPTION_ENVIRONMENT);
 		options.addOption(OPTION_UPDATE);
+		options.addOption(PYFILES_OPTION);
+		options.addOption(PYREQUIREMENTS_OPTION);
+		options.addOption(PYARCHIVE_OPTION);
+		options.addOption(PYEXEC_OPTION);
 		return options;
 	}
 
@@ -149,6 +163,10 @@ public class CliOptionsParser {
 		options.addOption(OPTION_DEFAULTS);
 		options.addOption(OPTION_JAR);
 		options.addOption(OPTION_LIBRARY);
+		options.addOption(PYFILES_OPTION);
+		options.addOption(PYREQUIREMENTS_OPTION);
+		options.addOption(PYARCHIVE_OPTION);
+		options.addOption(PYEXEC_OPTION);
 		return options;
 	}
 
@@ -235,7 +253,8 @@ public class CliOptionsParser {
 				checkUrl(line, CliOptionsParser.OPTION_DEFAULTS),
 				checkUrls(line, CliOptionsParser.OPTION_JAR),
 				checkUrls(line, CliOptionsParser.OPTION_LIBRARY),
-				line.getOptionValue(CliOptionsParser.OPTION_UPDATE.getOpt())
+				line.getOptionValue(CliOptionsParser.OPTION_UPDATE.getOpt()),
+				new PythonDependencyOptionsParserFactory().createResult(line)
 			);
 		}
 		catch (ParseException e) {
@@ -254,7 +273,8 @@ public class CliOptionsParser {
 				null,
 				checkUrls(line, CliOptionsParser.OPTION_JAR),
 				checkUrls(line, CliOptionsParser.OPTION_LIBRARY),
-				line.getOptionValue(CliOptionsParser.OPTION_UPDATE.getOpt())
+				line.getOptionValue(CliOptionsParser.OPTION_UPDATE.getOpt()),
+				new PythonDependencyOptionsParserFactory().createResult(line)
 			);
 		}
 		catch (ParseException e) {
@@ -273,7 +293,8 @@ public class CliOptionsParser {
 				checkUrl(line, CliOptionsParser.OPTION_DEFAULTS),
 				checkUrls(line, CliOptionsParser.OPTION_JAR),
 				checkUrls(line, CliOptionsParser.OPTION_LIBRARY),
-				null
+				null,
+				new PythonDependencyOptionsParserFactory().createResult(line)
 			);
 		}
 		catch (ParseException e) {

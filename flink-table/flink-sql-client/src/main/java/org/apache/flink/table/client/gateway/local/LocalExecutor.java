@@ -28,6 +28,7 @@ import org.apache.flink.client.deployment.ClusterClientServiceLoader;
 import org.apache.flink.client.deployment.ClusterDescriptor;
 import org.apache.flink.client.deployment.DefaultClusterClientServiceLoader;
 import org.apache.flink.client.program.ClusterClient;
+import org.apache.flink.client.python.PythonDependencyOptions;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.DeploymentOptions;
 import org.apache.flink.configuration.GlobalConfiguration;
@@ -106,6 +107,7 @@ public class LocalExecutor implements Executor {
 	private final Configuration flinkConfig;
 	private final List<CustomCommandLine> commandLines;
 	private final Options commandLineOptions;
+	private final PythonDependencyOptions pythonDependencyOptions;
 
 	// result maintenance
 
@@ -118,10 +120,12 @@ public class LocalExecutor implements Executor {
 	/**
 	 * Creates a local executor for submitting table programs and retrieving results.
 	 */
-	public LocalExecutor(URL defaultEnv, List<URL> jars, List<URL> libraries) {
+	public LocalExecutor(URL defaultEnv, List<URL> jars, List<URL> libraries, PythonDependencyOptions pythonDependencyOptions) {
 		// discover configuration
 		final String flinkConfigDir;
 		try {
+			this.pythonDependencyOptions = pythonDependencyOptions;
+
 			// find the configuration directory
 			flinkConfigDir = CliFrontend.getConfigurationDirectoryFromEnv();
 
@@ -194,6 +198,7 @@ public class LocalExecutor implements Executor {
 		this.commandLines = Collections.singletonList(commandLine);
 		this.commandLineOptions = collectCommandLineOptions(commandLines);
 		this.contextMap = new ConcurrentHashMap<>();
+		this.pythonDependencyOptions = null;
 
 		// prepare result store
 		this.resultStore = new ResultStore(flinkConfig);
@@ -214,7 +219,8 @@ public class LocalExecutor implements Executor {
 				this.flinkConfig,
 				this.clusterClientServiceLoader,
 				this.commandLineOptions,
-				this.commandLines);
+				this.commandLines,
+				this.pythonDependencyOptions);
 	}
 
 	@Override

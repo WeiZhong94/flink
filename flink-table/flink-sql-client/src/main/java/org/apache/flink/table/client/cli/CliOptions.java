@@ -18,6 +18,8 @@
 
 package org.apache.flink.table.client.cli;
 
+import org.apache.flink.client.python.PythonDependencyOptions;
+
 import java.net.URL;
 import java.util.List;
 
@@ -34,6 +36,7 @@ public class CliOptions {
 	private final List<URL> jars;
 	private final List<URL> libraryDirs;
 	private final String updateStatement;
+	private final PythonDependencyOptions pythonDependencyOptions;
 
 	public CliOptions(
 			boolean isPrintHelp,
@@ -42,7 +45,8 @@ public class CliOptions {
 			URL defaults,
 			List<URL> jars,
 			List<URL> libraryDirs,
-			String updateStatement) {
+			String updateStatement,
+			PythonDependencyOptions pythonDependencyOptions) {
 		this.isPrintHelp = isPrintHelp;
 		this.sessionId = sessionId;
 		this.environment = environment;
@@ -50,6 +54,7 @@ public class CliOptions {
 		this.jars = jars;
 		this.libraryDirs = libraryDirs;
 		this.updateStatement = updateStatement;
+		this.pythonDependencyOptions = pythonDependencyOptions;
 	}
 
 	public boolean isPrintHelp() {
@@ -78,5 +83,9 @@ public class CliOptions {
 
 	public String getUpdateStatement() {
 		return updateStatement;
+	}
+
+	public PythonDependencyOptions getPythonDependencyOptions() {
+		return pythonDependencyOptions;
 	}
 }

@@ -82,7 +82,8 @@ public class SqlClient {
 			} else {
 				libDirs = Collections.emptyList();
 			}
-			final Executor executor = new LocalExecutor(options.getDefaults(), jars, libDirs);
+			final Executor executor = new LocalExecutor(
+				options.getDefaults(), jars, libDirs, options.getPythonDependencyOptions());
 			executor.start();
 
 			// create CLI client with session environment

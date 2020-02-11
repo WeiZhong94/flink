@@ -269,7 +269,8 @@ public class ExecutionContextTest {
 				flinkConfig,
 				new DefaultClusterClientServiceLoader(),
 				new Options(),
-				Collections.singletonList(new DefaultCLI(flinkConfig))).build();
+				Collections.singletonList(new DefaultCLI(flinkConfig)),
+				null).build();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -285,7 +286,8 @@ public class ExecutionContextTest {
 				flinkConfig,
 				new DefaultClusterClientServiceLoader(),
 				new Options(),
-				Collections.singletonList(new DefaultCLI(flinkConfig)))
+				Collections.singletonList(new DefaultCLI(flinkConfig)),
+				null)
 				.build();
 	}
 

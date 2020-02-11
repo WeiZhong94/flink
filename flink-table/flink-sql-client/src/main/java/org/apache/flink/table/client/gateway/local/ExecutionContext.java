@@ -19,9 +19,12 @@
 package org.apache.flink.table.client.gateway.local;
 
 import org.apache.flink.api.common.ExecutionConfig;
+import org.apache.flink.api.common.python.DependencyManager;
+import org.apache.flink.api.common.python.GlobalPythonScalarFunction;
 import org.apache.flink.api.common.time.Time;
 import org.apache.flink.api.dag.Pipeline;
 import org.apache.flink.api.java.ExecutionEnvironment;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.client.cli.CliArgsException;
 import org.apache.flink.client.cli.CustomCommandLine;
 import org.apache.flink.client.cli.ExecutionConfigAccessor;
@@ -30,6 +33,7 @@ import org.apache.flink.client.deployment.ClusterClientFactory;
 import org.apache.flink.client.deployment.ClusterClientServiceLoader;
 import org.apache.flink.client.deployment.ClusterDescriptor;
 import org.apache.flink.client.deployment.ClusterSpecification;
+import org.apache.flink.client.python.PythonDependencyOptions;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.plugin.TemporaryClassLoaderContext;
 import org.apache.flink.runtime.execution.librarycache.FlinkUserCodeClassLoaders;
@@ -87,6 +91,8 @@ import org.apache.flink.table.sinks.TableSink;
 import org.apache.flink.table.sources.TableSource;
 import org.apache.flink.util.FlinkException;
 
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessingException;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.slf4j.Logger;
@@ -94,6 +100,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.HashMap;
@@ -122,6 +129,7 @@ public class ExecutionContext<ClusterID> {
 	private final Environment environment;
 	private final SessionContext originalSessionContext;
 	private final ClassLoader classLoader;
+	private final PythonDependencyOptions pythonDependencyOptions;
 
 	private final Configuration flinkConfig;
 	private final ClusterClientFactory<ClusterID> clusterClientFactory;
@@ -144,9 +152,11 @@ public class ExecutionContext<ClusterID> {
 			Configuration flinkConfig,
 			ClusterClientServiceLoader clusterClientServiceLoader,
 			Options commandLineOptions,
-			List<CustomCommandLine> availableCommandLines) throws FlinkException {
+			List<CustomCommandLine> availableCommandLines,
+			PythonDependencyOptions pythonDependencyOptions) throws FlinkException {
 		this.environment = environment;
 		this.originalSessionContext = originalSessionContext;
+		this.pythonDependencyOptions = pythonDependencyOptions;
 
 		this.flinkConfig = flinkConfig;
 
@@ -157,6 +167,9 @@ public class ExecutionContext<ClusterID> {
 
 		// Initialize the TableEnvironment.
 		initializeTableEnvironment(sessionState);
+
+		// Depends on initialized ExecutionEnvironment/StreamExecutionEnvironment and TableEnvironment.
+		registerPythonDependencies();
 
 		LOG.debug("Deployment descriptor: {}", environment.getDeployment());
 		final CommandLine commandLine = createCommandLine(
@@ -289,15 +302,16 @@ public class ExecutionContext<ClusterID> {
 
 	/** Returns a builder for this {@link ExecutionContext}. */
 	public static Builder builder(
-			Environment defaultEnv,
-			SessionContext sessionContext,
-			List<URL> dependencies,
-			Configuration configuration,
-			ClusterClientServiceLoader serviceLoader,
-			Options commandLineOptions,
-			List<CustomCommandLine> commandLines) {
+		Environment defaultEnv,
+		SessionContext sessionContext,
+		List<URL> dependencies,
+		Configuration configuration,
+		ClusterClientServiceLoader serviceLoader,
+		Options commandLineOptions,
+		List<CustomCommandLine> commandLines,
+		PythonDependencyOptions pythonDependencyOptions) {
 		return new Builder(defaultEnv, sessionContext, dependencies, configuration,
-				serviceLoader, commandLineOptions, commandLines);
+				serviceLoader, commandLineOptions, commandLines, pythonDependencyOptions);
 	}
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -631,7 +645,16 @@ public class ExecutionContext<ClusterID> {
 	private void registerFunctions() {
 		Map<String, FunctionDefinition> functions = new LinkedHashMap<>();
 		environment.getFunctions().forEach((name, entry) -> {
-			final UserDefinedFunction function = FunctionService.createFunction(entry.getDescriptor(), classLoader, false);
+			final UserDefinedFunction function;
+			if ("python".equals(entry.getDescriptor().toProperties().get("from"))) {
+				try {
+					function = GlobalPythonScalarFunction.create(entry.getDescriptor());
+				} catch (IOException e) {
+					throw new SqlExecutionException("Create python function failed.", e);
+				}
+			} else {
+				function = FunctionService.createFunction(entry.getDescriptor(), classLoader, false);
+			}
 			functions.put(name, function);
 		});
 		registerFunctions(functions);
@@ -697,6 +720,47 @@ public class ExecutionContext<ClusterID> {
 		}
 	}
 
+	private void registerPythonDependencies() {
+		if (pythonDependencyOptions == null) {
+			return;
+		}
+
+		DependencyManager dependencyManager;
+		if (environment.getExecution().isStreamingPlanner()) {
+			dependencyManager = new DependencyManager(tableEnv.getConfig().getConfiguration(), streamExecEnv);
+		} else if (environment.getExecution().isBatchPlanner()) {
+			dependencyManager = new DependencyManager(tableEnv.getConfig().getConfiguration(), execEnv);
+		} else {
+			throw new SqlExecutionException("Unsupported execution type specified.");
+		}
+
+		if (!pythonDependencyOptions.getPyFiles().isEmpty()) {
+			for (String file : pythonDependencyOptions.getPyFiles()) {
+				try {
+					dependencyManager.addPythonFile(file);
+				} catch (JsonProcessingException e) {
+					throw new SqlExecutionException("Unexpected exception when registering python dependencies.", e);
+				}
+			}
+		}
+
+		pythonDependencyOptions.getPyRequirements().ifPresent(requirements -> {
+			dependencyManager.setPythonRequirements(requirements.f0, requirements.f1);
+		});
+
+		if (!pythonDependencyOptions.getPyArchives().isEmpty()) {
+			for (Tuple2<String, String> archive : pythonDependencyOptions.getPyArchives()) {
+				try {
+					dependencyManager.addPythonArchive(archive.f0, archive.f1);
+				} catch (JsonProcessingException e) {
+					throw new SqlExecutionException("Unexpected exception when registering python dependencies.", e);
+				}
+			}
+		}
+
+		pythonDependencyOptions.getPyExecutable().ifPresent(dependencyManager::setPythonExecutable);
+	}
+
 	//~ Inner Class -------------------------------------------------------------------------------
 
 	/** Builder for {@link ExecutionContext}. */
@@ -708,6 +772,7 @@ public class ExecutionContext<ClusterID> {
 		private final ClusterClientServiceLoader serviceLoader;
 		private final Options commandLineOptions;
 		private final List<CustomCommandLine> commandLines;
+		private final PythonDependencyOptions pythonDependencyOptions;
 
 		private Environment defaultEnv;
 		private Environment currentEnv;
@@ -723,7 +788,8 @@ public class ExecutionContext<ClusterID> {
 				Configuration configuration,
 				ClusterClientServiceLoader serviceLoader,
 				Options commandLineOptions,
-				List<CustomCommandLine> commandLines) {
+				List<CustomCommandLine> commandLines,
+				PythonDependencyOptions pythonDependencyOptions) {
 			this.defaultEnv = defaultEnv;
 			this.sessionContext = sessionContext;
 			this.dependencies = dependencies;
@@ -731,6 +797,7 @@ public class ExecutionContext<ClusterID> {
 			this.serviceLoader = serviceLoader;
 			this.commandLineOptions = commandLineOptions;
 			this.commandLines = commandLines;
+			this.pythonDependencyOptions = pythonDependencyOptions;
 		}
 
 		public Builder env(Environment environment) {
@@ -755,7 +822,8 @@ public class ExecutionContext<ClusterID> {
 						this.configuration,
 						this.serviceLoader,
 						this.commandLineOptions,
-						this.commandLines);
+						this.commandLines,
+						this.pythonDependencyOptions);
 			} catch (Throwable t) {
 				// catch everything such that a configuration does not crash the executor
 				throw new SqlExecutionException("Could not create execution context.", t);
