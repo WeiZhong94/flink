@@ -20,9 +20,15 @@ package org.apache.flink.client.python;
 
 import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.configuration.ConfigOption;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.GlobalConfiguration;
 import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.core.fs.Path;
+import org.apache.flink.python.PythonOptions;
 import org.apache.flink.util.FileUtils;
+
+import org.apache.flink.shaded.guava18.com.google.common.base.Strings;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +64,29 @@ public final class PythonDriverEnvUtils {
 
 	@VisibleForTesting
 	public static final String PYFLINK_PY_ARCHIVES = "PYFLINK_PY_ARCHIVES";
+
+	public static final String PYFLINK_EXECUTABLE = "PYFLINK_EXECUTABLE";
+
+	public static final String PYFLINK_PYTHONPATH = "PYFLINK_PYTHONPATH";
+
+	@VisibleForTesting
+	static Configuration globalConf = GlobalConfiguration.loadConfiguration();
+
+	@VisibleForTesting
+	static Map<String, String> systemEnv = System.getenv();
+
+	public static String loadConfiguration(
+			ConfigOption<String> configOption,
+			String environmentVariableKey,
+			Configuration appConf) {
+		if (appConf.contains(configOption)) {
+			return appConf.get(configOption);
+		} else if (!Strings.isNullOrEmpty(systemEnv.get(environmentVariableKey))) {
+			return systemEnv.get(environmentVariableKey);
+		} else {
+			return globalConf.get(configOption);
+		}
+	}
 
 	/**
 	 * Wraps Python exec environment.
@@ -106,6 +135,10 @@ public final class PythonDriverEnvUtils {
 			PythonDriverOptions pythonDriverOptions,
 			String tmpDir) throws IOException, InterruptedException {
 		PythonEnvironment env = new PythonEnvironment();
+		env.pythonExec = loadConfiguration(
+			PythonOptions.PYTHON_CLIENT_EXECUTABLE, PYFLINK_EXECUTABLE, new Configuration());
+		env.pythonPath = loadConfiguration(
+			PythonOptions.PYTHON_CLIENT_PYTHONPATH, PYFLINK_PYTHONPATH, new Configuration());
 
 		tmpDir = new File(tmpDir).getAbsolutePath();
 

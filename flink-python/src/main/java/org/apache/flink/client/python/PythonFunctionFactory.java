@@ -24,9 +24,9 @@ import org.apache.flink.table.functions.python.PythonFunction;
 
 import java.io.IOException;
 
-import static org.apache.flink.client.python.PythonFunctionFactoryUtil.PYFLINK_EXECUTABLE;
-import static org.apache.flink.client.python.PythonFunctionFactoryUtil.PYFLINK_PYTHONPATH;
-import static org.apache.flink.client.python.PythonFunctionFactoryUtil.loadConfiguration;
+import static org.apache.flink.client.python.PythonDriverEnvUtils.PYFLINK_EXECUTABLE;
+import static org.apache.flink.client.python.PythonDriverEnvUtils.PYFLINK_PYTHONPATH;
+import static org.apache.flink.client.python.PythonDriverEnvUtils.loadConfiguration;
 import static org.apache.flink.python.PythonOptions.PYTHON_CLIENT_EXECUTABLE;
 import static org.apache.flink.python.PythonOptions.PYTHON_CLIENT_PYTHONPATH;
 

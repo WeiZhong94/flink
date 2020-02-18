@@ -18,12 +18,8 @@
 
 package org.apache.flink.client.python;
 
-import org.apache.flink.configuration.ConfigOption;
-import org.apache.flink.configuration.Configuration;
-import org.apache.flink.configuration.GlobalConfiguration;
 import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.core.fs.Path;
-import org.apache.flink.shaded.guava18.com.google.common.base.Strings;
 import org.apache.flink.util.Preconditions;
 
 import py4j.GatewayServer;
@@ -40,9 +36,6 @@ import java.util.concurrent.TimeUnit;
  * PythonFunctionFactoryUtil.
  */
 public class PythonFunctionFactoryUtil {
-
-	public static final String PYFLINK_EXECUTABLE = "PYFLINK_EXECUTABLE";
-	public static final String PYFLINK_PYTHONPATH = "PYFLINK_PYTHONPATH";
 
 	private static final long TIMEOUT_MILLIS = 3000;
 	private static final long CHECK_INTERVAL = 100;
@@ -123,19 +116,4 @@ public class PythonFunctionFactoryUtil {
 		}
 	}
 
-	static Configuration globalConf = GlobalConfiguration.loadConfiguration();
-	static Map<String, String> systemEnv = System.getenv();
-
-	public static String loadConfiguration(
-			ConfigOption<String> configOption,
-			String environmentVariableKey,
-			Configuration appConf) {
-		if (appConf.contains(configOption)) {
-			return appConf.get(configOption);
-		} else if (!Strings.isNullOrEmpty(systemEnv.get(environmentVariableKey))) {
-			return systemEnv.get(environmentVariableKey);
-		} else {
-			return globalConf.get(configOption);
-		}
-	}
 }

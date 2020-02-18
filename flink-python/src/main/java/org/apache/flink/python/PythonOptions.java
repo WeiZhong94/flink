@@ -85,7 +85,7 @@ public class PythonOptions {
 		.defaultValue("")
 		.withDescription("The value of this configuration would be added to the \"PYTHONPATH\" " +
 			"environment variable before launching the python process when compiling the jobs " +
-			"containing Python UDFs. It could be used to add users' .py files which defines the " +
+			"containing Python UDFs. It could be used to add users' .py files which define the " +
 			"Python UDFs to PYTHONPATH. Equivalent to the environment variable PYFLINK_PYTHONPATH. " +
 			"The precedence is: 1. configuration in job source code. 2. environment variable. " +
 			"3. configuration in flink-conf.yaml.");
