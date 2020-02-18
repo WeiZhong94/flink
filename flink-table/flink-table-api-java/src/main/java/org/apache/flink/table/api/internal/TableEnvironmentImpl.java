@@ -913,7 +913,9 @@ public class TableEnvironmentImpl implements TableEnvironment {
 				if (!exist) {
 					FunctionDefinition functionDefinition = FunctionDefinitionUtil.createFunctionDefinition(
 						operation.getFunctionName(),
-						operation.getFunctionClass());
+						operation.getFunctionClass(),
+						operation.getFunctionLanguage(),
+						this);
 					registerSystemFunctionInFunctionCatalog(operation.getFunctionName(), functionDefinition);
 
 				} else if (!operation.isIgnoreIfExists()) {

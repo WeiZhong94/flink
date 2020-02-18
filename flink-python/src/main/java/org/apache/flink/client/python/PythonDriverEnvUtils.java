@@ -117,17 +117,9 @@ public final class PythonDriverEnvUtils {
 		env.tempDirectory = tmpDir;
 
 		// 2. append the internal lib files to PYTHONPATH.
+		appendInternalLibFiles(env);
+
 		List<String> pythonPathList = new ArrayList<>();
-
-		List<File> internalLibs = extractBuiltInDependencies(
-			tmpDir,
-			UUID.randomUUID().toString(),
-			true);
-
-		for (File file: internalLibs) {
-			pythonPathList.add(file.getAbsolutePath());
-			file.deleteOnExit();
-		}
 
 		// 3. copy relevant python files to tmp dir and set them in PYTHONPATH.
 		for (Path pythonFile : pythonDriverOptions.getPythonLibFiles()) {
@@ -153,6 +145,9 @@ public final class PythonDriverEnvUtils {
 			}
 		}
 
+		if (env.pythonPath != null && !env.pythonPath.isEmpty()) {
+			pythonPathList.add(env.pythonPath);
+		}
 		env.pythonPath = String.join(File.pathSeparator, pythonPathList);
 
 		if (!pythonDriverOptions.getPyFiles().isEmpty()) {
@@ -170,6 +165,28 @@ public final class PythonDriverEnvUtils {
 		pythonDriverOptions.getPyExecutable().ifPresent(
 			pyExecutable -> env.systemEnv.put(PYFLINK_PY_EXECUTABLE, pythonDriverOptions.getPyExecutable().get()));
 		return env;
+	}
+
+	public static void appendInternalLibFiles(PythonEnvironment env)
+		throws IOException, InterruptedException {
+
+		List<File> internalLibs = extractBuiltInDependencies(
+			env.tempDirectory,
+			UUID.randomUUID().toString(),
+			true);
+
+		List<String> pythonPathList = new ArrayList<>();
+
+		if (env.pythonPath != null && !env.pythonPath.isEmpty()) {
+			pythonPathList.add(env.pythonPath);
+		}
+
+		for (File file: internalLibs) {
+			pythonPathList.add(file.getAbsolutePath());
+			file.deleteOnExit();
+		}
+
+		env.pythonPath = String.join(File.pathSeparator, pythonPathList);
 	}
 
 	private static String joinTuples(Collection<Tuple2<String, String>> tuples) {

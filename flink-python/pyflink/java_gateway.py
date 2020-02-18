@@ -26,7 +26,7 @@ import time
 from subprocess import Popen, PIPE
 from threading import RLock
 
-from py4j.java_gateway import java_import, JavaGateway, GatewayParameters
+from py4j.java_gateway import java_import, JavaGateway, GatewayParameters, CallbackServerParameters
 from pyflink.find_flink_home import _find_flink_home
 from pyflink.util.exceptions import install_exception_handler
 
@@ -44,7 +44,9 @@ def get_gateway():
             if 'PYFLINK_GATEWAY_PORT' in os.environ:
                 gateway_port = int(os.environ['PYFLINK_GATEWAY_PORT'])
                 gateway_param = GatewayParameters(port=gateway_port, auto_convert=True)
-                _gateway = JavaGateway(gateway_parameters=gateway_param)
+                _gateway = JavaGateway(
+                    gateway_parameters=gateway_param,
+                    callback_server_parameters=CallbackServerParameters())
             else:
                 _gateway = launch_gateway()
 

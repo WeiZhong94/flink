@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
  * Parser factory which generates a {@link PythonDriverOptions} from a given
  * list of command line arguments.
  */
-final class PythonDriverOptionsParserFactory implements ParserResultFactory<PythonDriverOptions> {
+public final class PythonDriverOptionsParserFactory implements ParserResultFactory<PythonDriverOptions> {
 
 	private static final Option PY_OPTION = Option.builder("py")
 		.longOpt("python")
@@ -58,7 +58,7 @@ final class PythonDriverOptionsParserFactory implements ParserResultFactory<Pyth
 			"This option must be used in conjunction with `--pyFiles`.")
 		.build();
 
-	private static final Option PYFILES_OPTION = Option.builder("pyfs")
+	public static final Option PYFILES_OPTION = Option.builder("pyfs")
 		.longOpt("pyFiles")
 		.required(false)
 		.hasArg(true)
@@ -70,7 +70,7 @@ final class PythonDriverOptionsParserFactory implements ParserResultFactory<Pyth
 			"(e.g.: --pyFiles file:///tmp/myresource.zip,hdfs:///$namenode_address/myresource2.zip).")
 		.build();
 
-	private static final Option PYREQUIREMENTS_OPTION = Option.builder("pyreq")
+	public static final Option PYREQUIREMENTS_OPTION = Option.builder("pyreq")
 		.longOpt("pyRequirements")
 		.required(false)
 		.hasArg(true)
@@ -82,7 +82,7 @@ final class PythonDriverOptionsParserFactory implements ParserResultFactory<Pyth
 			"(e.g.: --pyRequirements file:///tmp/requirements.txt#file:///tmp/cached_dir).")
 		.build();
 
-	private static final Option PYARCHIVE_OPTION = Option.builder("pyarch")
+	public static final Option PYARCHIVE_OPTION = Option.builder("pyarch")
 		.longOpt("pyArchives")
 		.required(false)
 		.hasArg(true)
@@ -100,7 +100,7 @@ final class PythonDriverOptionsParserFactory implements ParserResultFactory<Pyth
 			"f = open('data/data.txt', 'r').")
 		.build();
 
-	private static final Option PYEXEC_OPTION = Option.builder("pyexec")
+	public static final Option PYEXEC_OPTION = Option.builder("pyexec")
 		.longOpt("pyExecutable")
 		.required(false)
 		.hasArg(true)

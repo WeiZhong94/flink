@@ -71,4 +71,22 @@ public class PythonOptions {
 			"buffer of a Python worker. The memory will be accounted as managed memory if the " +
 			"actual memory allocated to an operator is no less than the total memory of a Python " +
 			"worker. Otherwise, this configuration takes no effect.");
+
+	public static final ConfigOption<String> PYTHON_CLIENT_EXECUTABLE = ConfigOptions
+		.key("python.client.executable")
+		.defaultValue("python")
+		.withDescription("The python interpreter used to launch the python process when compiling " +
+			"the jobs containing Python UDFs. Equivalent to the environment variable PYFLINK_EXECUTABLE. " +
+			"The precedence is: 1. configuration in job source code. 2. environment variable. " +
+			"3. configuration in flink-conf.yaml.");
+
+	public static final ConfigOption<String> PYTHON_CLIENT_PYTHONPATH = ConfigOptions
+		.key("python.client.python-path")
+		.defaultValue("")
+		.withDescription("The value of this configuration would be added to the \"PYTHONPATH\" " +
+			"environment variable before launching the python process when compiling the jobs " +
+			"containing Python UDFs. It could be used to add users' .py files which defines the " +
+			"Python UDFs to PYTHONPATH. Equivalent to the environment variable PYFLINK_PYTHONPATH. " +
+			"The precedence is: 1. configuration in job source code. 2. environment variable. " +
+			"3. configuration in flink-conf.yaml.");
 }

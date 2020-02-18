@@ -30,6 +30,7 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A main class used to launch Python applications. It executes python as a
@@ -97,7 +98,8 @@ public final class PythonDriver {
 	 */
 	static GatewayServer startGatewayServer() {
 		InetAddress localhost = InetAddress.getLoopbackAddress();
-		GatewayServer gatewayServer = new GatewayServer.GatewayServerBuilder()
+		GatewayServer gatewayServer = new GatewayServer.GatewayServerBuilder(
+			new ConcurrentHashMap<String, Object>())
 			.javaPort(0)
 			.javaAddress(localhost)
 			.build();

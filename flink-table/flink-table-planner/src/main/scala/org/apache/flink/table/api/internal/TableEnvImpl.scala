@@ -844,7 +844,10 @@ abstract class TableEnvImpl(
         createFunctionOperation.getFunctionName)
       if (!exist) {
         val functionDefinition = FunctionDefinitionUtil.createFunctionDefinition(
-          createFunctionOperation.getFunctionName, createFunctionOperation.getFunctionClass)
+          createFunctionOperation.getFunctionName,
+          createFunctionOperation.getFunctionClass,
+          createFunctionOperation.getFunctionLanguage,
+          this)
         registerSystemFunctionInFunctionCatalog(
           createFunctionOperation.getFunctionName,
           functionDefinition)

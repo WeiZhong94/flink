@@ -80,6 +80,7 @@
     "DATABASES",
     "FUNCTIONS",
     "EXTENDED",
+    "PYTHON",
     "SCALA",
     "TABLES",
     "RENAME"
@@ -261,6 +262,7 @@
     "PRIOR"
     "PRIVILEGES"
     "PUBLIC"
+    "PYTHON"
     "QUARTER"
     "READ"
     "RELATIVE"
