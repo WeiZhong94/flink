@@ -24,19 +24,36 @@ import org.apache.flink.table.functions.python.PythonFunction;
 
 import java.io.IOException;
 
-import static org.apache.flink.client.python.PythonDriverEnvUtils.PYFLINK_EXECUTABLE;
-import static org.apache.flink.client.python.PythonDriverEnvUtils.PYFLINK_PYTHONPATH;
+import static org.apache.flink.client.python.PythonDriverEnvUtils.PYFLINK_CLIENT_EXECUTABLE;
 import static org.apache.flink.client.python.PythonDriverEnvUtils.loadConfiguration;
 import static org.apache.flink.python.PythonOptions.PYTHON_CLIENT_EXECUTABLE;
 import static org.apache.flink.python.PythonOptions.PYTHON_CLIENT_PYTHONPATH;
 
 /**
- * PythonFunctionFactory.
+ * The factory which creates the PythonFunction objects from given module name and object name.
  */
 public interface PythonFunctionFactory {
 
+	/**
+	 * Returns PythonFunction according to moduleName and objectName. The current environment is also
+	 * needed because different environments have different code generation logic.
+	 *
+	 * @param moduleName The module name of the Python UDF.
+	 * @param objectName The function name / class name of the Python UDF.
+	 * @param environment The TableEnvironment to which the generated PythonFunction is registered.
+	 * @return The PythonFunction object which represents the Python UDF.
+	 */
 	PythonFunction getPythonFunction(String moduleName, String objectName, TableEnvironment environment);
 
+	/**
+	 * Returns PythonFunction according to the fully qualified name of the Python UDF
+	 * i.e ${moduleName}.${functionName} or ${moduleName}.${className}. The current environment is also
+	 * needed because different environments have different code generation logic.
+	 *
+	 * @param fullyQualifiedName The fully qualified name of the Python UDF.
+	 * @param environment The TableEnvironment to which the generated PythonFunction is registered.
+	 * @return The PythonFunction object which represents the Python UDF.
+	 */
 	static PythonFunction getPythonFunction(String fullyQualifiedName, TableEnvironment environment)
 			throws IOException {
 		int splitIndex = fullyQualifiedName.lastIndexOf(".");
@@ -44,8 +61,8 @@ public interface PythonFunctionFactory {
 		String objectName = fullyQualifiedName.substring(splitIndex + 1);
 
 		Configuration appConf = environment.getConfig().getConfiguration();
-		String pythonExecutable = loadConfiguration(PYTHON_CLIENT_EXECUTABLE, PYFLINK_EXECUTABLE, appConf);
-		String pythonPath = loadConfiguration(PYTHON_CLIENT_PYTHONPATH, PYFLINK_PYTHONPATH, appConf);
+		String pythonExecutable = loadConfiguration(PYTHON_CLIENT_EXECUTABLE, PYFLINK_CLIENT_EXECUTABLE, appConf);
+		String pythonPath = loadConfiguration(PYTHON_CLIENT_PYTHONPATH, null, appConf);
 		PythonFunctionFactory pythonFunctionFactory = PythonFunctionFactoryUtil.getPythonFunctionFactory(
 			pythonExecutable, pythonPath);
 		return pythonFunctionFactory.getPythonFunction(

@@ -107,23 +107,23 @@ class DependencyManagerTests(PyFlinkTestCase):
 
         JPythonDriverEnvUtils = \
             get_gateway().jvm.org.apache.flink.client.python.PythonDriverEnvUtils
-        self.assertEqual(DependencyManager.PYFLINK_PY_REQUIREMENTS,
-                         JPythonDriverEnvUtils.PYFLINK_PY_REQUIREMENTS)
-        self.assertEqual(DependencyManager.PYFLINK_PY_ARCHIVES,
-                         JPythonDriverEnvUtils.PYFLINK_PY_ARCHIVES)
-        self.assertEqual(DependencyManager.PYFLINK_PY_FILES,
-                         JPythonDriverEnvUtils.PYFLINK_PY_FILES)
-        self.assertEqual(DependencyManager.PYFLINK_PY_EXECUTABLE,
-                         JPythonDriverEnvUtils.PYFLINK_PY_EXECUTABLE)
+        self.assertEqual(DependencyManager.PYFLINK_CLUSTER_PY_REQUIREMENTS,
+                         JPythonDriverEnvUtils.PYFLINK_CLUSTER_PY_REQUIREMENTS)
+        self.assertEqual(DependencyManager.PYFLINK_CLUSTER_PY_ARCHIVES,
+                         JPythonDriverEnvUtils.PYFLINK_CLUSTER_PY_REQUIREMENTS)
+        self.assertEqual(DependencyManager.PYFLINK_CLUSTER_PY_FILES,
+                         JPythonDriverEnvUtils.PYFLINK_CLUSTER_PY_REQUIREMENTS)
+        self.assertEqual(DependencyManager.PYFLINK_CLUSTER_PY_EXECUTABLE,
+                         JPythonDriverEnvUtils.PYFLINK_CLUSTER_PY_REQUIREMENTS)
 
     def test_load_from_env(self):
         dm = DependencyManager
 
         system_env = dict()
-        system_env[dm.PYFLINK_PY_FILES] = "/file1.py\nhdfs://file2.zip\nfile3.egg"
-        system_env[dm.PYFLINK_PY_REQUIREMENTS] = "a.txt\nb_dir"
-        system_env[dm.PYFLINK_PY_EXECUTABLE] = "/usr/local/bin/python"
-        system_env[dm.PYFLINK_PY_ARCHIVES] = "/py3.zip\nvenv\n/py3.zip\n\ndata.zip\ndata"
+        system_env[dm.PYFLINK_CLUSTER_PY_FILES] = "/file1.py\nhdfs://file2.zip\nfile3.egg"
+        system_env[dm.PYFLINK_CLUSTER_PY_REQUIREMENTS] = "a.txt\nb_dir"
+        system_env[dm.PYFLINK_CLUSTER_PY_EXECUTABLE] = "/usr/local/bin/python"
+        system_env[dm.PYFLINK_CLUSTER_PY_ARCHIVES] = "/py3.zip\nvenv\n/py3.zip\n\ndata.zip\ndata"
 
         self.dependency_manager.load_from_env(system_env)
 

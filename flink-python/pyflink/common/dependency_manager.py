@@ -41,10 +41,10 @@ class DependencyManager(object):
 
     # Environment variable names used to store the dependency settings specified via commandline
     # options.
-    PYFLINK_PY_FILES = "PYFLINK_PY_FILES"
-    PYFLINK_PY_REQUIREMENTS = "PYFLINK_PY_REQUIREMENTS"
-    PYFLINK_PY_EXECUTABLE = "PYFLINK_PY_EXECUTABLE"
-    PYFLINK_PY_ARCHIVES = "PYFLINK_PY_ARCHIVES"
+    PYFLINK_CLUSTER_PY_FILES = "_PYFLINK_CLUSTER_PY_FILES"
+    PYFLINK_CLUSTER_PY_REQUIREMENTS = "_PYFLINK_CLUSTER_PY_REQUIREMENTS"
+    PYFLINK_CLUSTER_PY_EXECUTABLE = "_PYFLINK_CLUSTER_PY_EXECUTABLE"
+    PYFLINK_CLUSTER_PY_ARCHIVES = "_PYFLINK_CLUSTER_PY_ARCHIVES"
 
     def __init__(self, config, j_env):
         self._config = config
@@ -100,21 +100,21 @@ class DependencyManager(object):
         Loads python dependency settings specified via command line options from the environment
         variable.
         """
-        if self.PYFLINK_PY_FILES in env:
-            py_files = env[self.PYFLINK_PY_FILES].split("\n")
+        if self.PYFLINK_CLUSTER_PY_FILES in env:
+            py_files = env[self.PYFLINK_CLUSTER_PY_FILES].split("\n")
             for file_path in py_files:
                 self.add_python_file(file_path)
 
-        if self.PYFLINK_PY_ARCHIVES in env:
-            py_archives = env[self.PYFLINK_PY_ARCHIVES].split("\n")
+        if self.PYFLINK_CLUSTER_PY_ARCHIVES in env:
+            py_archives = env[self.PYFLINK_CLUSTER_PY_ARCHIVES].split("\n")
             for i in range(0, len(py_archives), 2):
                 self.add_python_archive(py_archives[i], py_archives[i + 1] or None)
 
-        if self.PYFLINK_PY_REQUIREMENTS in env:
+        if self.PYFLINK_CLUSTER_PY_REQUIREMENTS in env:
             requirements_file_path, requirements_cache_dir = \
-                env[self.PYFLINK_PY_REQUIREMENTS].split("\n")
+                env[self.PYFLINK_CLUSTER_PY_REQUIREMENTS].split("\n")
             requirements_cache_dir = requirements_cache_dir or None
             self.set_python_requirements(requirements_file_path, requirements_cache_dir)
 
-        if self.PYFLINK_PY_EXECUTABLE in env:
-            self._config.set_string(self.PYTHON_EXEC, env[self.PYFLINK_PY_EXECUTABLE])
+        if self.PYFLINK_CLUSTER_PY_EXECUTABLE in env:
+            self._config.set_string(self.PYTHON_EXEC, env[self.PYFLINK_CLUSTER_PY_EXECUTABLE])

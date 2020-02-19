@@ -18,9 +18,11 @@
 
 package org.apache.flink.client.python;
 
+import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.core.fs.Path;
-import org.apache.flink.util.Preconditions;
+
+import org.apache.flink.shaded.guava18.com.google.common.base.Strings;
 
 import py4j.GatewayServer;
 
@@ -42,11 +44,11 @@ public class PythonFunctionFactoryUtil {
 
 	private static PythonFunctionFactory pythonFunctionFactory = null;
 
+	@VisibleForTesting
+	static Thread pythonProcessShutdownHook = null;
+
 	public static synchronized PythonFunctionFactory getPythonFunctionFactory(String python, String pythonPath)
 		throws IOException {
-		Preconditions.checkNotNull(python);
-		Preconditions.checkNotNull(pythonPath);
-
 		if (pythonFunctionFactory != null) {
 			return pythonFunctionFactory;
 		} else {
@@ -54,10 +56,10 @@ public class PythonFunctionFactoryUtil {
 
 			PythonDriverEnvUtils.PythonEnvironment env = new PythonDriverEnvUtils.PythonEnvironment();
 
-			if (!python.isEmpty()) {
+			if (!Strings.isNullOrEmpty(python)) {
 				env.pythonExec = python;
 			}
-			if (!pythonPath.isEmpty()) {
+			if (!Strings.isNullOrEmpty(pythonPath)) {
 				env.pythonPath = pythonPath;
 			}
 
@@ -100,7 +102,7 @@ public class PythonFunctionFactoryUtil {
 				}
 			}
 			pythonFunctionFactory = (PythonFunctionFactory) entryPoint.get("PythonFunctionFactory");
-			Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+			pythonProcessShutdownHook = new Thread(() -> {
 				gatewayServer.shutdown();
 				pythonProcess.destroy();
 				try {
@@ -111,9 +113,9 @@ public class PythonFunctionFactoryUtil {
 				if (pythonProcess.isAlive()) {
 					pythonProcess.destroyForcibly();
 				}
-			}));
+			});
+			Runtime.getRuntime().addShutdownHook(pythonProcessShutdownHook);
 			return pythonFunctionFactory;
 		}
 	}
-
 }

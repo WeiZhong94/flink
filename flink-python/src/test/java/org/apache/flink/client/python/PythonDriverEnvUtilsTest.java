@@ -19,6 +19,8 @@
 package org.apache.flink.client.python;
 
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.GlobalConfiguration;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.util.FileUtils;
 
@@ -44,6 +46,11 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static org.apache.flink.client.python.PythonDriverEnvUtils.PYFLINK_CLIENT_EXECUTABLE;
+import static org.apache.flink.client.python.PythonDriverEnvUtils.loadConfiguration;
+import static org.apache.flink.python.PythonOptions.PYTHON_CLIENT_EXECUTABLE;
+import static org.apache.flink.python.PythonOptions.PYTHON_CLIENT_PYTHONPATH;
+
 /**
  * Tests for the {@link PythonDriverEnvUtils}.
  */
@@ -57,6 +64,9 @@ public class PythonDriverEnvUtilsTest {
 		File tmpDirFile = new File(System.getProperty("java.io.tmpdir"), "pyflink_" + UUID.randomUUID());
 		tmpDirFile.mkdirs();
 		this.tmpDirPath = tmpDirFile.getAbsolutePath();
+
+		PythonDriverEnvUtils.globalConf = new Configuration();
+		PythonDriverEnvUtils.systemEnv = new HashMap<>();
 	}
 
 	@Test
@@ -131,11 +141,42 @@ public class PythonDriverEnvUtilsTest {
 			actualPaths.stream().map(PythonDriverEnvUtilsTest::replaceUUID).collect(Collectors.toSet()));
 
 		Map<String, String> expectedEnv = new HashMap<>();
-		expectedEnv.put(PythonDriverEnvUtils.PYFLINK_PY_FILES, String.join("\n", pyFiles));
-		expectedEnv.put(PythonDriverEnvUtils.PYFLINK_PY_REQUIREMENTS, "requirements.txt\nrequirements_cache");
-		expectedEnv.put(PythonDriverEnvUtils.PYFLINK_PY_EXECUTABLE, "/usr/bin/python");
-		expectedEnv.put(PythonDriverEnvUtils.PYFLINK_PY_ARCHIVES, "hdfs://a.zip\n\nb.zip\nvenv");
+		expectedEnv.put(PythonDriverEnvUtils.PYFLINK_CLUSTER_PY_FILES, String.join("\n", pyFiles));
+		expectedEnv.put(PythonDriverEnvUtils.PYFLINK_CLUSTER_PY_REQUIREMENTS, "requirements.txt\nrequirements_cache");
+		expectedEnv.put(PythonDriverEnvUtils.PYFLINK_CLUSTER_PY_EXECUTABLE, "/usr/bin/python");
+		expectedEnv.put(PythonDriverEnvUtils.PYFLINK_CLUSTER_PY_ARCHIVES, "hdfs://a.zip\n\nb.zip\nvenv");
 		Assert.assertEquals(expectedEnv, env.systemEnv);
+	}
+
+	@Test
+	public void testLoadConifguration() {
+		Configuration appConf = new Configuration();
+
+		String defaultExecutable = loadConfiguration(PYTHON_CLIENT_EXECUTABLE, PYFLINK_CLIENT_EXECUTABLE, appConf);
+		String defaultPythonPath = loadConfiguration(PYTHON_CLIENT_PYTHONPATH, null, appConf);
+		Assert.assertEquals("python", defaultExecutable);
+		Assert.assertEquals("", defaultPythonPath);
+
+		PythonDriverEnvUtils.globalConf.set(PYTHON_CLIENT_EXECUTABLE, "python3");
+		PythonDriverEnvUtils.globalConf.set(PYTHON_CLIENT_PYTHONPATH, "../");
+
+		String globalExecutable = loadConfiguration(PYTHON_CLIENT_EXECUTABLE, PYFLINK_CLIENT_EXECUTABLE, appConf);
+		String globalPythonPath = loadConfiguration(PYTHON_CLIENT_PYTHONPATH, null, appConf);
+		Assert.assertEquals("python3", globalExecutable);
+		Assert.assertEquals("../", globalPythonPath);
+
+		PythonDriverEnvUtils.systemEnv.put(PYFLINK_CLIENT_EXECUTABLE, "pypy");
+
+		String environmentExecutable = loadConfiguration(PYTHON_CLIENT_EXECUTABLE, PYFLINK_CLIENT_EXECUTABLE, appConf);
+		Assert.assertEquals("pypy", environmentExecutable);
+
+		appConf.set(PYTHON_CLIENT_EXECUTABLE, "python37");
+		appConf.set(PYTHON_CLIENT_PYTHONPATH, "/home/my/udf");
+
+		String appExecutable = loadConfiguration(PYTHON_CLIENT_EXECUTABLE, PYFLINK_CLIENT_EXECUTABLE, appConf);
+		String appPythonPath = loadConfiguration(PYTHON_CLIENT_PYTHONPATH, null, appConf);
+		Assert.assertEquals("python37", appExecutable);
+		Assert.assertEquals("/home/my/udf", appPythonPath);
 	}
 
 	@Test
@@ -182,6 +223,8 @@ public class PythonDriverEnvUtilsTest {
 	@After
 	public void cleanEnvironment() {
 		FileUtils.deleteDirectoryQuietly(new File(tmpDirPath));
+		PythonDriverEnvUtils.globalConf = GlobalConfiguration.loadConfiguration();
+		PythonDriverEnvUtils.systemEnv = System.getenv();
 	}
 
 	private static String replaceUUID(String originPath) {
