@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.client.python;
+package org.apache.flink.client.cli;
 
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.core.fs.Path;
@@ -30,11 +30,11 @@ import java.util.Optional;
 import static java.util.Objects.requireNonNull;
 
 /**
- * Options for the {@link PythonDriver}.
+ * Options for the PythonDriver.
  */
-final class PythonDriverOptions {
+public class PythonProgramOptions {
 
-	@Nonnull
+	@Nullable
 	private String entrypointModule;
 
 	@Nonnull
@@ -55,40 +55,39 @@ final class PythonDriverOptions {
 	@Nonnull
 	private final List<Tuple2<String, String>> pyArchives;
 
-	@Nonnull
-	String getEntrypointModule() {
-		return entrypointModule;
+	public Optional<String> getEntrypointModule() {
+		return Optional.ofNullable(entrypointModule);
 	}
 
 	@Nonnull
-	List<Path> getPythonLibFiles() {
+	public List<Path> getPythonLibFiles() {
 		return pythonLibFiles;
 	}
 
 	@Nonnull
-	List<String> getProgramArgs() {
+	public List<String> getProgramArgs() {
 		return programArgs;
 	}
 
 	@Nonnull
-	List<String> getPyFiles() {
+	public List<String> getPyFiles() {
 		return pyFiles;
 	}
 
-	Optional<Tuple2<String, String>> getPyRequirements() {
+	public Optional<Tuple2<String, String>> getPyRequirements() {
 		return Optional.ofNullable(pyRequirements);
 	}
 
-	Optional<String> getPyExecutable() {
+	public Optional<String> getPyExecutable() {
 		return Optional.ofNullable(pyExecutable);
 	}
 
 	@Nonnull
-	List<Tuple2<String, String>> getPyArchives() {
+	public List<Tuple2<String, String>> getPyArchives() {
 		return pyArchives;
 	}
 
-	PythonDriverOptions(
+	PythonProgramOptions(
 			String entrypointModule,
 			List<Path> pythonLibFiles,
 			List<String> programArgs,
@@ -96,7 +95,7 @@ final class PythonDriverOptions {
 			Tuple2<String, String> pyRequirements,
 			String pyExecutable,
 			List<Tuple2<String, String>> pyArchives) {
-		this.entrypointModule = requireNonNull(entrypointModule, "entrypointModule");
+		this.entrypointModule = entrypointModule;
 		this.pythonLibFiles = requireNonNull(pythonLibFiles, "pythonLibFiles");
 		this.programArgs = requireNonNull(programArgs, "programArgs");
 		this.pyFiles = requireNonNull(pyFiles, "pyFiles");

@@ -79,12 +79,16 @@ public class DependencyManager {
 		this.senv = Preconditions.checkNotNull(senv);
 	}
 
-	public void addPythonFile(String filePath) throws JsonProcessingException {
+	public void addPythonFile(String filePath) {
 		Preconditions.checkNotNull(filePath);
 		String fileKey = generateUniqueFileKey(PYTHON_FILE_PREFIX);
 		registerCachedFile(filePath, fileKey);
 		pythonFiles.put(fileKey, new File(filePath).getName());
-		config.set(PYTHON_FILES, jsonMapper.writeValueAsString(pythonFiles));
+		try {
+			config.set(PYTHON_FILES, jsonMapper.writeValueAsString(pythonFiles));
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	public void setPythonRequirements(String requirementsFilePath) {
@@ -107,11 +111,11 @@ public class DependencyManager {
 		}
 	}
 
-	public void addPythonArchive(String archivePath) throws JsonProcessingException {
+	public void addPythonArchive(String archivePath) {
 		addPythonArchive(archivePath, null);
 	}
 
-	public void addPythonArchive(String archivePath, String targetDir) throws JsonProcessingException {
+	public void addPythonArchive(String archivePath, String targetDir) {
 		Preconditions.checkNotNull(archivePath);
 
 		String fileKey = generateUniqueFileKey(PYTHON_ARCHIVE_PREFIX);
@@ -121,7 +125,11 @@ public class DependencyManager {
 		} else {
 			archives.put(fileKey, new File(archivePath).getName());
 		}
-		config.set(PYTHON_ARCHIVES, jsonMapper.writeValueAsString(archives));
+		try {
+			config.set(PYTHON_ARCHIVES, jsonMapper.writeValueAsString(archives));
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	public void setPythonExecutable(String pythonExecutable) {
@@ -196,5 +204,13 @@ public class DependencyManager {
 		} catch (NoSuchFieldException | IllegalAccessException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	public static DependencyManager create(Configuration config, ExecutionEnvironment env) {
+		return new DependencyManager(config, env);
+	}
+
+	public static DependencyManager create(Configuration config, StreamExecutionEnvironment env) {
+		return new DependencyManager(config, env);
 	}
 }

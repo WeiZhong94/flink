@@ -19,6 +19,8 @@
 package org.apache.flink.client.python;
 
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.client.cli.PythonProgramOptions;
+import org.apache.flink.client.cli.PythonProgramOptionsParserFactory;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.runtime.entrypoint.FlinkParseException;
 import org.apache.flink.runtime.entrypoint.parser.CommandLineParser;
@@ -33,12 +35,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 /**
- * Tests for the {@link PythonDriverOptionsParserFactory}.
+ * Tests for the {@link PythonProgramOptionsParserFactory}.
  */
-public class PythonDriverOptionsParserFactoryTest {
+public class PythonProgramOptionsParserFactoryTest {
 
-	private static final CommandLineParser<PythonDriverOptions> commandLineParser = new CommandLineParser<>(
-		new PythonDriverOptionsParserFactory());
+	private static final CommandLineParser<PythonProgramOptions> commandLineParser = new CommandLineParser<>(
+		new PythonProgramOptionsParserFactory());
 
 	@Test
 	public void testPythonDriverOptionsParsing() throws FlinkParseException {
@@ -82,7 +84,7 @@ public class PythonDriverOptionsParserFactoryTest {
 			"-py", "xxx.py",
 			"-pyreq", "d.txt",
 		};
-		PythonDriverOptions pythonCommandOptions = commandLineParser.parse(args);
+		PythonProgramOptions pythonCommandOptions = commandLineParser.parse(args);
 
 		assertEquals(new Tuple2<>("d.txt", null), pythonCommandOptions.getPyRequirements().get());
 	}
@@ -113,10 +115,10 @@ public class PythonDriverOptionsParserFactoryTest {
 	}
 
 	private void verifyPythonDriverOptionsParsing(final String[] args) throws FlinkParseException {
-		final PythonDriverOptions pythonCommandOptions = commandLineParser.parse(args);
+		final PythonProgramOptions pythonCommandOptions = commandLineParser.parse(args);
 
 		// verify the parsed python entrypoint module
-		assertEquals("xxx", pythonCommandOptions.getEntrypointModule());
+		assertEquals("xxx", pythonCommandOptions.getEntrypointModule().get());
 
 		// verify the parsed python library files
 		final List<Path> pythonMainFile = pythonCommandOptions.getPythonLibFiles();
@@ -134,7 +136,7 @@ public class PythonDriverOptionsParserFactoryTest {
 	}
 
 	private void verifyPythonDependencyOptionsParsing(final String[] args) throws FlinkParseException {
-		PythonDriverOptions pythonCommandOptions = commandLineParser.parse(args);
+		PythonProgramOptions pythonCommandOptions = commandLineParser.parse(args);
 		List<String> expectedPythonFiles = new ArrayList<>();
 		expectedPythonFiles.add("/absolute/a.py");
 		expectedPythonFiles.add("relative/b.py");

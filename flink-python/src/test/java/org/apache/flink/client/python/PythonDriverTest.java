@@ -18,6 +18,7 @@
 
 package org.apache.flink.client.python;
 
+import org.apache.flink.client.cli.PythonProgramOptions;
 import org.apache.flink.core.fs.Path;
 
 import org.junit.Assert;
@@ -56,7 +57,7 @@ public class PythonDriverTest {
 		args.add("--input");
 		args.add("in.txt");
 
-		PythonDriverOptions pythonDriverOptions = new PythonDriverOptions(
+		PythonProgramOptions pythonProgramOptions = new PythonProgramOptions(
 			"xxx",
 			pyFilesList,
 			args,
@@ -64,7 +65,7 @@ public class PythonDriverTest {
 			null,
 			null,
 			new ArrayList<>());
-		List<String> commands = PythonDriver.constructPythonCommands(pythonDriverOptions);
+		List<String> commands = PythonDriver.constructPythonCommands(pythonProgramOptions);
 		// verify the generated commands
 		Assert.assertEquals(4, commands.size());
 		Assert.assertEquals(commands.get(0), "-m");

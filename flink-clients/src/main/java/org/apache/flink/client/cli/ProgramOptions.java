@@ -19,6 +19,7 @@
 package org.apache.flink.client.cli;
 
 import org.apache.flink.api.common.ExecutionConfig;
+import org.apache.flink.runtime.entrypoint.FlinkParseException;
 import org.apache.flink.runtime.jobgraph.SavepointRestoreSettings;
 
 import org.apache.commons.cli.CommandLine;
@@ -30,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.apache.flink.client.cli.CliFrontendParser.ARGS_OPTION;
@@ -73,6 +75,8 @@ public class ProgramOptions extends CommandLineOptions {
 	 */
 	private final boolean isPython;
 
+	private final PythonProgramOptions pythonProgramOptions;
+
 	public ProgramOptions(CommandLine line) throws CliArgsException {
 		super(line);
 
@@ -85,25 +89,43 @@ public class ProgramOptions extends CommandLineOptions {
 
 		isPython = line.hasOption(PY_OPTION.getOpt()) | line.hasOption(PYMODULE_OPTION.getOpt())
 			| "org.apache.flink.client.python.PythonGatewayServer".equals(entryPointClass);
-		if (isPython) {
-			// copy python related parameters to program args and place them in front of user parameters
-			List<String> pyArgList = new ArrayList<>();
-			Set<Option> pyOptions = new HashSet<>();
-			pyOptions.add(PY_OPTION);
-			pyOptions.add(PYMODULE_OPTION);
-			pyOptions.add(PYFILES_OPTION);
-			pyOptions.add(PYREQUIREMENTS_OPTION);
-			pyOptions.add(PYARCHIVE_OPTION);
-			pyOptions.add(PYEXEC_OPTION);
-			for (Option option: line.getOptions()) {
-				if (pyOptions.contains(option)) {
-					pyArgList.add("--" + option.getLongOpt());
-					pyArgList.add(option.getValue());
-				}
+		boolean containPythonParam = false;
+		// copy python related parameters to program args and place them in front of user parameters
+		List<String> pyArgList = new ArrayList<>();
+
+		Set<Option> pyDependencyOptions = new HashSet<>();
+		pyDependencyOptions.add(PYFILES_OPTION);
+		pyDependencyOptions.add(PYREQUIREMENTS_OPTION);
+		pyDependencyOptions.add(PYARCHIVE_OPTION);
+		pyDependencyOptions.add(PYEXEC_OPTION);
+
+		Set<Option> pyJobOptions = new HashSet<>(pyDependencyOptions);
+		pyJobOptions.add(PY_OPTION);
+		pyJobOptions.add(PYMODULE_OPTION);
+		for (Option option: line.getOptions()) {
+			if (pyJobOptions.contains(option)) {
+				pyArgList.add("--" + option.getLongOpt());
+				pyArgList.add(option.getValue());
 			}
+			if (!containPythonParam && pyDependencyOptions.contains(option)) {
+				containPythonParam = true;
+			}
+		}
+
+		if (isPython) {
 			String[] newArgs = pyArgList.toArray(new String[args.length + pyArgList.size()]);
 			System.arraycopy(args, 0, newArgs, pyArgList.size(), args.length);
 			args = newArgs;
+		}
+
+		if (containPythonParam) {
+			try {
+				pythonProgramOptions = new PythonProgramOptionsParserFactory().createResult(line);
+			} catch (FlinkParseException e) {
+				throw new CliArgsException(e.getMessage(), e);
+			}
+		} else {
+			pythonProgramOptions = null;
 		}
 
 		if (line.hasOption(JAR_OPTION.getOpt())) {
@@ -184,6 +206,9 @@ public class ProgramOptions extends CommandLineOptions {
 		return savepointSettings;
 	}
 
+	public Optional<PythonProgramOptions> getPythonProgramOptions() {
+		return Optional.ofNullable(pythonProgramOptions);
+	}
 	/**
 	 * Indicates whether the job is a Python job.
 	 */

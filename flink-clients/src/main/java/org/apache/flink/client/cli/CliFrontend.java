@@ -40,6 +40,7 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.CoreOptions;
 import org.apache.flink.configuration.GlobalConfiguration;
 import org.apache.flink.configuration.JobManagerOptions;
+import org.apache.flink.configuration.PipelineOptions;
 import org.apache.flink.configuration.RestOptions;
 import org.apache.flink.core.execution.DefaultExecutorServiceLoader;
 import org.apache.flink.core.fs.FileSystem;
@@ -206,6 +207,17 @@ public class CliFrontend {
 		final List<URL> jobJars = program.getJobJarAndDependencies();
 		final Configuration effectiveConfiguration =
 				getEffectiveConfiguration(commandLine, programOptions, jobJars);
+
+		programOptions.getPythonProgramOptions().ifPresent(p -> {
+			PythonDependencyManager pythonDependencyManager =
+				new PythonDependencyManager(effectiveConfiguration, new ArrayList<>());
+			p.getPyFiles().forEach(pythonDependencyManager::addPythonFile);
+			p.getPyRequirements().ifPresent(r -> pythonDependencyManager.setPythonRequirements(r.f0, r.f1));
+			p.getPyExecutable().ifPresent(pythonDependencyManager::setPythonExecutable);
+			p.getPyArchives().forEach(a -> pythonDependencyManager.addPythonArchive(a.f0, a.f1));
+			effectiveConfiguration.set(
+				PipelineOptions.CACHED_FILES, pythonDependencyManager.serializeCachedFilesConfiguration());
+		});
 
 		LOG.debug("Effective executor configuration: {}", effectiveConfiguration);
 

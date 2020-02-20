@@ -20,10 +20,12 @@ package org.apache.flink.python;
 
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.client.cli.PythonDependencyManager;
 
 import javax.annotation.Nullable;
 
 import java.io.Serializable;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -33,12 +35,6 @@ import java.util.Optional;
 public class PythonConfig implements Serializable {
 
 	private static final long serialVersionUID = 1L;
-
-	public static final String PYTHON_FILES = "python.files";
-	public static final String PYTHON_REQUIREMENTS_FILE = "python.requirements-file";
-	public static final String PYTHON_REQUIREMENTS_CACHE = "python.requirements-cache";
-	public static final String PYTHON_ARCHIVES = "python.archives";
-	public static final String PYTHON_EXEC = "python.exec";
 
 	/**
 	 * Max number of elements to include in a bundle.
@@ -65,8 +61,7 @@ public class PythonConfig implements Serializable {
 	 * option "-pyfs". It is a json string. The key is the file key in distribute cache and the
 	 * value is the corresponding origin file name.
 	 */
-	@Nullable
-	private final String pythonFilesInfo;
+	private final Map<String, String> pythonFilesInfo;
 
 	/**
 	 * The file key of the requirements file in distribute cache. It is specified by
@@ -88,8 +83,7 @@ public class PythonConfig implements Serializable {
 	 * command line option "-pyarch". It is a json string. The key is the file key of the archives
 	 * in distribute cache and the value is the name of the directory to extract to.
 	 */
-	@Nullable
-	private final String pythonArchivesInfo;
+	private final Map<String, String> pythonArchivesInfo;
 
 	/**
 	 * The path of the python interpreter (e.g. /usr/local/bin/python) specified by
@@ -103,11 +97,11 @@ public class PythonConfig implements Serializable {
 		maxBundleTimeMills = config.get(PythonOptions.MAX_BUNDLE_TIME_MILLS);
 		pythonFrameworkMemorySize = config.get(PythonOptions.PYTHON_FRAMEWORK_MEMORY_SIZE);
 		pythonDataBufferMemorySize = config.get(PythonOptions.PYTHON_DATA_BUFFER_MEMORY_SIZE);
-		pythonFilesInfo = config.getString(PYTHON_FILES, null);
-		pythonRequirementsFileInfo = config.getString(PYTHON_REQUIREMENTS_FILE, null);
-		pythonRequirementsCacheDirInfo = config.getString(PYTHON_REQUIREMENTS_CACHE, null);
-		pythonArchivesInfo = config.getString(PYTHON_ARCHIVES, null);
-		pythonExec = config.getString(PYTHON_EXEC, null);
+		pythonFilesInfo = config.get(PythonDependencyManager.PYTHON_FILES);
+		pythonRequirementsFileInfo = config.get(PythonDependencyManager.PYTHON_REQUIREMENTS_FILE);
+		pythonRequirementsCacheDirInfo = config.get(PythonDependencyManager.PYTHON_REQUIREMENTS_CACHE);
+		pythonArchivesInfo = config.get(PythonDependencyManager.PYTHON_ARCHIVES);
+		pythonExec = config.get(PythonDependencyManager.PYTHON_EXEC);
 	}
 
 	public int getMaxBundleSize() {
@@ -126,8 +120,8 @@ public class PythonConfig implements Serializable {
 		return pythonDataBufferMemorySize;
 	}
 
-	public Optional<String> getPythonFilesInfo() {
-		return Optional.ofNullable(pythonFilesInfo);
+	public Map<String, String> getPythonFilesInfo() {
+		return pythonFilesInfo;
 	}
 
 	public Optional<String> getPythonRequirementsFileInfo() {
@@ -138,8 +132,8 @@ public class PythonConfig implements Serializable {
 		return Optional.ofNullable(pythonRequirementsCacheDirInfo);
 	}
 
-	public Optional<String> getPythonArchivesInfo() {
-		return Optional.ofNullable(pythonArchivesInfo);
+	public Map<String, String> getPythonArchivesInfo() {
+		return pythonArchivesInfo;
 	}
 
 	public Optional<String> getPythonExec() {

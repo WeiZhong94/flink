@@ -18,6 +18,8 @@
 
 package org.apache.flink.client.python;
 
+import org.apache.flink.client.cli.PythonProgramOptions;
+import org.apache.flink.client.cli.PythonProgramOptionsParserFactory;
 import org.apache.flink.client.program.OptimizerPlanEnvironment;
 import org.apache.flink.runtime.entrypoint.parser.CommandLineParser;
 
@@ -49,11 +51,11 @@ public final class PythonDriver {
 		}
 
 		// parse args
-		final CommandLineParser<PythonDriverOptions> commandLineParser = new CommandLineParser<>(
-			new PythonDriverOptionsParserFactory());
-		PythonDriverOptions pythonDriverOptions = null;
+		final CommandLineParser<PythonProgramOptions> commandLineParser = new CommandLineParser<>(
+			new PythonProgramOptionsParserFactory());
+		PythonProgramOptions pythonProgramOptions = null;
 		try {
-			pythonDriverOptions = commandLineParser.parse(args);
+			pythonProgramOptions = commandLineParser.parse(args);
 		} catch (Exception e) {
 			LOG.error("Could not parse command line arguments {}.", args, e);
 			commandLineParser.printHelp(PythonDriver.class.getSimpleName());
@@ -65,13 +67,13 @@ public final class PythonDriver {
 		// prepare python env
 
 		// commands which will be exec in python progress.
-		final List<String> commands = constructPythonCommands(pythonDriverOptions);
+		final List<String> commands = constructPythonCommands(pythonProgramOptions);
 		try {
 			// prepare the exec environment of python progress.
 			String tmpDir = System.getProperty("java.io.tmpdir") +
 				File.separator + "pyflink" + File.separator + UUID.randomUUID();
 			PythonDriverEnvUtils.PythonEnvironment pythonEnv = PythonDriverEnvUtils.preparePythonEnvironment(
-				pythonDriverOptions, tmpDir);
+				pythonProgramOptions, tmpDir);
 			// set env variable PYFLINK_GATEWAY_PORT for connecting of python gateway in python progress.
 			pythonEnv.systemEnv.put("PYFLINK_GATEWAY_PORT", String.valueOf(gatewayServer.getListeningPort()));
 			// start the python process.
@@ -119,13 +121,13 @@ public final class PythonDriver {
 	/**
 	 * Constructs the Python commands which will be executed in python process.
 	 *
-	 * @param pythonDriverOptions parsed Python command options
+	 * @param pythonProgramOptions parsed Python command options
 	 */
-	static List<String> constructPythonCommands(final PythonDriverOptions pythonDriverOptions) {
+	static List<String> constructPythonCommands(final PythonProgramOptions pythonProgramOptions) {
 		final List<String> commands = new ArrayList<>();
 		commands.add("-m");
-		commands.add(pythonDriverOptions.getEntrypointModule());
-		commands.addAll(pythonDriverOptions.getProgramArgs());
+		commands.add(pythonProgramOptions.getEntrypointModule().get());
+		commands.addAll(pythonProgramOptions.getProgramArgs());
 		return commands;
 	}
 }

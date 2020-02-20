@@ -20,6 +20,7 @@ package org.apache.flink.client.python;
 
 import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.client.cli.PythonProgramOptions;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.GlobalConfiguration;
@@ -126,12 +127,12 @@ public final class PythonDriverEnvUtils {
 	/**
 	 * Prepares PythonEnvironment to start python process.
 	 *
-	 * @param pythonDriverOptions The Python driver options.
+	 * @param pythonProgramOptions The Python driver options.
 	 * @param tmpDir The temporary directory which files will be copied to.
 	 * @return PythonEnvironment the Python environment which will be executed in Python process.
 	 */
 	public static PythonEnvironment preparePythonEnvironment(
-			PythonDriverOptions pythonDriverOptions,
+			PythonProgramOptions pythonProgramOptions,
 			String tmpDir) throws IOException, InterruptedException {
 		PythonEnvironment env = new PythonEnvironment();
 		env.pythonExec = loadConfiguration(
@@ -154,7 +155,7 @@ public final class PythonDriverEnvUtils {
 		List<String> pythonPathList = new ArrayList<>();
 
 		// 3. copy relevant python files to tmp dir and set them in PYTHONPATH.
-		for (Path pythonFile : pythonDriverOptions.getPythonLibFiles()) {
+		for (Path pythonFile : pythonProgramOptions.getPythonLibFiles()) {
 			String sourceFileName = pythonFile.getName();
 			// add random UUID parent directory to avoid name conflict.
 			Path targetPath = new Path(
@@ -182,20 +183,20 @@ public final class PythonDriverEnvUtils {
 		}
 		env.pythonPath = String.join(File.pathSeparator, pythonPathList);
 
-		if (!pythonDriverOptions.getPyFiles().isEmpty()) {
-			env.systemEnv.put(PYFLINK_CLUSTER_PY_FILES, String.join("\n", pythonDriverOptions.getPyFiles()));
+		if (!pythonProgramOptions.getPyFiles().isEmpty()) {
+			env.systemEnv.put(PYFLINK_CLUSTER_PY_FILES, String.join("\n", pythonProgramOptions.getPyFiles()));
 		}
-		if (!pythonDriverOptions.getPyArchives().isEmpty()) {
+		if (!pythonProgramOptions.getPyArchives().isEmpty()) {
 			env.systemEnv.put(
 				PYFLINK_CLUSTER_PY_ARCHIVES,
-				joinTuples(pythonDriverOptions.getPyArchives()));
+				joinTuples(pythonProgramOptions.getPyArchives()));
 		}
-		pythonDriverOptions.getPyRequirements().ifPresent(
+		pythonProgramOptions.getPyRequirements().ifPresent(
 			pyRequirements -> env.systemEnv.put(
 				PYFLINK_CLUSTER_PY_REQUIREMENTS,
 				joinTuples(Collections.singleton(pyRequirements))));
-		pythonDriverOptions.getPyExecutable().ifPresent(
-			pyExecutable -> env.systemEnv.put(PYFLINK_CLUSTER_PY_EXECUTABLE, pythonDriverOptions.getPyExecutable().get()));
+		pythonProgramOptions.getPyExecutable().ifPresent(
+			pyExecutable -> env.systemEnv.put(PYFLINK_CLUSTER_PY_EXECUTABLE, pythonProgramOptions.getPyExecutable().get()));
 		return env;
 	}
 

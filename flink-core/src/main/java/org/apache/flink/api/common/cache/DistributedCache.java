@@ -198,7 +198,7 @@ public class DistributedCache {
 	public static List<Tuple2<String, DistributedCacheEntry>> parseCachedFilesFromString(List<String> files) {
 		return files.stream()
 			.map(v -> Arrays.stream(v.split(","))
-				.map(p -> p.split(":"))
+				.map(p -> p.split(":", 2))
 				.collect(
 					Collectors.toMap(
 						arr -> arr[0], // key name

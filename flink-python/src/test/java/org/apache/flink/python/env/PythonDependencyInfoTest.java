@@ -23,6 +23,7 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.python.PythonConfig;
 
+import org.apache.flink.client.cli.PythonDependencyManager;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -65,11 +66,12 @@ public class PythonDependencyInfoTest {
 	}
 
 	@Test
-	public void testParsePythonFiles() throws IOException {
+	public void testParsePythonFiles() {
 		Configuration config = new Configuration();
-		config.setString(
-			PythonConfig.PYTHON_FILES,
-			"{\"python_file_0_{uuid}\": \"test_file1.py\", \"python_file_1_{uuid}\": \"test_file2.py\"}");
+		Map<String, String> pythonFiles = new HashMap<>();
+		pythonFiles.put("python_file_0_{uuid}", "test_file1.py");
+		pythonFiles.put("python_file_1_{uuid}", "test_file2.py");
+		config.set(PythonDependencyManager.PYTHON_FILES, pythonFiles);
 		PythonDependencyInfo dependencyInfo = PythonDependencyInfo.create(new PythonConfig(config), distributedCache);
 
 		Map<String, String> expected = new HashMap<>();
@@ -81,13 +83,13 @@ public class PythonDependencyInfoTest {
 	@Test
 	public void testParsePythonRequirements() throws IOException {
 		Configuration config = new Configuration();
-		config.setString(PythonConfig.PYTHON_REQUIREMENTS_FILE, "python_requirements_file_2_{uuid}");
+		config.set(PythonDependencyManager.PYTHON_REQUIREMENTS_FILE, "python_requirements_file_2_{uuid}");
 		PythonDependencyInfo dependencyInfo = PythonDependencyInfo.create(new PythonConfig(config), distributedCache);
 
 		assertEquals("/distributed_cache/file2", dependencyInfo.getRequirementsFilePath().get());
 		assertFalse(dependencyInfo.getRequirementsCacheDir().isPresent());
 
-		config.setString(PythonConfig.PYTHON_REQUIREMENTS_CACHE, "python_requirements_cache_3_{uuid}");
+		config.set(PythonDependencyManager.PYTHON_REQUIREMENTS_CACHE, "python_requirements_cache_3_{uuid}");
 		dependencyInfo = PythonDependencyInfo.create(new PythonConfig(config), distributedCache);
 
 		assertEquals("/distributed_cache/file2", dependencyInfo.getRequirementsFilePath().get());
@@ -95,13 +97,13 @@ public class PythonDependencyInfoTest {
 	}
 
 	@Test
-	public void testParsePythonArchives() throws IOException {
+	public void testParsePythonArchives() {
 		Configuration config = new Configuration();
-		config.setString(
-			PythonConfig.PYTHON_ARCHIVES,
-			"{\"python_archive_4_{uuid}\": \"py27.zip\", \"python_archive_5_{uuid}\": \"py37\"}");
-		PythonDependencyInfo dependencyInfo =
-			PythonDependencyInfo.create(new PythonConfig(config), distributedCache);
+		Map<String, String> pythonArchives = new HashMap<>();
+		pythonArchives.put("python_archive_4_{uuid}", "py27.zip");
+		pythonArchives.put("python_archive_5_{uuid}", "py37");
+		config.set(PythonDependencyManager.PYTHON_ARCHIVES, pythonArchives);
+		PythonDependencyInfo dependencyInfo = PythonDependencyInfo.create(new PythonConfig(config), distributedCache);
 
 		Map<String, String> expected = new HashMap<>();
 		expected.put("/distributed_cache/file4", "py27.zip");
@@ -110,9 +112,9 @@ public class PythonDependencyInfoTest {
 	}
 
 	@Test
-	public void testParsePythonExec() throws IOException {
+	public void testParsePythonExec() {
 		Configuration config = new Configuration();
-		config.setString(PythonConfig.PYTHON_EXEC, "/usr/bin/python3");
+		config.set(PythonDependencyManager.PYTHON_EXEC, "/usr/bin/python3");
 		PythonDependencyInfo dependencyInfo =
 			PythonDependencyInfo.create(new PythonConfig(config), distributedCache);
 

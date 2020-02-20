@@ -110,19 +110,14 @@ public final class PythonDependencyInfo {
 	 * @param distributedCache The DistributedCache object of current task.
 	 * @return The PythonDependencyInfo object that contains whole information of python dependency.
 	 */
-	public static PythonDependencyInfo create(PythonConfig pythonConfig, DistributedCache distributedCache)
-		throws IOException {
-		ObjectMapper mapper = new ObjectMapper();
+	public static PythonDependencyInfo create(PythonConfig pythonConfig, DistributedCache distributedCache) {
 
 		Map<String, String> pythonFiles = new HashMap<>();
-		if (pythonConfig.getPythonFilesInfo().isPresent()) {
-			Map<String, String> filesIdToFilesName =
-				mapper.readValue(pythonConfig.getPythonFilesInfo().get(), HashMap.class);
-			for (Map.Entry<String, String> entry: filesIdToFilesName.entrySet()) {
-				File pythonFile = distributedCache.getFile(entry.getKey());
-				String filePath = pythonFile.getAbsolutePath();
-				pythonFiles.put(filePath, entry.getValue());
-			}
+		Map<String, String> filesIdToFilesName = pythonConfig.getPythonFilesInfo();
+		for (Map.Entry<String, String> entry: filesIdToFilesName.entrySet()) {
+			File pythonFile = distributedCache.getFile(entry.getKey());
+			String filePath = pythonFile.getAbsolutePath();
+			pythonFiles.put(filePath, entry.getValue());
 		}
 
 		String requirementsFilePath = null;
@@ -137,15 +132,11 @@ public final class PythonDependencyInfo {
 		}
 
 		Map<String, String> archives = new HashMap<>();
-		if (pythonConfig.getPythonArchivesInfo().isPresent()) {
-			Map<String, String> archivesMap =
-				mapper.readValue(pythonConfig.getPythonArchivesInfo().get(), HashMap.class);
-
-			for (Map.Entry<String, String> entry: archivesMap.entrySet()) {
-				String archiveFilePath = distributedCache.getFile(entry.getKey()).getAbsolutePath();
-				String targetPath = entry.getValue();
-				archives.put(archiveFilePath, targetPath);
-			}
+		Map<String, String> archivesMap = pythonConfig.getPythonArchivesInfo();
+		for (Map.Entry<String, String> entry: archivesMap.entrySet()) {
+			String archiveFilePath = distributedCache.getFile(entry.getKey()).getAbsolutePath();
+			String targetPath = entry.getValue();
+			archives.put(archiveFilePath, targetPath);
 		}
 
 		String pythonExec = pythonConfig.getPythonExec().orElse(null);

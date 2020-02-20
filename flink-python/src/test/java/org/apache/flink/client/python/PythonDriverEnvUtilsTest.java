@@ -19,6 +19,7 @@
 package org.apache.flink.client.python;
 
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.client.cli.PythonProgramOptions;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.GlobalConfiguration;
 import org.apache.flink.core.fs.Path;
@@ -103,7 +104,7 @@ public class PythonDriverEnvUtilsTest {
 		pyArchives.add(new Tuple2<>("hdfs://a.zip", null));
 		pyArchives.add(new Tuple2<>("b.zip", "venv"));
 
-		PythonDriverOptions pythonDriverOptions = new PythonDriverOptions(
+		PythonProgramOptions pythonProgramOptions = new PythonProgramOptions(
 			"test",
 			pyFilesList,
 			new ArrayList<>(),
@@ -113,7 +114,7 @@ public class PythonDriverEnvUtilsTest {
 			pyArchives);
 
 		PythonDriverEnvUtils.PythonEnvironment env = PythonDriverEnvUtils.preparePythonEnvironment(
-			pythonDriverOptions, tmpDirPath);
+			pythonProgramOptions, tmpDirPath);
 
 		String base = replaceUUID(env.tempDirectory);
 		Set<String> expectedPythonPaths = new HashSet<>();
