@@ -15,10 +15,6 @@
 #  See the License for the specific language governing permissions and
 # limitations under the License.
 ################################################################################
-import json
-import os
-import uuid
-
 from pyflink.java_gateway import get_gateway
 
 __all__ = ['DependencyManager']
