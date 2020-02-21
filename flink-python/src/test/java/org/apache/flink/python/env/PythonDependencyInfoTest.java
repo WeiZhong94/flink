@@ -19,11 +19,11 @@
 package org.apache.flink.python.env;
 
 import org.apache.flink.api.common.cache.DistributedCache;
+import org.apache.flink.client.cli.PythonDependencyManager;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.python.PythonConfig;
 
-import org.apache.flink.client.cli.PythonDependencyManager;
 import org.junit.Test;
 
 import java.io.IOException;

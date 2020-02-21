@@ -19,8 +19,8 @@
 package org.apache.flink.python;
 
 import org.apache.flink.annotation.Internal;
-import org.apache.flink.configuration.Configuration;
 import org.apache.flink.client.cli.PythonDependencyManager;
+import org.apache.flink.configuration.Configuration;
 
 import javax.annotation.Nullable;
 

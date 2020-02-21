@@ -103,4 +103,13 @@ public class PythonFunctionSqlTest {
 		String blinkPlan = blinkTableEnv.explain(blinkTable);
 		Assert.assertTrue(blinkPlan.contains("PythonCalc(select=[func1(f0) AS _c0])"));
 	}
+
+	public static void main(String[] args) throws Exception {
+		PythonFunctionSqlTest tests = new PythonFunctionSqlTest();
+		tests.prepareEnvironment();
+		tests.flinkTableEnv.sqlUpdate("create temporary system function func1 as 'test1.func1' language python");
+		Table flinkTable = tests.flinkSourceTable.select("func1(str)");
+		System.out.println(tests.flinkTableEnv.toDataSet(flinkTable, String.class).collect());
+		tests.cleanEnvironment();
+	}
 }

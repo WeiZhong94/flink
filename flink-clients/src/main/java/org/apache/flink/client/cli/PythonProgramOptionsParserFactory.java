@@ -74,9 +74,6 @@ public final class PythonProgramOptionsParserFactory implements ParserResultFact
 			}
 		} else if (commandLine.hasOption(PYMODULE_OPTION.getOpt())) {
 			entrypointModule = commandLine.getOptionValue(PYMODULE_OPTION.getOpt());
-		} else {
-			throw new FlinkParseException(
-				"The Python entrypoint has not been specified. It can be specified with options -py or -pym");
 		}
 
 		List<String> pyFiles = new ArrayList<>();

@@ -80,8 +80,10 @@ class DataSetPythonCalc(
       inputSchema.typeInfo).getLogicalType.asInstanceOf[RowType]
     val flatMapFunctionOutputRowType = TypeConversions.fromLegacyInfoToDataType(
       flatMapFunctionResultTypeInfo).getLogicalType.asInstanceOf[RowType]
+    val combinedConfiguration = new Configuration(tableEnv.execEnv.getConfiguration)
+    combinedConfiguration.addAll(tableEnv.getConfig.getConfiguration)
     val flatMapFunction = getPythonScalarFunctionFlatMap(
-      tableEnv.getConfig.getConfiguration,
+      combinedConfiguration,
       flatMapFunctionInputRowType,
       flatMapFunctionOutputRowType,
       calcProgram)

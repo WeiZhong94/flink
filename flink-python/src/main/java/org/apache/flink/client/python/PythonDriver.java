@@ -21,6 +21,7 @@ package org.apache.flink.client.python;
 import org.apache.flink.client.cli.PythonProgramOptions;
 import org.apache.flink.client.cli.PythonProgramOptionsParserFactory;
 import org.apache.flink.client.program.OptimizerPlanEnvironment;
+import org.apache.flink.runtime.entrypoint.FlinkParseException;
 import org.apache.flink.runtime.entrypoint.parser.CommandLineParser;
 
 import org.slf4j.Logger;
@@ -41,7 +42,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class PythonDriver {
 	private static final Logger LOG = LoggerFactory.getLogger(PythonDriver.class);
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws FlinkParseException {
 		// the python job needs at least 2 args.
 		// e.g. py a.py ...
 		// e.g. pym a.b -pyfs a.zip ...
@@ -60,6 +61,11 @@ public final class PythonDriver {
 			LOG.error("Could not parse command line arguments {}.", args, e);
 			commandLineParser.printHelp(PythonDriver.class.getSimpleName());
 			System.exit(1);
+		}
+
+		if (!pythonProgramOptions.getEntrypointModule().isPresent()) {
+			throw new FlinkParseException(
+				"The Python entrypoint has not been specified. It can be specified with options -py or -pym");
 		}
 
 		// start gateway server

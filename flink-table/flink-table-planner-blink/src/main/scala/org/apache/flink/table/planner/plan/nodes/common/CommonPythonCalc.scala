@@ -18,10 +18,13 @@
 
 package org.apache.flink.table.planner.plan.nodes.common
 
+import java.lang.reflect.Method
+
 import org.apache.calcite.rex._
 import org.apache.calcite.sql.`type`.SqlTypeName
 import org.apache.flink.api.dag.Transformation
 import org.apache.flink.configuration.Configuration
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
 import org.apache.flink.streaming.api.operators.OneInputStreamOperator
 import org.apache.flink.streaming.api.transformations.OneInputTransformation
 import org.apache.flink.table.api.TableException
@@ -45,6 +48,12 @@ trait CommonPythonCalc {
       case ex: ClassNotFoundException => throw new TableException(
         "The dependency of 'flink-python' is not present on the classpath.", ex)
     }
+  }
+
+  def getExecEnvConfiguration(execEnv: StreamExecutionEnvironment): Configuration = {
+    val method: Method = classOf[StreamExecutionEnvironment].getDeclaredMethod("getConfiguration")
+    method.setAccessible(true)
+    method.invoke(execEnv).asInstanceOf[Configuration]
   }
 
   private lazy val convertLiteralToPython = {

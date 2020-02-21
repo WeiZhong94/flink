@@ -54,11 +54,13 @@ class BatchExecPythonCalc(
   override protected def translateToPlanInternal(planner: BatchPlanner): Transformation[BaseRow] = {
     val inputTransform = getInputNodes.get(0).translateToPlan(planner)
       .asInstanceOf[Transformation[BaseRow]]
+    val combineConfiguration = new Configuration(getExecEnvConfiguration(planner.getExecEnv))
+    combineConfiguration.addAll(planner.getTableConfig.getConfiguration)
     val ret = createPythonOneInputTransformation(
       inputTransform,
       calcProgram,
       "BatchExecPythonCalc",
-      planner.getTableConfig.getConfiguration)
+      combineConfiguration)
 
     ExecNode.setManagedMemoryWeight(
       ret, getPythonWorkerMemory(planner.getTableConfig.getConfiguration))

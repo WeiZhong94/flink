@@ -22,13 +22,10 @@ import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.common.cache.DistributedCache;
 import org.apache.flink.python.PythonConfig;
 
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;

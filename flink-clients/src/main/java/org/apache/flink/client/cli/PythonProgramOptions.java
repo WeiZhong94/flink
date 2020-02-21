@@ -87,7 +87,7 @@ public class PythonProgramOptions {
 		return pyArchives;
 	}
 
-	PythonProgramOptions(
+	public PythonProgramOptions(
 			String entrypointModule,
 			List<Path> pythonLibFiles,
 			List<String> programArgs,
