@@ -54,18 +54,6 @@ import static org.apache.flink.python.util.ResourceUtil.extractBuiltInDependenci
 public final class PythonDriverEnvUtils {
 	private static final Logger LOG = LoggerFactory.getLogger(PythonDriverEnvUtils.class);
 
-	@VisibleForTesting
-	public static final String PYFLINK_CLUSTER_PY_FILES = "_PYFLINK_CLUSTER_PY_FILES";
-
-	@VisibleForTesting
-	public static final String PYFLINK_CLUSTER_PY_REQUIREMENTS = "_PYFLINK_CLUSTER_PY_REQUIREMENTS";
-
-	@VisibleForTesting
-	public static final String PYFLINK_CLUSTER_PY_EXECUTABLE = "_PYFLINK_CLUSTER_PY_EXECUTABLE";
-
-	@VisibleForTesting
-	public static final String PYFLINK_CLUSTER_PY_ARCHIVES = "_PYFLINK_CLUSTER_PY_ARCHIVES";
-
 	public static final String PYFLINK_CLIENT_EXECUTABLE = "PYFLINK_EXECUTABLE";
 
 	@VisibleForTesting
@@ -182,21 +170,6 @@ public final class PythonDriverEnvUtils {
 			pythonPathList.add(env.pythonPath);
 		}
 		env.pythonPath = String.join(File.pathSeparator, pythonPathList);
-
-		if (!pythonProgramOptions.getPyFiles().isEmpty()) {
-			env.systemEnv.put(PYFLINK_CLUSTER_PY_FILES, String.join("\n", pythonProgramOptions.getPyFiles()));
-		}
-		if (!pythonProgramOptions.getPyArchives().isEmpty()) {
-			env.systemEnv.put(
-				PYFLINK_CLUSTER_PY_ARCHIVES,
-				joinTuples(pythonProgramOptions.getPyArchives()));
-		}
-		pythonProgramOptions.getPyRequirements().ifPresent(
-			pyRequirements -> env.systemEnv.put(
-				PYFLINK_CLUSTER_PY_REQUIREMENTS,
-				joinTuples(Collections.singleton(pyRequirements))));
-		pythonProgramOptions.getPyExecutable().ifPresent(
-			pyExecutable -> env.systemEnv.put(PYFLINK_CLUSTER_PY_EXECUTABLE, pythonProgramOptions.getPyExecutable().get()));
 		return env;
 	}
 

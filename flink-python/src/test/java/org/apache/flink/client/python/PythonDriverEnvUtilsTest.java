@@ -96,22 +96,14 @@ public class PythonDriverEnvUtilsTest {
 
 		List<String> pyFiles = pyFilesList.stream().map(Path::toString).collect(Collectors.toList());
 
-		Tuple2<String, String> pyRequirements = new Tuple2<>("requirements.txt", "requirements_cache");
-
-		String pyExecutable = "/usr/bin/python";
-
-		List<Tuple2<String, String>> pyArchives = new ArrayList<>();
-		pyArchives.add(new Tuple2<>("hdfs://a.zip", null));
-		pyArchives.add(new Tuple2<>("b.zip", "venv"));
-
 		PythonProgramOptions pythonProgramOptions = new PythonProgramOptions(
 			"test",
 			pyFilesList,
 			new ArrayList<>(),
 			pyFiles,
-			pyRequirements,
-			pyExecutable,
-			pyArchives);
+			null,
+			null,
+			new ArrayList<>());
 
 		PythonDriverEnvUtils.PythonEnvironment env = PythonDriverEnvUtils.preparePythonEnvironment(
 			pythonProgramOptions, tmpDirPath);
@@ -140,13 +132,6 @@ public class PythonDriverEnvUtilsTest {
 		Assert.assertEquals(
 			expectedPythonPaths,
 			actualPaths.stream().map(PythonDriverEnvUtilsTest::replaceUUID).collect(Collectors.toSet()));
-
-		Map<String, String> expectedEnv = new HashMap<>();
-		expectedEnv.put(PythonDriverEnvUtils.PYFLINK_CLUSTER_PY_FILES, String.join("\n", pyFiles));
-		expectedEnv.put(PythonDriverEnvUtils.PYFLINK_CLUSTER_PY_REQUIREMENTS, "requirements.txt\nrequirements_cache");
-		expectedEnv.put(PythonDriverEnvUtils.PYFLINK_CLUSTER_PY_EXECUTABLE, "/usr/bin/python");
-		expectedEnv.put(PythonDriverEnvUtils.PYFLINK_CLUSTER_PY_ARCHIVES, "hdfs://a.zip\n\nb.zip\nvenv");
-		Assert.assertEquals(expectedEnv, env.systemEnv);
 	}
 
 	@Test
