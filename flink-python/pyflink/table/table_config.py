@@ -20,7 +20,6 @@ from py4j.compat import long
 
 from pyflink import since
 from pyflink.common import Configuration
-from pyflink.common.dependency_manager import DependencyManager
 from pyflink.java_gateway import get_gateway
 from pyflink.table import SqlDialect
 
@@ -313,7 +312,7 @@ class TableConfig(object):
         :param python_exec: The path of python interpreter.
         :type python_exec: str
         """
-        self.get_configuration().set_string(DependencyManager.PYTHON_EXEC, python_exec)
+        self.get_configuration().set_string("python.executable", python_exec)
 
     @since("1.10.0")
     def get_python_executable(self):
@@ -324,7 +323,7 @@ class TableConfig(object):
         :return: The path of the python interpreter which is used to execute the python udf workers.
         :rtype: str
         """
-        return self.get_configuration().get_string(DependencyManager.PYTHON_EXEC, None)
+        return self.get_configuration().get_string("python.executable", None)
 
     @staticmethod
     def get_default():

@@ -19,7 +19,7 @@
 package org.apache.flink.table.runtime.operators.python.table;
 
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.python.PythonOptions;
+import org.apache.flink.configuration.PythonOptions;
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
 import org.apache.flink.streaming.util.OneInputStreamOperatorTestHarness;
 import org.apache.flink.table.functions.python.PythonFunctionInfo;

@@ -36,6 +36,7 @@ import org.apache.flink.table.catalog.CatalogFunction;
 import org.apache.flink.table.catalog.CatalogManager;
 import org.apache.flink.table.catalog.ConnectorCatalogTable;
 import org.apache.flink.table.catalog.FunctionCatalog;
+import org.apache.flink.table.catalog.FunctionLanguage;
 import org.apache.flink.table.catalog.GenericInMemoryCatalog;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.catalog.QueryOperationCatalogView;
@@ -832,7 +833,10 @@ public class TableEnvironmentImpl implements TableEnvironment {
 					createCatalogFunctionOperation.getFunctionIdentifier());
 				if (!exist) {
 					FunctionDefinition functionDefinition = FunctionDefinitionUtil.createFunctionDefinition(
-						createCatalogFunctionOperation.getFunctionName(), function.getClassName());
+						createCatalogFunctionOperation.getFunctionName(),
+						function.getClassName(),
+						function.getFunctionLanguage(),
+						this);
 					registerCatalogFunctionInFunctionCatalog(
 						createCatalogFunctionOperation.getFunctionIdentifier(), functionDefinition);
 				} else if (!createCatalogFunctionOperation.isIgnoreIfExists()) {
@@ -864,6 +868,9 @@ public class TableEnvironmentImpl implements TableEnvironment {
 			if (alterCatalogFunctionOperation.isTemporary()) {
 				throw new ValidationException(
 					"Alter temporary catalog function is not supported");
+			} else if (function.getFunctionLanguage() == FunctionLanguage.PYTHON) {
+				throw new ValidationException(
+					"Alter Python catalog function is not supported");
 			} else {
 				Catalog catalog = getCatalogOrThrowException(
 					alterCatalogFunctionOperation.getFunctionIdentifier().getCatalogName());
@@ -913,7 +920,9 @@ public class TableEnvironmentImpl implements TableEnvironment {
 				if (!exist) {
 					FunctionDefinition functionDefinition = FunctionDefinitionUtil.createFunctionDefinition(
 						operation.getFunctionName(),
-						operation.getFunctionClass());
+						operation.getFunctionClass(),
+						operation.getFunctionLanguage(),
+						this);
 					registerSystemFunctionInFunctionCatalog(operation.getFunctionName(), functionDefinition);
 
 				} else if (!operation.isIgnoreIfExists()) {

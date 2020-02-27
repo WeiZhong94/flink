@@ -18,7 +18,6 @@
 
 package org.apache.flink.client.cli;
 
-import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.common.InvalidProgramException;
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.common.JobStatus;
@@ -206,6 +205,9 @@ public class CliFrontend {
 		final List<URL> jobJars = program.getJobJarAndDependencies();
 		final Configuration effectiveConfiguration =
 				getEffectiveConfiguration(commandLine, programOptions, jobJars);
+		programOptions.getPythonProgramOptions().ifPresent(pythonProgramOptions -> {
+			pythonProgramOptions.writeToConfiguration(effectiveConfiguration);
+		});
 
 		LOG.debug("Effective executor configuration: {}", effectiveConfiguration);
 
@@ -236,7 +238,8 @@ public class CliFrontend {
 	 *
 	 * @param args Command line arguments for the info action.
 	 */
-	protected void info(String[] args) throws CliArgsException, FileNotFoundException, ProgramInvocationException {
+	protected void info(String[] args)
+		throws CliArgsException, FileNotFoundException, ProgramInvocationException, FlinkException {
 		LOG.info("Running 'info' command.");
 
 		final Options commandOptions = CliFrontendParser.getInfoCommandOptions();
@@ -261,14 +264,16 @@ public class CliFrontend {
 		final PackagedProgram program = buildProgram(programOptions);
 
 		try {
-			int parallelism = programOptions.getParallelism();
-			if (ExecutionConfig.PARALLELISM_DEFAULT == parallelism) {
-				parallelism = defaultParallelism;
-			}
+			final List<URL> jobJars = program.getJobJarAndDependencies();
+			final Configuration effectiveConfiguration =
+				getEffectiveConfiguration(commandLine, programOptions, jobJars);
+			programOptions.getPythonProgramOptions().ifPresent(pythonProgramOptions -> {
+				pythonProgramOptions.writeToConfiguration(effectiveConfiguration);
+			});
 
 			LOG.info("Creating program plan dump");
 
-			Pipeline pipeline = PackagedProgramUtils.getPipelineFromProgram(program, parallelism, true);
+			Pipeline pipeline = PackagedProgramUtils.getPipelineFromProgram(program, effectiveConfiguration, true);
 			String jsonPlan = FlinkPipelineTranslationUtil.translateToJSONExecutionPlan(pipeline);
 
 			if (jsonPlan != null) {

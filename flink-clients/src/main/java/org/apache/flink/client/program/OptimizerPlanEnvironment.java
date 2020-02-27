@@ -21,6 +21,7 @@ package org.apache.flink.client.program;
 import org.apache.flink.api.dag.Pipeline;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.ExecutionEnvironmentFactory;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.execution.JobClient;
 import org.apache.flink.util.Preconditions;
 
@@ -36,6 +37,12 @@ import java.io.PrintStream;
 public class OptimizerPlanEnvironment extends ExecutionEnvironment {
 
 	private Pipeline pipeline;
+
+	public OptimizerPlanEnvironment() {}
+
+	public OptimizerPlanEnvironment(Configuration configuration) {
+		super(configuration);
+	}
 
 	// ------------------------------------------------------------------------
 	//  Execution Environment methods

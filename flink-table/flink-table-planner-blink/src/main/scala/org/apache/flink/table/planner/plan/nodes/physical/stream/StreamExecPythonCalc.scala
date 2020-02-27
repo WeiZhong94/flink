@@ -24,6 +24,7 @@ import org.apache.calcite.rel.`type`.RelDataType
 import org.apache.calcite.rel.core.Calc
 import org.apache.calcite.rex.RexProgram
 import org.apache.flink.api.dag.Transformation
+import org.apache.flink.configuration.Configuration
 import org.apache.flink.table.dataformat.BaseRow
 import org.apache.flink.table.planner.delegation.StreamPlanner
 import org.apache.flink.table.planner.plan.nodes.common.CommonPythonCalc
@@ -53,11 +54,13 @@ class StreamExecPythonCalc(
       planner: StreamPlanner): Transformation[BaseRow] = {
     val inputTransform = getInputNodes.get(0).translateToPlan(planner)
       .asInstanceOf[Transformation[BaseRow]]
+    val combineConfiguration = new Configuration(getExecEnvConfiguration(planner.getExecEnv))
+    combineConfiguration.addAll(planner.getTableConfig.getConfiguration)
     val ret = createPythonOneInputTransformation(
       inputTransform,
       calcProgram,
       "StreamExecPythonCalc",
-      planner.getTableConfig.getConfiguration)
+      combineConfiguration)
 
     if (inputsContainSingleton()) {
       ret.setParallelism(1)

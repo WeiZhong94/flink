@@ -18,7 +18,6 @@
 
 package org.apache.flink.client.python;
 
-import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.util.FileUtils;
 
@@ -35,10 +34,8 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -83,24 +80,10 @@ public class PythonDriverEnvUtilsTest {
 		// test path with schema
 		pyFilesList.add(new Path("file://" + c.getAbsolutePath()));
 
-		List<String> pyFiles = pyFilesList.stream().map(Path::toString).collect(Collectors.toList());
-
-		Tuple2<String, String> pyRequirements = new Tuple2<>("requirements.txt", "requirements_cache");
-
-		String pyExecutable = "/usr/bin/python";
-
-		List<Tuple2<String, String>> pyArchives = new ArrayList<>();
-		pyArchives.add(new Tuple2<>("hdfs://a.zip", null));
-		pyArchives.add(new Tuple2<>("b.zip", "venv"));
-
 		PythonDriverOptions pythonDriverOptions = new PythonDriverOptions(
 			"test",
 			pyFilesList,
-			new ArrayList<>(),
-			pyFiles,
-			pyRequirements,
-			pyExecutable,
-			pyArchives);
+			new ArrayList<>());
 
 		PythonDriverEnvUtils.PythonEnvironment env = PythonDriverEnvUtils.preparePythonEnvironment(
 			pythonDriverOptions, tmpDirPath);
@@ -129,13 +112,6 @@ public class PythonDriverEnvUtilsTest {
 		Assert.assertEquals(
 			expectedPythonPaths,
 			actualPaths.stream().map(PythonDriverEnvUtilsTest::replaceUUID).collect(Collectors.toSet()));
-
-		Map<String, String> expectedEnv = new HashMap<>();
-		expectedEnv.put(PythonDriverEnvUtils.PYFLINK_PY_FILES, String.join("\n", pyFiles));
-		expectedEnv.put(PythonDriverEnvUtils.PYFLINK_PY_REQUIREMENTS, "requirements.txt\nrequirements_cache");
-		expectedEnv.put(PythonDriverEnvUtils.PYFLINK_PY_EXECUTABLE, "/usr/bin/python");
-		expectedEnv.put(PythonDriverEnvUtils.PYFLINK_PY_ARCHIVES, "hdfs://a.zip\n\nb.zip\nvenv");
-		Assert.assertEquals(expectedEnv, env.systemEnv);
 	}
 
 	@Test

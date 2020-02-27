@@ -58,7 +58,7 @@ class DataStreamPythonCalc(
     schema,
     calcProgram,
     ruleDescription)
-  with CommonPythonCalc {
+    with CommonPythonCalc {
 
   override def copy(traitSet: RelTraitSet, child: RelNode, program: RexProgram): Calc = {
     new DataStreamPythonCalc(
@@ -87,8 +87,11 @@ class DataStreamPythonCalc(
       inputSchema.typeInfo).getLogicalType.asInstanceOf[RowType]
     val pythonOperatorOutputRowType = TypeConversions.fromLegacyInfoToDataType(
       pythonOperatorResultTypeInfo).getLogicalType.asInstanceOf[RowType]
+    val combinedConfiguration = new Configuration(
+      getExecEnvConfiguration(planner.getExecutionEnvironment))
+    combinedConfiguration.addAll(planner.getConfig.getConfiguration)
     val pythonOperator = getPythonScalarFunctionOperator(
-      planner.getConfig.getConfiguration,
+      combinedConfiguration,
       pythonOperatorInputRowType,
       pythonOperatorOutputRowType,
       calcProgram)

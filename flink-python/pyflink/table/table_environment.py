@@ -23,7 +23,6 @@ from abc import ABCMeta, abstractmethod
 from py4j.java_gateway import get_java_class, get_method
 
 from pyflink import since
-from pyflink.common.dependency_manager import DependencyManager
 from pyflink.serializers import BatchedSerializer, PickleSerializer
 from pyflink.table.catalog import Catalog
 from pyflink.table.table_config import TableConfig
@@ -80,9 +79,10 @@ class TableEnvironment(object):
         self._j_tenv = j_tenv
         self._is_blink_planner = is_blink_planner
         self._serializer = serializer
-        self._dependency_manager = DependencyManager(self.get_config().get_configuration(),
-                                                     self._get_j_env())
-        self._dependency_manager.load_from_env(os.environ)
+        JPythonDependencyManagerUtil = \
+            get_gateway().jvm.org.apache.flink.client.python.PythonDependencyManagerUtil
+        self._j_dependency_manager = \
+            JPythonDependencyManagerUtil.createPythonDependencyManager(self._get_j_env())
 
     def from_table_source(self, table_source):
         """
@@ -788,7 +788,7 @@ class TableEnvironment(object):
         :param file_path: The path of the python dependency.
         :type file_path: str
         """
-        self._dependency_manager.add_python_file(file_path)
+        self._j_dependency_manager.addPythonFile(file_path)
 
     @since("1.10.0")
     def set_python_requirements(self, requirements_file_path, requirements_cache_dir=None):
@@ -825,7 +825,7 @@ class TableEnvironment(object):
                                        installation packages.
         :type requirements_cache_dir: str
         """
-        self._dependency_manager.set_python_requirements(requirements_file_path,
+        self._j_dependency_manager.setPythonRequirements(requirements_file_path,
                                                          requirements_cache_dir)
 
     @since("1.10.0")
@@ -880,7 +880,7 @@ class TableEnvironment(object):
         :param target_dir: Optional, the target dir name that the archive file extracted to.
         :type target_dir: str
         """
-        self._dependency_manager.add_python_archive(archive_path, target_dir)
+        self._j_dependency_manager.addPythonArchive(archive_path, target_dir)
 
     def execute(self, job_name):
         """

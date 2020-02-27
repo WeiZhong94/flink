@@ -67,6 +67,7 @@ import org.apache.flink.types.StringValue;
 import org.apache.flink.util.ExceptionUtils;
 import org.apache.flink.util.NumberSequenceIterator;
 import org.apache.flink.util.Preconditions;
+import org.apache.flink.util.PythonDependencyManager;
 import org.apache.flink.util.SplittableIterator;
 import org.apache.flink.util.Visitor;
 
@@ -401,6 +402,9 @@ public class ExecutionEnvironment {
 				this.cacheFile.clear();
 				this.cacheFile.addAll(DistributedCache.parseCachedFilesFromString(f));
 			});
+		PythonDependencyManager pythonDependencyManager =
+			new PythonDependencyManager(this.configuration, this.cacheFile);
+		pythonDependencyManager.configure(configuration);
 		config.configure(configuration, classLoader);
 	}
 

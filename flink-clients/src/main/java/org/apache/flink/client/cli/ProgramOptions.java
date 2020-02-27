@@ -24,12 +24,15 @@ import org.apache.flink.runtime.jobgraph.SavepointRestoreSettings;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
+import javax.annotation.Nullable;
+
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.apache.flink.client.cli.CliFrontendParser.ARGS_OPTION;
@@ -68,6 +71,9 @@ public class ProgramOptions extends CommandLineOptions {
 
 	private final SavepointRestoreSettings savepointSettings;
 
+	@Nullable
+	private final PythonProgramOptions pythonProgramOptions;
+
 	/**
 	 * Flag indicating whether the job is a Python job.
 	 */
@@ -92,9 +98,6 @@ public class ProgramOptions extends CommandLineOptions {
 			pyOptions.add(PY_OPTION);
 			pyOptions.add(PYMODULE_OPTION);
 			pyOptions.add(PYFILES_OPTION);
-			pyOptions.add(PYREQUIREMENTS_OPTION);
-			pyOptions.add(PYARCHIVE_OPTION);
-			pyOptions.add(PYEXEC_OPTION);
 			for (Option option: line.getOptions()) {
 				if (pyOptions.contains(option)) {
 					pyArgList.add("--" + option.getLongOpt());
@@ -104,6 +107,16 @@ public class ProgramOptions extends CommandLineOptions {
 			String[] newArgs = pyArgList.toArray(new String[args.length + pyArgList.size()]);
 			System.arraycopy(args, 0, newArgs, pyArgList.size(), args.length);
 			args = newArgs;
+		}
+
+		boolean containsPythonDependency = line.hasOption(PYFILES_OPTION.getOpt()) ||
+			line.hasOption(PYREQUIREMENTS_OPTION.getOpt()) ||
+			line.hasOption(PYARCHIVE_OPTION.getOpt()) ||
+			line.hasOption(PYEXEC_OPTION.getOpt());
+		if (containsPythonDependency) {
+			pythonProgramOptions = PythonProgramOptions.parse(line);
+		} else {
+			pythonProgramOptions = null;
 		}
 
 		if (line.hasOption(JAR_OPTION.getOpt())) {
@@ -182,6 +195,10 @@ public class ProgramOptions extends CommandLineOptions {
 
 	public SavepointRestoreSettings getSavepointRestoreSettings() {
 		return savepointSettings;
+	}
+
+	public Optional<PythonProgramOptions> getPythonProgramOptions() {
+		return Optional.ofNullable(pythonProgramOptions);
 	}
 
 	/**

@@ -88,6 +88,7 @@ import org.apache.flink.streaming.api.operators.StreamSource;
 import org.apache.flink.util.DynamicCodeLoadingException;
 import org.apache.flink.util.ExceptionUtils;
 import org.apache.flink.util.Preconditions;
+import org.apache.flink.util.PythonDependencyManager;
 import org.apache.flink.util.SplittableIterator;
 import org.apache.flink.util.StringUtils;
 import org.apache.flink.util.WrappingRuntimeException;
@@ -758,6 +759,9 @@ public class StreamExecutionEnvironment {
 				this.cacheFile.clear();
 				this.cacheFile.addAll(DistributedCache.parseCachedFilesFromString(f));
 			});
+		PythonDependencyManager pythonDependencyManager =
+			new PythonDependencyManager(this.configuration, this.cacheFile);
+		pythonDependencyManager.configure(configuration);
 		config.configure(configuration, classLoader);
 		checkpointCfg.configure(configuration);
 	}

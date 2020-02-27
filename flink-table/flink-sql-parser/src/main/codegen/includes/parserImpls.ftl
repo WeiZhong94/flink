@@ -208,6 +208,8 @@ SqlCreate SqlCreateFunction(Span s, boolean replace) :
             <SCALA> { functionLanguage = "SCALA"; }
         |
             <SQL>   { functionLanguage = "SQL"; }
+        |
+            <PYTHON>   { functionLanguage = "PYTHON"; }
         )
     ]
     {
@@ -272,6 +274,8 @@ SqlAlterFunction SqlAlterFunction() :
             <SCALA> { functionLanguage = "SCALA"; }
         |
             <SQL>   { functionLanguage = "SQL"; }
+        |
+            <PYTHON>   { functionLanguage = "PYTHON"; }
         )
     ]
     {

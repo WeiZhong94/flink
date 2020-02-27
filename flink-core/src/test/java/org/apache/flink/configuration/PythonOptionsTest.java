@@ -16,9 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.python;
-
-import org.apache.flink.configuration.Configuration;
+package org.apache.flink.configuration;
 
 import org.junit.Test;
 

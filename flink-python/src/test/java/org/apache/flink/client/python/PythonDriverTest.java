@@ -56,14 +56,7 @@ public class PythonDriverTest {
 		args.add("--input");
 		args.add("in.txt");
 
-		PythonDriverOptions pythonDriverOptions = new PythonDriverOptions(
-			"xxx",
-			pyFilesList,
-			args,
-			new ArrayList<>(),
-			null,
-			null,
-			new ArrayList<>());
+		PythonDriverOptions pythonDriverOptions = new PythonDriverOptions("xxx", pyFilesList, args);
 		List<String> commands = PythonDriver.constructPythonCommands(pythonDriverOptions);
 		// verify the generated commands
 		Assert.assertEquals(4, commands.size());

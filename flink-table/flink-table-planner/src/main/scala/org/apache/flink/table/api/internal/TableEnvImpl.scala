@@ -770,7 +770,10 @@ abstract class TableEnvImpl(
           createFunctionOperation.getFunctionIdentifier);
         if (!exist) {
           val functionDefinition = FunctionDefinitionUtil.createFunctionDefinition(
-            createFunctionOperation.getFunctionName, function.getClassName)
+            createFunctionOperation.getFunctionName,
+            function.getClassName,
+            function.getFunctionLanguage,
+            this)
           registerCatalogFunctionInFunctionCatalog(
             createFunctionOperation.getFunctionIdentifier,
             functionDefinition)
@@ -800,6 +803,8 @@ abstract class TableEnvImpl(
       val function = alterFunctionOperation.getCatalogFunction
       if (alterFunctionOperation.isTemporary) {
         throw new ValidationException("Alter temporary catalog function is not supported")
+      } else if (function.getFunctionLanguage eq FunctionLanguage.PYTHON) {
+        throw new ValidationException("Alter Python catalog function is not supported");
       } else {
         val catalog = getCatalogOrThrowException(
           alterFunctionOperation.getFunctionIdentifier.getCatalogName)
@@ -843,7 +848,10 @@ abstract class TableEnvImpl(
         createFunctionOperation.getFunctionName)
       if (!exist) {
         val functionDefinition = FunctionDefinitionUtil.createFunctionDefinition(
-          createFunctionOperation.getFunctionName, createFunctionOperation.getFunctionClass)
+          createFunctionOperation.getFunctionName,
+          createFunctionOperation.getFunctionClass,
+          createFunctionOperation.getFunctionLanguage,
+          this)
         registerSystemFunctionInFunctionCatalog(
           createFunctionOperation.getFunctionName,
           functionDefinition)

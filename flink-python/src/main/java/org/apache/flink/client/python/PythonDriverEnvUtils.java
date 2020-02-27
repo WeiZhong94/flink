@@ -20,9 +20,15 @@ package org.apache.flink.client.python;
 
 import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.configuration.ConfigOption;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.GlobalConfiguration;
+import org.apache.flink.configuration.PythonOptions;
 import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.util.FileUtils;
+
+import org.apache.flink.shaded.guava18.com.google.common.base.Strings;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +39,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,17 +52,27 @@ import static org.apache.flink.python.util.ResourceUtil.extractBuiltInDependenci
 public final class PythonDriverEnvUtils {
 	private static final Logger LOG = LoggerFactory.getLogger(PythonDriverEnvUtils.class);
 
-	@VisibleForTesting
-	public static final String PYFLINK_PY_FILES = "PYFLINK_PY_FILES";
+	public static final String PYFLINK_CLIENT_EXECUTABLE = "PYFLINK_CLIENT_EXECUTABLE";
 
 	@VisibleForTesting
-	public static final String PYFLINK_PY_REQUIREMENTS = "PYFLINK_PY_REQUIREMENTS";
+	static Configuration globalConf = GlobalConfiguration.loadConfiguration();
 
 	@VisibleForTesting
-	public static final String PYFLINK_PY_EXECUTABLE = "PYFLINK_PY_EXECUTABLE";
+	static Map<String, String> systemEnv = System.getenv();
 
-	@VisibleForTesting
-	public static final String PYFLINK_PY_ARCHIVES = "PYFLINK_PY_ARCHIVES";
+	public static String loadConfiguration(
+		ConfigOption<String> configOption,
+		String environmentVariableKey,
+		Configuration appConf) {
+		if (appConf.contains(configOption)) {
+			return appConf.get(configOption);
+		} else if (!Strings.isNullOrEmpty(environmentVariableKey) &&
+			!Strings.isNullOrEmpty(systemEnv.get(environmentVariableKey))) {
+			return systemEnv.get(environmentVariableKey);
+		} else {
+			return globalConf.get(configOption);
+		}
+	}
 
 	/**
 	 * Wraps Python exec environment.
@@ -106,6 +121,8 @@ public final class PythonDriverEnvUtils {
 			PythonDriverOptions pythonDriverOptions,
 			String tmpDir) throws IOException, InterruptedException {
 		PythonEnvironment env = new PythonEnvironment();
+		env.pythonExec = loadConfiguration(
+			PythonOptions.PYTHON_CLIENT_EXECUTABLE, PYFLINK_CLIENT_EXECUTABLE, new Configuration());
 
 		tmpDir = new File(tmpDir).getAbsolutePath();
 
@@ -117,20 +134,40 @@ public final class PythonDriverEnvUtils {
 		env.tempDirectory = tmpDir;
 
 		// 2. append the internal lib files to PYTHONPATH.
-		List<String> pythonPathList = new ArrayList<>();
+		appendInternalLibFiles(env);
+
+		// 3. copy relevant python files to tmp dir and set them in PYTHONPATH.
+		appendUserFiles(env, pythonDriverOptions.getPythonLibFiles());
+		return env;
+	}
+
+	public static void appendInternalLibFiles(PythonEnvironment env)
+		throws IOException, InterruptedException {
 
 		List<File> internalLibs = extractBuiltInDependencies(
-			tmpDir,
+			env.tempDirectory,
 			UUID.randomUUID().toString(),
 			true);
+
+		List<String> pythonPathList = new ArrayList<>();
+
+		if (env.pythonPath != null && !env.pythonPath.isEmpty()) {
+			pythonPathList.add(env.pythonPath);
+		}
 
 		for (File file: internalLibs) {
 			pythonPathList.add(file.getAbsolutePath());
 			file.deleteOnExit();
 		}
 
-		// 3. copy relevant python files to tmp dir and set them in PYTHONPATH.
-		for (Path pythonFile : pythonDriverOptions.getPythonLibFiles()) {
+		env.pythonPath = String.join(File.pathSeparator, pythonPathList);
+	}
+
+	public static void appendUserFiles(PythonEnvironment env, List<Path> userFileList) throws IOException {
+		List<String> pythonPathList = new ArrayList<>();
+		Path tmpDirPath = new Path(env.tempDirectory);
+
+		for (Path pythonFile : userFileList) {
 			String sourceFileName = pythonFile.getName();
 			// add random UUID parent directory to avoid name conflict.
 			Path targetPath = new Path(
@@ -153,23 +190,10 @@ public final class PythonDriverEnvUtils {
 			}
 		}
 
+		if (env.pythonPath != null && !env.pythonPath.isEmpty()) {
+			pythonPathList.add(env.pythonPath);
+		}
 		env.pythonPath = String.join(File.pathSeparator, pythonPathList);
-
-		if (!pythonDriverOptions.getPyFiles().isEmpty()) {
-			env.systemEnv.put(PYFLINK_PY_FILES, String.join("\n", pythonDriverOptions.getPyFiles()));
-		}
-		if (!pythonDriverOptions.getPyArchives().isEmpty()) {
-			env.systemEnv.put(
-				PYFLINK_PY_ARCHIVES,
-				joinTuples(pythonDriverOptions.getPyArchives()));
-		}
-		pythonDriverOptions.getPyRequirements().ifPresent(
-			pyRequirements -> env.systemEnv.put(
-				PYFLINK_PY_REQUIREMENTS,
-				joinTuples(Collections.singleton(pyRequirements))));
-		pythonDriverOptions.getPyExecutable().ifPresent(
-			pyExecutable -> env.systemEnv.put(PYFLINK_PY_EXECUTABLE, pythonDriverOptions.getPyExecutable().get()));
-		return env;
 	}
 
 	private static String joinTuples(Collection<Tuple2<String, String>> tuples) {
@@ -211,7 +235,14 @@ public final class PythonDriverEnvUtils {
 	public static Process startPythonProcess(PythonEnvironment pythonEnv, List<String> commands) throws IOException {
 		ProcessBuilder pythonProcessBuilder = new ProcessBuilder();
 		Map<String, String> env = pythonProcessBuilder.environment();
-		env.put("PYTHONPATH", pythonEnv.pythonPath);
+		// combine with system PYTHONPATH
+		String pythonPath = System.getenv("PYTHONPATH");
+		if (!Strings.isNullOrEmpty(pythonPath)) {
+			pythonPath = String.join(File.pathSeparator, pythonEnv.pythonPath, pythonPath);
+		} else {
+			pythonPath = pythonEnv.pythonPath;
+		}
+		env.put("PYTHONPATH", pythonPath);
 		pythonEnv.systemEnv.forEach(env::put);
 		commands.add(0, pythonEnv.pythonExec);
 		pythonProcessBuilder.command(commands);
