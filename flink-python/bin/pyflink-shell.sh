@@ -73,11 +73,6 @@ OPTIONS=("${OPTIONS[@]:0:$LAST}")
 
 export SUBMIT_ARGS=${OPTIONS[@]}
 
-EXTRACTOR="org.apache.flink.client.python.PythonResourceExtractor"
-PYFLINK_INTERNAL_LIB=`${JAVA_RUN} ${JVM_ARGS} -cp ${PYTHON_JAR_PATH} ${EXTRACTOR}`
-export PYTHONPATH="$PYFLINK_INTERNAL_LIB:$PYTHONPATH"
-export PYFLINK_INTERNAL_LIB
-
 # -i: interactive
 # -m: execute shell.py in the zip package
 ${PYFLINK_PYTHON} -i -m pyflink.shell

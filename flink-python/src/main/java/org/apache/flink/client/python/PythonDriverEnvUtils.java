@@ -39,8 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.apache.flink.python.util.ResourceUtil.extractBuiltInDependencies;
-
 /**
  * The util class help to prepare Python env and run the python process.
  */
@@ -115,21 +113,9 @@ public final class PythonDriverEnvUtils {
 		fs.mkdirs(tmpDirPath);
 
 		env.tempDirectory = tmpDir;
-
-		// 2. append the internal lib files to PYTHONPATH.
 		List<String> pythonPathList = new ArrayList<>();
 
-		List<File> internalLibs = extractBuiltInDependencies(
-			tmpDir,
-			UUID.randomUUID().toString(),
-			true);
-
-		for (File file: internalLibs) {
-			pythonPathList.add(file.getAbsolutePath());
-			file.deleteOnExit();
-		}
-
-		// 3. copy relevant python files to tmp dir and set them in PYTHONPATH.
+		// 2. copy relevant python files to tmp dir and set them in PYTHONPATH.
 		for (Path pythonFile : pythonDriverOptions.getPythonLibFiles()) {
 			String sourceFileName = pythonFile.getName();
 			// add random UUID parent directory to avoid name conflict.

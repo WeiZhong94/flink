@@ -201,12 +201,6 @@ under the License.
 	<build>
 		<resources>
 			<resource>
-				<directory>lib</directory>
-				<includes>
-					<include>*.zip</include>
-				</includes>
-			</resource>
-			<resource>
 				<directory>bin</directory>
 				<includes>
 					<include>pyflink-udf-runner.sh</include>
@@ -239,37 +233,10 @@ under the License.
 										</and>
 									</fileset>
 								</delete>
-								<delete file="${project.basedir}/lib/pyflink.zip"/>
 								<delete dir="${project.basedir}/target"/>
 								<delete dir="${project.basedir}/build"/>
 								<delete dir="${project.basedir}/dist"/>
 								<delete dir="${project.basedir}/apache_flink.egg-info"/>
-							</target>
-						</configuration>
-					</execution>
-					<execution>
-						<id>generate-resources</id>
-						<phase>generate-resources</phase>
-						<goals>
-							<goal>run</goal>
-						</goals>
-						<configuration>
-							<target>
-								<delete includeEmptyDirs="true">
-									<fileset dir="${project.basedir}/pyflink"
-											 includes="**/*.pyc,**/__pycache__"/>
-									<fileset dir="${project.basedir}/pyflink">
-										<and>
-											<size value="0"/>
-											<type type="dir"/>
-										</and>
-									</fileset>
-								</delete>
-								<delete file="${project.basedir}/lib/pyflink.zip"/>
-								<zip destfile="${project.basedir}/lib/pyflink.zip">
-									<fileset dir="${project.basedir}"
-											 includes="pyflink/**/*"/>
-								</zip>
 							</target>
 						</configuration>
 					</execution>
