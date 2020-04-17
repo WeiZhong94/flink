@@ -19,12 +19,16 @@
 package org.apache.flink.client.python;
 
 import org.apache.flink.configuration.ConfigConstants;
-import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.ReadableConfig;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.util.FileUtils;
+import org.apache.flink.util.NetUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import py4j.CallbackClient;
+import py4j.Gateway;
+import py4j.GatewayServer;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,6 +45,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static org.apache.flink.python.PythonOptions.PYTHON_CLIENT_EXECUTABLE;
@@ -50,8 +57,8 @@ import static org.apache.flink.python.util.PythonDependencyUtils.FILE_DELIMITER;
 /**
  * The util class help to prepare Python env and run the python process.
  */
-final class PythonDriverEnvUtils {
-	private static final Logger LOG = LoggerFactory.getLogger(PythonDriverEnvUtils.class);
+final class PythonEnvUtils {
+	private static final Logger LOG = LoggerFactory.getLogger(PythonEnvUtils.class);
 
 	static final String PYFLINK_CLIENT_EXECUTABLE = "PYFLINK_CLIENT_EXECUTABLE";
 
@@ -100,7 +107,7 @@ final class PythonDriverEnvUtils {
 	 * @return PythonEnvironment the Python environment which will be executed in Python process.
 	 */
 	static PythonEnvironment preparePythonEnvironment(
-		Configuration config,
+		ReadableConfig config,
 		String entryPointScript,
 		String tmpDir) throws IOException {
 		PythonEnvironment env = new PythonEnvironment();
@@ -228,7 +235,9 @@ final class PythonDriverEnvUtils {
 	static Process startPythonProcess(PythonEnvironment pythonEnv, List<String> commands) throws IOException {
 		ProcessBuilder pythonProcessBuilder = new ProcessBuilder();
 		Map<String, String> env = pythonProcessBuilder.environment();
-		env.put("PYTHONPATH", pythonEnv.pythonPath);
+		if (pythonEnv.pythonPath != null) {
+			env.put("PYTHONPATH", pythonEnv.pythonPath);
+		}
 		pythonEnv.systemEnv.forEach(env::put);
 		commands.add(0, pythonEnv.pythonExec);
 		pythonProcessBuilder.command(commands);
@@ -246,5 +255,64 @@ final class PythonDriverEnvUtils {
 		Runtime.getRuntime().addShutdownHook(hook);
 
 		return process;
+	}
+
+	/**
+	 * Py4J both supports Java to Python RPC and Python to Java RPC. The GatewayServer object is
+	 * the entry point of Java to Python RPC. Since the Py4j Python client will only be launched
+	 * only once, the GatewayServer object needs to be reused.
+	 */
+	private static GatewayServer gatewayServer = null;
+
+	/**
+	 * Creates a GatewayServer run in a daemon thread.
+	 *
+	 * @return The created GatewayServer
+	 */
+	static GatewayServer startGatewayServer() throws ExecutionException, InterruptedException {
+		if (gatewayServer != null) {
+			return gatewayServer;
+		}
+		CompletableFuture<GatewayServer> gatewayServerFuture = new CompletableFuture<>();
+		Thread thread = new Thread(() -> {
+			int freePort = NetUtils.getAvailablePort();
+			GatewayServer server = new GatewayServer.GatewayServerBuilder()
+				.gateway(new Gateway(new ConcurrentHashMap<String, Object>(), new CallbackClient(freePort)))
+				.javaPort(0)
+				.build();
+			gatewayServerFuture.complete(server);
+			server.start(true);
+		});
+		thread.setName("py4j-gateway");
+		thread.setDaemon(true);
+		thread.start();
+		thread.join();
+		gatewayServer = gatewayServerFuture.get();
+		return gatewayServer;
+	}
+
+	static Process launchPy4jPythonClient(
+			GatewayServer gatewayServer,
+			ReadableConfig config,
+			List<String> commands,
+			String entryPointScript,
+			String tmpDir) throws IOException {
+		PythonEnvironment pythonEnv = PythonEnvUtils.preparePythonEnvironment(
+			config, entryPointScript, tmpDir);
+		// set env variable PYFLINK_GATEWAY_PORT for connecting of python gateway in python process.
+		pythonEnv.systemEnv.put("PYFLINK_GATEWAY_PORT", String.valueOf(gatewayServer.getListeningPort()));
+		// set env variable PYFLINK_CALLBACK_PORT for creating callback server in python process.
+		pythonEnv.systemEnv.put("PYFLINK_CALLBACK_PORT", String.valueOf(gatewayServer.getCallbackClient().getPort()));
+		// start the python process.
+		return PythonEnvUtils.startPythonProcess(pythonEnv, commands);
+	}
+
+	static GatewayServer getGatewayServer() {
+		return gatewayServer;
+	}
+
+	static void removeGatewayServer() {
+		gatewayServer.shutdown();
+		gatewayServer = null;
 	}
 }
