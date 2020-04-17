@@ -18,13 +18,39 @@
 
 import array
 import datetime
+import unittest
+import os
 from decimal import Decimal
 
+from pyflink.find_flink_home import _find_flink_home
 from pyflink.table import DataTypes, Row, BatchTableEnvironment, EnvironmentSettings
 from pyflink.table.tests.test_types import ExamplePoint, PythonOnlyPoint, ExamplePointUDT, \
     PythonOnlyUDT
 from pyflink.testing import source_sink_utils
 from pyflink.testing.test_case_utils import PyFlinkStreamTableTestCase
+
+
+class PrintEnvironmentTests(unittest.TestCase):
+
+    def test_print_flink_home_directory(self):
+        flink_home = _find_flink_home()
+        print(flink_home)
+        print('ls -l %s' % flink_home)
+        p = os.popen('ls -l %s' % flink_home)
+        x = p.read()
+        print(x)
+        print('ls -l %s/bin' % flink_home)
+        p = os.popen('ls -l %s/bin' % flink_home)
+        x = p.read()
+        print(x)
+        print('ls -l %s/lib' % flink_home)
+        p = os.popen('ls -l %s/lib' % flink_home)
+        x = p.read()
+        print(x)
+        print('ls -l %s/opt' % flink_home)
+        p = os.popen('ls -l %s/opt' % flink_home)
+        x = p.read()
+        print(x)
 
 
 class StreamTableCalcTests(PyFlinkStreamTableTestCase):
