@@ -663,10 +663,12 @@ public final class FunctionCatalog {
 		// changed to use `UserDefinedFunctionHelper#instantiateFunction`.
 		if (either.right() instanceof CatalogFunction) {
 			CatalogFunction function = (CatalogFunction) either.right();
-			return FunctionDefinitionUtil.createFunctionDefinition(name, function.getClassName());
+			return FunctionDefinitionUtil.createFunctionDefinition(
+				name, function.getClassName(), function.getFunctionLanguage(), config);
 		} else if (either.right() instanceof UninstantiatedSystemFunction) {
 			UninstantiatedSystemFunction function = (UninstantiatedSystemFunction) either.right();
-			return FunctionDefinitionUtil.createFunctionDefinition(name, function.getFullyQualifiedName());
+			return FunctionDefinitionUtil.createFunctionDefinition(
+				name, function.getFullyQualifiedName(), function.getFunctionLanguage(), config);
 		} else {
 			throw new TableException("Unsupported function: " + either.right());
 		}

@@ -807,6 +807,8 @@ abstract class TableEnvImpl(
       val function = alterFunctionOperation.getCatalogFunction
       if (alterFunctionOperation.isTemporary) {
         throw new ValidationException("Alter temporary catalog function is not supported")
+      } else if (function.getFunctionLanguage eq FunctionLanguage.PYTHON) {
+        throw new ValidationException("Alter Python catalog function is not supported");
       } else {
         val catalog = getCatalogOrThrowException(
           alterFunctionOperation.getFunctionIdentifier.getCatalogName)
@@ -852,7 +854,7 @@ abstract class TableEnvImpl(
         functionCatalog.registerTemporarySystemFunction(
           createFunctionOperation.getFunctionName,
           createFunctionOperation.getFunctionClass,
-          FunctionLanguage.JAVA,
+          createFunctionOperation.getFunctionLanguage,
           false)
       } else if (!createFunctionOperation.isIgnoreIfExists) {
         throw new ValidationException(
