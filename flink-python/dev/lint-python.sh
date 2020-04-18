@@ -239,6 +239,7 @@ function install_py_env() {
         fi
         print_function "STEP" "install python${py_env[i]}... [SUCCESS]"
     done
+    rm -rf "$CURRENT_DIR/.conda/pkgs"
 }
 
 # Install tox.
