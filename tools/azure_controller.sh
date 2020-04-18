@@ -144,23 +144,6 @@ if [ $STAGE == "$STAGE_COMPILE" ]; then
         echo "=============================================================================="
     fi
 elif [ $STAGE != "$STAGE_CLEANUP" ]; then
-    if ! [ -e $CACHE_FLINK_DIR ]; then
-        echo "Cached flink dir $CACHE_FLINK_DIR does not exist. Exiting build."
-        exit 1
-    fi
-    # merged compiled flink into local clone
-    # this prevents the cache from being re-uploaded
-    echo "Merging cache"
-    cp -RT "$CACHE_FLINK_DIR" "."
-
-    echo "Adjusting timestamps"
-    # adjust timestamps to prevent recompilation
-    find . -type f -name '*.java' | xargs touch
-    find . -type f -name '*.scala' | xargs touch
-    # wait a bit for better odds of different timestamps
-    sleep 5
-    find . -type f -name '*.class' | xargs touch
-    find . -type f -name '*.timestamp' | xargs touch
 
     if [ $STAGE == $STAGE_PYTHON ]; then
         echo "=============================================================================="
@@ -178,10 +161,27 @@ elif [ $STAGE != "$STAGE_CLEANUP" ]; then
             echo "=============================================================================="
             exit $EXIT_CODE
         fi
-        
-        echo "Done compiling ... "
-    fi
 
+        echo "Done compiling ... "
+    else
+    	if ! [ -e $CACHE_FLINK_DIR ]; then
+    	    echo "Cached flink dir $CACHE_FLINK_DIR does not exist. Exiting build."
+    	    exit 1
+    	fi
+    	# merged compiled flink into local clone
+    	# this prevents the cache from being re-uploaded
+    	echo "Merging cache"
+    	cp -RT "$CACHE_FLINK_DIR" "."
+
+    	echo "Adjusting timestamps"
+    	# adjust timestamps to prevent recompilation
+    	find . -type f -name '*.java' | xargs touch
+    	find . -type f -name '*.scala' | xargs touch
+    	# wait a bit for better odds of different timestamps
+    	sleep 5
+    	find . -type f -name '*.class' | xargs touch
+    	find . -type f -name '*.timestamp' | xargs touch
+    fi
 
     TEST="$STAGE" "./tools/travis_watchdog.sh" 300
     EXIT_CODE=$?
