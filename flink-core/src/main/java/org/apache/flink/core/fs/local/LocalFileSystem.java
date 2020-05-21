@@ -311,7 +311,7 @@ public class LocalFileSystem extends FileSystem {
 	 * Converts the given Path to a File for this file system.
 	 */
 	public File pathToFile(Path path) {
-		return Paths.get(path.getPath()).toFile();
+		return new File(path.getPath());
 	}
 
 	// ------------------------------------------------------------------------
