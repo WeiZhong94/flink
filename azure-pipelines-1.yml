@@ -12,7 +12,7 @@ pool:
 steps:
 - script: echo Hello, world!
   displayName: 'Run a one-line script'
-- script: mvn clean install -DskipTests
+- script: mvn clean install -DskipTests -Drat.skip=true
 #- task: Maven@3
 #  inputs:
 #    mavenPomFile: 'pom.xml' 
