@@ -12,10 +12,11 @@ pool:
 steps:
 - script: echo Hello, world!
   displayName: 'Run a one-line script'
-- task: Maven@3
-  inputs:
-    mavenPomFile: 'pom.xml' 
-    goals: 'clean install'
-    options: '-DskipTests'
-    javaHomeOption: 'JDKVersion' # Options: jDKVersion, path
-    jdkVersionOption: '1.8' # Optional. Options: default, 1.11, 1.10, 1.9, 1.8, 1.7, 1.6
+- script: mvn clean install -DskipTests
+#- task: Maven@3
+#  inputs:
+#    mavenPomFile: 'pom.xml' 
+#    goals: 'clean install'
+#    options: '-DskipTests'
+#    javaHomeOption: 'JDKVersion' # Options: jDKVersion, path
+#    jdkVersionOption: '1.8' # Optional. Options: default, 1.11, 1.10, 1.9, 1.8, 1.7, 1.6
