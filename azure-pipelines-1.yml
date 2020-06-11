@@ -15,14 +15,12 @@ steps:
     cd flink-python
     mvn test
 - script: |
-    cd flink-python
     python setup.py sdist
     cd dist
     for /f %%i in ('dir /b') do (python -m pip install %%i)
     cd ../
     python -m pip install pytest
     pytest
-    cd ../
 #- task: Maven@3
 #  inputs:
 #    mavenPomFile: 'pom.xml' 
