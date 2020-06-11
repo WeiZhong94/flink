@@ -10,22 +10,12 @@ pool:
   vmImage: 'windows-latest'
 
 steps:
-- script: |
-    for /f %%i in ('dir /b') do (python -m pip install %%i)
-    cd flink-python
-    python setup.py sdist
-    cd dist
-    for /f %%i in ('dir /b') do (python -m pip install %%i)
-    cd ../
-    python -m pip install pytest
-    pytest
-    cd ../
 - script: mvn clean install -DskipTests -Drat.skip=true
 - script: |
     cd flink-python
     python setup.py sdist
     cd dist
-    for /f %i in ('dir /b') do (python -m pip install %i)
+    for /f %%i in ('dir /b') do (python -m pip install %%i)
     cd ../
     python -m pip install pytest
     pytest
