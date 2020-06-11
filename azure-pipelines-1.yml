@@ -21,6 +21,7 @@ steps:
     for /f %%i in ('dir /b') do (python -m pip install %%i)
     cd ../
     python -m pip install pytest
+    python -m pip install "grpcio-tools>=1.3.5,<=1.14.2"
     pytest
 #- task: Maven@3
 #  inputs:
