@@ -131,7 +131,6 @@ END
     docker exec master bash -c "cat /home/hadoop-user/$FLINK_DIRNAME/conf/flink-conf.yaml"
 }
 
-
 function debug_copy_and_show_logs {
     echo "Debugging failed YARN Docker test:"
     echo "Currently running containers"
