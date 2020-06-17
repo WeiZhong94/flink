@@ -148,6 +148,7 @@ configuration:
   python.client.executable: "$PYTHON_EXEC"
 EOF
 
+
 SQL_STATEMENT="insert into sink select add_one(a) from (VALUES (1), (2), (3)) as source (a)"
 
 JOB_ID=$($FLINK_DIR/bin/sql-client.sh embedded \
