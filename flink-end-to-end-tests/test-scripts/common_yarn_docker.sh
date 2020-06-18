@@ -64,7 +64,6 @@ function start_hadoop_cluster() {
         fi
     done
 
-
     # perform health checks
     containers_health_check "master" "slave1" "slave2" "kdc"
 
