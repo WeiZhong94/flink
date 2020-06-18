@@ -111,13 +111,15 @@ function start_hadoop_cluster_and_prepare_flink() {
     fi
 
     mkdir -p $FLINK_TARBALL_DIR
-    tar czf $FLINK_TARBALL_DIR/$FLINK_TARBALL -C $(dirname $FLINK_DIR) .
-
+    #tar czf $FLINK_TARBALL_DIR/$FLINK_TARBALL -C $(dirname $FLINK_DIR) .
+    current_dir=$(pwd)
+    cd $(dirname $FLINK_DIR) && zip -r $FLINK_TARBALL_DIR/$FLINK_TARBALL $(basename $FLINK_DIR)
+    cd $current_dir
     docker cp $FLINK_TARBALL_DIR/$FLINK_TARBALL master:/home/hadoop-user/
 
     docker exec master bash -c "df -hl"
     # now, at least the container is ready
-    docker exec master bash -c "tar xzvf /home/hadoop-user/$FLINK_TARBALL --directory /home/hadoop-user/"
+    docker exec master bash -c "cd /home/hadoop-user/ && unzip $FLINK_TARBALL"
     docker exec master bash -c "df -hl"
 
     # minimal Flink config, bebe
