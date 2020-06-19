@@ -111,7 +111,6 @@ function start_hadoop_cluster_and_prepare_flink() {
         exit 1
     fi
 
-
     mkdir -p $FLINK_TARBALL_DIR
     #tar czf $FLINK_TARBALL_DIR/$FLINK_TARBALL -C $(dirname $FLINK_DIR) .
     current_dir=$(pwd)
