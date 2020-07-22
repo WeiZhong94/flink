@@ -18,6 +18,7 @@
 ################################################################################
 
 set -Eeuo pipefail
+set -x
 CURRENT_DIR=`cd "$(dirname "$0")" && pwd -P`
 source "${CURRENT_DIR}"/common.sh
 

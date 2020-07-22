@@ -24,6 +24,7 @@
 #
 
 # Download some software, such as miniconda.sh
+set -x
 function download() {
     local DOWNLOAD_STATUS=
     if hash "wget" 2>/dev/null; then
