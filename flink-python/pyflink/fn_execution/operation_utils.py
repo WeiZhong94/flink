@@ -342,7 +342,8 @@ def extract_keyed_process_function(user_defined_function_proto, ctx, on_timer_ct
         process_element2 = process_function.process_element2
 
         def wrapped_keyed_co_process_function(value):
-            if value[0] is not None:
+            if value[0] == KeyedProcessFunctionInputFlag.EVENT_TIME_TIMER.value or \
+                    value[0] == KeyedProcessFunctionInputFlag.PROC_TIME_TIMER.value:
                 # it is timer data
                 # VALUE:
                 # TIMER_FLAG, TIMESTAMP_OF_TIMER, CURRENT_WATERMARK, CURRENT_KEY_OF_TIMER, None
@@ -354,12 +355,10 @@ def extract_keyed_process_function(user_defined_function_proto, ctx, on_timer_ct
                 keyed_state_backend.set_current_key(state_current_key)
                 if value[0] == KeyedProcessFunctionInputFlag.EVENT_TIME_TIMER.value:
                     on_timer_ctx.set_time_domain(TimeDomain.EVENT_TIME)
-                elif value[0] == KeyedProcessFunctionInputFlag.PROC_TIME_TIMER.value:
-                    on_timer_ctx.set_time_domain(TimeDomain.PROCESSING_TIME)
                 else:
-                    raise TypeError("TimeCharacteristic[%s] is not supported." % str(value[0]))
+                    on_timer_ctx.set_time_domain(TimeDomain.PROCESSING_TIME)
                 output_result = on_timer(value[1], on_timer_ctx)
-            else:
+            elif value[0] is None or value[0] == KeyedProcessFunctionInputFlag.NORMAL_DATA.value:
                 # it is normal data
                 # VALUE: TIMER_FLAG, CURRENT_TIMESTAMP, CURRENT_WATERMARK, None, UNIFIED_DATA
                 # UNIFIED_DATA: IS_LEFT, LEFT_DATA, RIGHT_DATA
@@ -382,6 +381,8 @@ def extract_keyed_process_function(user_defined_function_proto, ctx, on_timer_ct
                     output_result = process_element1(current_value, ctx)
                 else:
                     output_result = process_element2(current_value, ctx)
+            else:
+                raise Exception("Unsupported KeyedProcessFunctionInputFlag: " + str(value[0]))
 
             if output_result:
                 for result in output_result:
