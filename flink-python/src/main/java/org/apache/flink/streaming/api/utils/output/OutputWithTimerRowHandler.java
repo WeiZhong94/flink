@@ -23,10 +23,7 @@ import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.runtime.state.KeyedStateBackend;
 import org.apache.flink.streaming.api.TimerService;
 import org.apache.flink.streaming.api.operators.TimestampedCollector;
-import org.apache.flink.streaming.api.utils.PythonOperatorUtils.KeyedProcessFunctionOutputFlag;
 import org.apache.flink.types.Row;
-
-import static org.apache.flink.streaming.api.utils.PythonOperatorUtils.KeyedProcessFunctionOutputFlag.NORMAL_DATA;
 
 /** This handler can accepts the runner output which contains timer registration event. */
 public class OutputWithTimerRowHandler {
@@ -45,18 +42,18 @@ public class OutputWithTimerRowHandler {
     }
 
     public void accept(Row runnerOutput, long timestamp) {
-        if (runnerOutput.getField(0) == null
-                || (byte) runnerOutput.getField(0) == NORMAL_DATA.value) {
+        if (runnerOutput.getField(0) == null) {
+            // null represents normal data
             onData(timestamp, runnerOutput.getField(3));
         } else {
-            KeyedProcessFunctionOutputFlag operandType =
-                    KeyedProcessFunctionOutputFlag.values()[(byte) runnerOutput.getField(0)];
+            TimerOperandType operandType =
+                    TimerOperandType.values()[(byte) runnerOutput.getField(0)];
             onTimerOperation(
                     operandType, (long) runnerOutput.getField(1), (Row) runnerOutput.getField(2));
         }
     }
 
-    private void onTimerOperation(KeyedProcessFunctionOutputFlag operandType, long time, Row key) {
+    private void onTimerOperation(TimerOperandType operandType, long time, Row key) {
         synchronized (keyedStateBackend) {
             keyedStateBackend.setCurrentKey(key);
             switch (operandType) {
@@ -66,10 +63,10 @@ public class OutputWithTimerRowHandler {
                 case REGISTER_PROC_TIMER:
                     timerService.registerProcessingTimeTimer(time);
                     break;
-                case DEL_EVENT_TIMER:
+                case DELETE_EVENT_TIMER:
                     timerService.deleteEventTimeTimer(time);
                     break;
-                case DEL_PROC_TIMER:
+                case DELETE_PROC_TIMER:
                     timerService.deleteProcessingTimeTimer(time);
             }
         }
@@ -86,8 +83,8 @@ public class OutputWithTimerRowHandler {
 
     public static TypeInformation<Row> getRunnerOutputTypeInfo(
             TypeInformation<?> outputType, TypeInformation<Row> keyType) {
-        // structure: [outputFlag, timestamp, key, userOutput]
-        // for more details about the output flag, see `KeyedProcessFunctionOutputFlag`
+        // structure: [timerOperandType, timestamp, key, userOutput]
+        // for more details about the output flag, see `TimerOperandType`
         return Types.ROW(Types.BYTE, Types.LONG, keyType, outputType);
     }
 }

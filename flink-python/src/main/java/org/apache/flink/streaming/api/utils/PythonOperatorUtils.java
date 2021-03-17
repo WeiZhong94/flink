@@ -53,21 +53,6 @@ public enum PythonOperatorUtils {
         }
     }
 
-    /** The Flag for PythonKeyedProcessFunction output data. */
-    public enum KeyedProcessFunctionOutputFlag {
-        REGISTER_EVENT_TIMER((byte) 0),
-        REGISTER_PROC_TIMER((byte) 1),
-        NORMAL_DATA((byte) 2),
-        DEL_EVENT_TIMER((byte) 3),
-        DEL_PROC_TIMER((byte) 4);
-
-        public final byte value;
-
-        KeyedProcessFunctionOutputFlag(byte value) {
-            this.value = value;
-        }
-    }
-
     public static FlinkFnApi.UserDefinedFunction getUserDefinedFunctionProto(
             PythonFunctionInfo pythonFunctionInfo) {
         FlinkFnApi.UserDefinedFunction.Builder builder =

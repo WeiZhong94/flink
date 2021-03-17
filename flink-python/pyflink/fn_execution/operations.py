@@ -29,6 +29,7 @@ from pyflink.datastream.state import ValueStateDescriptor, ValueState, ListState
 from pyflink.datastream import TimeDomain, TimerService
 from pyflink.datastream.functions import RuntimeContext, ProcessFunction, KeyedProcessFunction, \
     KeyedCoProcessFunction
+from pyflink.datastream.timerservice import TimerOperandType
 from pyflink.fn_execution import flink_fn_execution_pb2, operation_utils
 from pyflink.fn_execution.aggregate import extract_data_view_specs
 from pyflink.fn_execution.beam.beam_coders import DataViewFilterCoder
@@ -635,26 +636,26 @@ class KeyedProcessFunctionOperation(StatefulFunctionOperation):
 
         def collect_reg_proc_timer(self, a: int, key: Row):
             self.buf.append(
-                (operation_utils.KeyedProcessFunctionOutputFlag.REGISTER_PROC_TIMER.value,
+                (TimerOperandType.REGISTER_PROC_TIMER.value,
                  a, key, None))
 
         def collect_reg_event_timer(self, a: int, key: Row):
             self.buf.append(
-                (operation_utils.KeyedProcessFunctionOutputFlag.REGISTER_EVENT_TIMER.value,
+                (TimerOperandType.REGISTER_EVENT_TIMER.value,
                  a, key, None))
 
         def collect_del_proc_timer(self, a: int, key: Row):
             self.buf.append(
-                (operation_utils.KeyedProcessFunctionOutputFlag.DEL_PROC_TIMER.value,
+                (TimerOperandType.DELETE_PROC_TIMER.value,
                  a, key, None))
 
         def collect_del_event_timer(self, a: int, key: Row):
             self.buf.append(
-                (operation_utils.KeyedProcessFunctionOutputFlag.DEL_EVENT_TIMER.value,
+                (TimerOperandType.DELETE_EVENT_TIMER.value,
                  a, key, None))
 
         def collect(self, a: Any):
-            self.buf.append((operation_utils.KeyedProcessFunctionOutputFlag.NORMAL_DATA.value, a))
+            self.buf.append((None, a))
 
         def clear(self):
             self.buf.clear()

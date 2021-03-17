@@ -412,11 +412,3 @@ class KeyedProcessFunctionInputFlag(Enum):
     EVENT_TIME_TIMER = 0
     PROC_TIME_TIMER = 1
     NORMAL_DATA = 2
-
-
-class KeyedProcessFunctionOutputFlag(Enum):
-    REGISTER_EVENT_TIMER = 0
-    REGISTER_PROC_TIMER = 1
-    NORMAL_DATA = 2
-    DEL_EVENT_TIMER = 3
-    DEL_PROC_TIMER = 4
